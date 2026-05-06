@@ -1,0 +1,48 @@
+"use client";
+
+import Link from "next/link";
+import {
+  LayoutDashboard,
+  Briefcase,
+  FlaskConical,
+  Bot,
+  LogOut,
+} from "lucide-react";
+
+const navItems = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/portfolio", label: "Portfolio", icon: Briefcase },
+  { href: "/dashboard/sandbox", label: "Sandbox", icon: FlaskConical },
+  { href: "/dashboard/advisor", label: "AI Advisor", icon: Bot },
+];
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen">
+      <aside className="flex w-64 flex-col border-r bg-card p-4">
+        <div className="mb-8 text-xl font-bold">StockWise</div>
+        <nav className="flex flex-1 flex-col gap-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <button className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
+      </aside>
+      <main className="flex-1 overflow-auto p-6">{children}</main>
+    </div>
+  );
+}

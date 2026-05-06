@@ -1,0 +1,11 @@
+{
+  "collections": {
+    "news_chunks": {
+      "vectors": {
+        "size": 768,
+        "distance": "Cosine"
+      },
+      "description": "News article chunks with embeddings for semantic search. Filter by symbol + date range."
+    }
+  }
+}
