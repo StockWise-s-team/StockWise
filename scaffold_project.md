@@ -61,8 +61,7 @@ stockwise/
 │   │       ├── ApiGatewayApplication.java
 │   │       ├── config/
 │   │       │   ├── SecurityConfig.java        # Spring Security + JWT
-│   │       │   ├── CorsConfig.java
-│   │       │   └── KafkaConfig.java
+│   │       │   └── CorsConfig.java
 │   │       ├── filter/
 │   │       │   └── JwtAuthenticationFilter.java
 │   │       ├── security/
@@ -120,8 +119,10 @@ stockwise/
 │   │       ├── adapter/
 │   │       │   └── in/web/
 │   │       │       └── MarketController.java  # GET /market/price/{symbol}, /market/ratio/{symbol}, /market/ohlc/{symbol}
-│   │       └── kafka/
-│   │           └── MarketDataConsumer.java    # Listens to market.price.updated topic
+│   │       ├── config/
+│   │       │   └── RabbitConfig.java
+│   │       └── messaging/
+│   │           └── MarketDataConsumer.java    # Listens to market.exchange price.updated
 │   │
 │   └── portfolio-service/             # Spring Boot 3, Java 21
 │       ├── Dockerfile
@@ -147,7 +148,9 @@ stockwise/
 │           ├── adapter/
 │           │   └── in/web/
 │           │       └── PortfolioController.java  # GET /portfolio, POST /portfolio/order, GET /portfolio/pnl
-│           └── kafka/
+│           ├── config/
+│           │   └── RabbitConfig.java
+│           └── messaging/
 │               └── PriceUpdateListener.java   # Recalculate P&L on price updates
 │
 ├── ai-service/                        # Python 3.11, FastAPI, LangGraph
@@ -225,15 +228,13 @@ stockwise/
 │       │   ├── merger.py              # LLM call: diff old_wiki vs new_data → merged JSON
 │       │   └── prompts.py             # System prompts for merge LLM call
 │       │
-│       └── kafka/
-│           ├── producer.py            # Publish to market.price.updated, news.raw.ingested
-│           └── topics.py              # Topic name constants
+│       └── rabbitmq/
+│           ├── producer.py            # Publish to market.exchange, news.exchange
+│           └── constants.py           # Exchange and routing key constants
 │
 └── infra/
     ├── postgres/
     │   └── init.sql                   # Create schemas: users, market, portfolio
-    ├── kafka/
-    │   └── topics.sh                  # Create Kafka topics on startup
     └── qdrant/
         └── collections.json           # Qdrant collection config (optional)
 ```
@@ -249,8 +250,7 @@ Generate a complete `docker-compose.yml` with these services:
 **Infrastructure:**
 - `postgres`: image `postgres:16-alpine`, port `5432`, volume, env POSTGRES_DB/USER/PASSWORD, healthcheck
 - `redis`: image `redis:7-alpine`, port `6379`, healthcheck
-- `zookeeper`: image `confluentinc/cp-zookeeper:7.6.0`
-- `kafka`: image `confluentinc/cp-kafka:7.6.0`, port `9092`, depends on zookeeper, env KAFKA_ADVERTISED_LISTENERS
+- `rabbitmq`: image `rabbitmq:3-management-alpine`, ports `5672` and `15672`, healthcheck
 - `qdrant`: image `qdrant/qdrant:latest`, port `6333`, volume (optional)
 
 **Application services** (all `build: context: ./path`, depends_on infrastructure with condition `service_healthy`):
@@ -275,8 +275,11 @@ POSTGRES_DB=stockwise
 POSTGRES_USER=stockwise
 POSTGRES_PASSWORD=stockwise_dev_password
 
-# Kafka
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+# RabbitMQ
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASS=guest
 
 # Redis
 REDIS_HOST=redis
@@ -298,8 +301,8 @@ PORTFOLIO_SERVICE_URL=http://portfolio-service:8083
 AI_SERVICE_URL=http://ai-service:8000
 
 # Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8080
-NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:18080
+NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:18000
 ```
 
 ### 3. Spring Boot Services — `pom.xml` dependencies
@@ -309,7 +312,7 @@ Each Spring Boot service must include:
 spring-boot-starter-web
 spring-boot-starter-data-jpa
 spring-boot-starter-security
-spring-kafka
+spring-boot-starter-amqp for services that consume or publish messages
 postgresql (runtime)
 lombok
 spring-boot-starter-validation
@@ -337,7 +340,7 @@ redis==5.0.7
 ```
 apscheduler==3.10.4
 vnstock3==0.3.0
-kafka-python==2.0.2
+aio-pika==9.4.1
 psycopg2-binary==2.9.9
 httpx==0.27.0
 beautifulsoup4==4.12.3
@@ -552,14 +555,14 @@ Include:
 2. Architecture diagram (ASCII)
 3. Team setup: how to clone, copy `.env.example` → `.env`, fill API keys, `docker compose up`
 4. Service port map table
-5. Kafka topics table:
+5. RabbitMQ exchanges and queues table:
 
-| Topic | Producer | Consumer | Payload |
+| Exchange | Routing Key | Consumer Queues | Payload |
 |---|---|---|---|
-| `market.price.updated` | data-pipeline stream A | market-service, portfolio-service | `{ symbol, prices[], ratios }` |
-| `news.raw.ingested` | data-pipeline stream B | ai-service embedder | `{ article_id, symbol[], text, source }` |
-| `portfolio.updated` | portfolio-service | ai-service (context) | `{ user_id, holdings[] }` |
-| `wiki.synthesis.requested` | scheduler | synthesis agent | `{ symbols[], trigger_reason }` |
+| `market.exchange` | `price.updated` | `market_service_price_q`, `portfolio_service_price_q` | `{ symbol, prices[], ratios }` |
+| `news.exchange` | `raw.ingested` | `ai_service_news_q` | `{ article_id, symbol[], text, source }` |
+| `portfolio.exchange` | `updated` | `ai_service_portfolio_q` | `{ user_id, holdings[] }` |
+| `wiki.exchange` | `synthesis.requested` | `synthesis_agent_q` | `{ symbols[], trigger_reason }` |
 6. Development workflow: which service each team member owns
 7. API endpoint summary table per service
 
@@ -580,7 +583,7 @@ Before declaring done, verify:
 - [ ] Every Spring Boot service has the Hexagonal Architecture folders: `domain/`, `application/port/`, `adapter/`
 - [ ] Qdrant `news_chunks` collection config documented in `infra/qdrant/collections.json`
 - [ ] Admin source management endpoints stubbed (role=ADMIN guard)
-- [ ] `README.md` is complete with Kafka topics table and wiki pattern explanation
+- [ ] `README.md` is complete with RabbitMQ exchanges/queues table and wiki pattern explanation
 - [ ] No file is completely empty — every file has at minimum a working stub
 
 Generate all files now.

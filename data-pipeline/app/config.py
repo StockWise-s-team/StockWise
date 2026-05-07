@@ -7,7 +7,10 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "stockwise"
     POSTGRES_PASSWORD: str = "stockwise_dev_password"
 
-    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
+    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASS: str = "guest"
 
     QDRANT_HOST: str = "qdrant"
     QDRANT_PORT: int = 6333

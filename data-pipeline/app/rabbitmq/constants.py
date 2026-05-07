@@ -1,0 +1,9 @@
+MARKET_EXCHANGE = "market.exchange"
+NEWS_EXCHANGE = "news.exchange"
+PORTFOLIO_EXCHANGE = "portfolio.exchange"
+WIKI_EXCHANGE = "wiki.exchange"
+
+PRICE_UPDATED_ROUTING_KEY = "price.updated"
+NEWS_INGESTED_ROUTING_KEY = "raw.ingested"
+PORTFOLIO_UPDATED_ROUTING_KEY = "updated"
+WIKI_SYNTHESIS_REQUESTED_ROUTING_KEY = "synthesis.requested"

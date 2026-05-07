@@ -19,9 +19,9 @@
                     └────┬─────┘ └───┬────┘ └─────┬──────┘
                          │           │            │
                     ┌────▼───────────▼────────────▼─────┐
-                    │         Kafka (9092)               │
-                    │  market.price.updated              │
-                    │  news.raw.ingested                 │
+                    │        RabbitMQ (5672)             │
+                    │  Exchange: market.exchange         │
+                    │  Exchange: news.exchange           │
                     └────┬────────────────────┬─────────┘
                          │                    │
                   ┌──────▼──────┐    ┌───────▼────────┐
@@ -56,17 +56,17 @@
 | data-pipeline | — | Python 3.11, APScheduler, vnstock3 |
 | postgres | 5432 | PostgreSQL 16 |
 | redis | 6379 | Redis 7 |
-| kafka | 9092 | Apache Kafka |
+| rabbitmq | 5672, 15672 | RabbitMQ + Management UI |
 | qdrant | 6333 | Qdrant Vector DB |
 
-## Kafka Topics
+## RabbitMQ Messaging (Exchanges & Queues)
 
-| Topic | Producer | Consumer | Payload |
-|-------|----------|----------|---------|
-| `market.price.updated` | data-pipeline | market-service, portfolio-service | `{ symbol, prices[], ratios[] }` |
-| `news.raw.ingested` | data-pipeline | ai-service | `{ article_id, symbol[], text, source }` |
-| `portfolio.updated` | portfolio-service | ai-service | `{ user_id, holdings[] }` |
-| `wiki.synthesis.requested` | scheduler | synthesis agent | `{ symbols[], trigger_reason }` |
+| Exchange | Routing Key | Consumer Queues | Payload |
+|----------|-------------|-----------------|---------|
+| `market.exchange` | `price.updated` | `market_service_price_q`, `portfolio_service_price_q` | `{ symbol, prices[], ratios[] }` |
+| `news.exchange` | `raw.ingested` | `ai_service_news_q` | `{ article_id, symbol[], text, source }` |
+| `portfolio.exchange` | `updated` | `ai_service_portfolio_q` | `{ user_id, holdings[] }` |
+| `wiki.exchange` | `synthesis.requested` | `synthesis_agent_q` | `{ symbols[], trigger_reason }` |
 
 ## API Endpoint Summary
 
@@ -125,9 +125,9 @@ cp .env.example .env
 docker compose up --build
 
 # 5. Access the application
-#    Frontend: http://localhost:3000
-#    API Gateway: http://localhost:8080
-#    AI Service: http://localhost:8000/docs
+#    Frontend: http://localhost:13000
+#    API Gateway: http://localhost:18080
+#    AI Service: http://localhost:18000/docs
 ```
 
 ### Development Workflow
@@ -156,7 +156,6 @@ stockwise/
 ├── data-pipeline/      # Python — data ingestion
 └── infra/
     ├── postgres/       # DB init scripts
-    ├── kafka/          # Topic creation
     └── qdrant/         # Vector DB config
 ```
 
