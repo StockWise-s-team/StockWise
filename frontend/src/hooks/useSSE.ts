@@ -10,6 +10,7 @@ const MOCK_EVENTS: SSEEvent[] = [
 ];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const AI_API_BASE = process.env.NEXT_PUBLIC_AI_SERVICE_URL || API_BASE;
 
 export function useSSE(endpoint: string | null): SSEEvent[] {
   const [events, setEvents] = useState<SSEEvent[]>([]);
@@ -29,19 +30,21 @@ export function useSSE(endpoint: string | null): SSEEvent[] {
   }, []);
 
   useEffect(() => {
+    cleanup();
+    setEvents([]);
+
     if (!endpoint) {
-      cleanup();
-      setEvents([]);
       return;
     }
 
-    const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
+    const baseUrl = endpoint.startsWith("/advisor") ? AI_API_BASE : API_BASE;
+    const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint}`;
 
     try {
       const es = new EventSource(url);
       eventSourceRef.current = es;
 
-      es.onmessage = (event) => {
+      const appendEvent = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data) as SSEEvent;
           setEvents((prev) => [...prev, data]);
@@ -53,12 +56,20 @@ export function useSSE(endpoint: string | null): SSEEvent[] {
         }
       };
 
+      es.onmessage = appendEvent;
+      es.addEventListener("thought", appendEvent);
+      es.addEventListener("answer", appendEvent);
+      es.addEventListener("error", (event) => {
+        if ("data" in event) {
+          appendEvent(event as MessageEvent);
+        }
+      });
+
       es.onerror = () => {
-        es.close();
+        cleanup();
       };
     } catch {
       mockIndexRef.current = 0;
-      setEvents([]);
       mockIntervalRef.current = setInterval(() => {
         setEvents((prev) => {
           if (mockIndexRef.current >= MOCK_EVENTS.length) {
