@@ -30,9 +30,10 @@ export function useSSE(endpoint: string | null): SSEEvent[] {
   }, []);
 
   useEffect(() => {
+    cleanup();
+    setEvents([]);
+
     if (!endpoint) {
-      cleanup();
-      setEvents([]);
       return;
     }
 
@@ -65,11 +66,10 @@ export function useSSE(endpoint: string | null): SSEEvent[] {
       });
 
       es.onerror = () => {
-        es.close();
+        cleanup();
       };
     } catch {
       mockIndexRef.current = 0;
-      setEvents([]);
       mockIntervalRef.current = setInterval(() => {
         setEvents((prev) => {
           if (mockIndexRef.current >= MOCK_EVENTS.length) {
