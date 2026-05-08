@@ -38,8 +38,8 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: stockwise-rabbitmq
     ports:
-      - "15672:15672" # Management UI
-      - "5672:5672"   # RabbitMQ port
+      - "15673:15672" # Management UI
+      - "5673:5672"   # RabbitMQ port
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
