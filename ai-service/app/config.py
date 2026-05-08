@@ -3,15 +3,18 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
-    DB_HOST: str = "postgres"
-    DB_PORT: int = 5432
-    DB_NAME: str = "stockwise"
-    DB_USERNAME: str = "stockwise"
-    DB_PASSWORD: str = "stockwise_dev_password"
+    POSTGRES_HOST: str = "postgres"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "stockwise"
+    POSTGRES_USER: str = "stockwise"
+    POSTGRES_PASSWORD: str = "stockwise_dev_password"
     
     @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
