@@ -1,13 +1,11 @@
-CREATE SCHEMA IF NOT EXISTS users;
-CREATE SCHEMA IF NOT EXISTS market;
-CREATE SCHEMA IF NOT EXISTS portfolio;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Users
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) DEFAULT 'USER',
+    role VARCHAR(20) DEFAULT 'ROLE_USER',
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -32,32 +30,36 @@ CREATE TABLE IF NOT EXISTS financial_ratios (
     pb_ratio NUMERIC(10, 2),
     eps NUMERIC(10, 2),
     roe NUMERIC(10, 4),
-    roa NUMERIC(10, 4)
+    roa NUMERIC(10, 4),
+    UNIQUE(symbol, period)
 );
 
 -- Portfolio
 CREATE TABLE IF NOT EXISTS portfolios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    virtual_cash NUMERIC(20, 2) DEFAULT 100000000
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    virtual_cash NUMERIC(20, 2) DEFAULT 100000000 CHECK (virtual_cash >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS holdings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    portfolio_id UUID REFERENCES portfolios(id),
+    portfolio_id UUID NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
     symbol VARCHAR(10) NOT NULL,
     quantity INTEGER NOT NULL,
-    avg_price NUMERIC(20, 2)
+    avg_price NUMERIC(20, 2),
+    UNIQUE(portfolio_id, symbol),
+    CHECK (quantity >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    portfolio_id UUID REFERENCES portfolios(id),
+    portfolio_id UUID NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
     symbol VARCHAR(10) NOT NULL,
-    type VARCHAR(4) CHECK(type IN ('BUY', 'SELL')),
-    price NUMERIC(20, 2),
-    quantity INTEGER,
-    executed_at TIMESTAMP DEFAULT NOW()
+    type VARCHAR(4) NOT NULL CHECK(type IN ('BUY', 'SELL')),
+    price NUMERIC(20, 2) NOT NULL,
+    quantity INTEGER NOT NULL,
+    executed_at TIMESTAMP DEFAULT NOW(),
+    CHECK (quantity > 0)
 );
 
 -- News sources (admin-managed list)
@@ -67,7 +69,8 @@ CREATE TABLE IF NOT EXISTS news_sources (
     base_url VARCHAR(500) NOT NULL,
     crawler_type VARCHAR(50) NOT NULL,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(name)
 );
 
 INSERT INTO news_sources (name, base_url, crawler_type) VALUES
@@ -91,7 +94,8 @@ CREATE TABLE IF NOT EXISTS company_wiki_history (
     symbol VARCHAR(10) NOT NULL,
     wiki_data JSONB NOT NULL,
     version INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(symbol, version)
 );
 
 -- News articles raw store (before embedding)
