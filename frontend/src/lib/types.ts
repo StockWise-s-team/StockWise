@@ -7,6 +7,26 @@ export interface User {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  user: User;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
 }
 
 export interface StockPrice {
