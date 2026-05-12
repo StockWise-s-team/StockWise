@@ -7,6 +7,8 @@ import com.stockwise.user.domain.entity.User;
 import com.stockwise.user.dto.AuthResponse;
 import com.stockwise.user.dto.LoginRequest;
 import com.stockwise.user.dto.RegisterRequest;
+import com.stockwise.user.dto.UserDto;
+import com.stockwise.user.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,11 +25,12 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
 
     private final UserPersistencePort userPersistencePort;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
         if (userPersistencePort.findByEmail(request.email()).isPresent()) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new EmailAlreadyExistsException("Email already registered");
         }
 
         User user = new User();
@@ -39,11 +42,12 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
 
         userPersistencePort.save(user);
 
-        String mockAccessToken = "mock-access-token-" + UUID.randomUUID();
-        String mockRefreshToken = "mock-refresh-token-" + UUID.randomUUID();
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                user.getId().toString(), user.getEmail(), user.getRole());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
 
         log.info("User registered: {}", user.getEmail());
-        return new AuthResponse(mockAccessToken, mockRefreshToken);
+        return new AuthResponse(accessToken, refreshToken, toUserDto(user));
     }
 
     @Override
@@ -51,19 +55,49 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         Optional<User> userOpt = userPersistencePort.findByEmail(request.email());
 
         if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
         User user = userOpt.get();
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new InvalidCredentialsException("Invalid email or password");
         }
 
-        String mockAccessToken = "mock-access-token-" + UUID.randomUUID();
-        String mockRefreshToken = "mock-refresh-token-" + UUID.randomUUID();
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                user.getId().toString(), user.getEmail(), user.getRole());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
 
         log.info("User authenticated: {}", user.getEmail());
-        return new AuthResponse(mockAccessToken, mockRefreshToken);
+        return new AuthResponse(accessToken, refreshToken, toUserDto(user));
+    }
+
+    public UserDto getCurrentUser(String userId) {
+        UUID id = UUID.fromString(userId);
+        User user = userPersistencePort.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return toUserDto(user);
+    }
+
+    private UserDto toUserDto(User user) {
+        return new UserDto(user.getId(), user.getEmail(), user.getRole());
+    }
+
+    public static class EmailAlreadyExistsException extends RuntimeException {
+        public EmailAlreadyExistsException(String message) {
+            super(message);
+        }
+    }
+
+    public static class InvalidCredentialsException extends RuntimeException {
+        public InvalidCredentialsException(String message) {
+            super(message);
+        }
+    }
+
+    public static class UserNotFoundException extends RuntimeException {
+        public UserNotFoundException(String message) {
+            super(message);
+        }
     }
 }

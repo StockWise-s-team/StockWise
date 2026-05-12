@@ -25,9 +25,12 @@ public class User {
     @Column(unique = true)
     private String email;
 
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(nullable = false)
     private String role;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
