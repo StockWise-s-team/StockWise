@@ -25,16 +25,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+
+        // Skip auth for public paths - let them pass through without token validation
+        if (path.startsWith("/auth/") || path.equals("/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtTokenProvider.validateToken(token)) {
                 String userId = jwtTokenProvider.getUserIdFromToken(token);
+                String role = jwtTokenProvider.getRoleFromToken(token);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId, null,
-                                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                                List.of(new SimpleGrantedAuthority(role)));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

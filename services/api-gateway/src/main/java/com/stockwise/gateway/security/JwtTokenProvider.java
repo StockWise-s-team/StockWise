@@ -5,4 +5,6 @@ public interface JwtTokenProvider {
     String generateRefreshToken(String userId);
     boolean validateToken(String token);
     String getUserIdFromToken(String token);
+    String getEmailFromToken(String token);
+    String getRoleFromToken(String token);
 }
