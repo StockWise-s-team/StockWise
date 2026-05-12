@@ -19,10 +19,16 @@ export const register = async (email: string, password: string): Promise<AuthRes
   return data;
 };
 
-export const logout = (): void => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("user");
+export const logout = async (): Promise<void> => {
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    // Token có thể đã hết hạn, vẫn xóa local storage
+  } finally {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+  }
 };
 
 export const getCurrentUser = (): User | null => {

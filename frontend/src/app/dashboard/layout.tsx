@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
@@ -8,6 +9,7 @@ import {
   Bot,
   LogOut,
 } from "lucide-react";
+import { logout } from "@/lib/auth";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -21,6 +23,12 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-64 flex-col border-r bg-card p-4">
@@ -37,7 +45,10 @@ export default function DashboardLayout({
             </Link>
           ))}
         </nav>
-        <button className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+        >
           <LogOut className="h-4 w-4" />
           Logout
         </button>
