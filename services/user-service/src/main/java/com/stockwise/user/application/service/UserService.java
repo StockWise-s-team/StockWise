@@ -7,6 +7,7 @@ import com.stockwise.user.domain.entity.User;
 import com.stockwise.user.dto.AuthResponse;
 import com.stockwise.user.dto.LoginRequest;
 import com.stockwise.user.dto.RegisterRequest;
+import com.stockwise.user.dto.UpdateProfileRequest;
 import com.stockwise.user.dto.UserDto;
 import com.stockwise.user.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole("ROLE_USER");
+        user.setFullName(request.fullName());
         user.setCreatedAt(LocalDateTime.now());
 
         userPersistencePort.save(user);
@@ -79,8 +81,18 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         return toUserDto(user);
     }
 
+    public UserDto updateProfile(String userId, UpdateProfileRequest request) {
+        UUID id = UUID.fromString(userId);
+        User user = userPersistencePort.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        user.setFullName(request.fullName());
+        User saved = userPersistencePort.save(user);
+        log.info("Profile updated for user: {}", user.getEmail());
+        return toUserDto(saved);
+    }
+
     private UserDto toUserDto(User user) {
-        return new UserDto(user.getId(), user.getEmail(), user.getRole());
+        return new UserDto(user.getId(), user.getEmail(), user.getRole(), user.getFullName(), user.getCreatedAt());
     }
 
     public static class EmailAlreadyExistsException extends RuntimeException {

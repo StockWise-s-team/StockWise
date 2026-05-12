@@ -7,6 +7,7 @@ import com.stockwise.user.dto.AuthResponse;
 import com.stockwise.user.dto.LoginRequest;
 import com.stockwise.user.dto.RefreshRequest;
 import com.stockwise.user.dto.RegisterRequest;
+import com.stockwise.user.dto.UpdateProfileRequest;
 import com.stockwise.user.dto.UserDto;
 import com.stockwise.user.security.JwtTokenProvider;
 import jakarta.validation.Valid;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,5 +70,14 @@ public class AuthController {
         String userId = jwtTokenProvider.getUserIdFromToken(token);
         log.info("User logged out: {}", userId);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserDto> updateProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        String token = authHeader.substring(7);
+        String userId = jwtTokenProvider.getUserIdFromToken(token);
+        return ResponseEntity.ok(userService.updateProfile(userId, request));
     }
 }

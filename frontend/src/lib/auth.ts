@@ -1,5 +1,5 @@
 import api from "./api";
-import type { AuthResponse, LoginRequest, RegisterRequest, User } from "./types";
+import type { AuthResponse, LoginRequest, RegisterRequest, User, UpdateProfileRequest } from "./types";
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>("/auth/login", { email, password } as LoginRequest);
@@ -10,8 +10,8 @@ export const login = async (email: string, password: string): Promise<AuthRespon
   return data;
 };
 
-export const register = async (email: string, password: string): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("/auth/register", { email, password } as RegisterRequest);
+export const register = async (email: string, password: string, fullName?: string): Promise<AuthResponse> => {
+  const response = await api.post<AuthResponse>("/auth/register", { email, password, fullName } as RegisterRequest);
   const data = response.data;
   localStorage.setItem("accessToken", data.accessToken);
   localStorage.setItem("refreshToken", data.refreshToken);
@@ -40,6 +40,20 @@ export const getCurrentUser = (): User | null => {
   } catch {
     return null;
   }
+};
+
+export const getCurrentUserFromApi = async (): Promise<User> => {
+  const response = await api.get<User>("/auth/me");
+  const user = response.data;
+  localStorage.setItem("user", JSON.stringify(user));
+  return user;
+};
+
+export const updateProfile = async (fullName: string): Promise<User> => {
+  const response = await api.put<User>("/auth/profile", { fullName } as UpdateProfileRequest);
+  const user = response.data;
+  localStorage.setItem("user", JSON.stringify(user));
+  return user;
 };
 
 export const getAccessToken = (): string | null => {

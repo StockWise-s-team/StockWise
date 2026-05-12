@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +47,16 @@ public class RouteController {
     @GetMapping("/me")
     public ResponseEntity<?> me(@RequestHeader HttpHeaders headers) {
         return forward(userServiceUrl + "/auth/me", HttpMethod.GET, null, headers);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/logout", HttpMethod.POST, null, headers);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> profile(@RequestBody String body, @RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/profile", HttpMethod.PUT, body, headers);
     }
 
     private ResponseEntity<?> forward(String url, HttpMethod method, String body, HttpHeaders requestHeaders) {

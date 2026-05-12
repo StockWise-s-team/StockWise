@@ -31,6 +31,9 @@ public class User {
     @Column(nullable = false)
     private String role;
 
+    @Column(name = "full_name")
+    private String fullName;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

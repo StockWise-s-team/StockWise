@@ -26,9 +26,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        // Skip auth for public paths - let them pass through without token validation
-        if (path.startsWith("/auth/") || path.equals("/health")) {
+        // Skip filter for public auth endpoints
+        if ((path.equals("/auth/register") || path.equals("/auth/login")) && "POST".equals(method)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (path.equals("/health") || path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }

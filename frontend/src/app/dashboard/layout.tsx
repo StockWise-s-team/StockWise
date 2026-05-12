@@ -1,21 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
   FlaskConical,
   Bot,
   LogOut,
+  User,
 } from "lucide-react";
-import { logout } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/dashboard/sandbox", label: "Sandbox", icon: FlaskConical },
   { href: "/dashboard/advisor", label: "AI Advisor", icon: Bot },
+  { href: "/dashboard/profile", label: "Profile", icon: User },
 ];
 
 export default function DashboardLayout({
@@ -23,11 +24,10 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    router.push("/login");
   };
   return (
     <div className="flex min-h-screen">

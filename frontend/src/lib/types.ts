@@ -2,6 +2,8 @@ export interface User {
   id: string;
   email: string;
   role: string;
+  fullName: string | null;
+  createdAt: string | null;
 }
 
 export interface AuthResponse {
@@ -18,6 +20,11 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
+  fullName?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
 }
 
 export interface RefreshRequest {

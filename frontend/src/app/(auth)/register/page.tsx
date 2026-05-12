@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { register } = useAuth();
@@ -28,7 +29,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(email, password);
+      await register(email, password, fullName || undefined);
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
@@ -60,6 +61,23 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="fullName"
+              className="mb-1.5 block text-xs font-medium text-emerald-500"
+            >
+              Full Name
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="Optional"
+            />
+          </div>
+
           <div>
             <label
               htmlFor="email"
