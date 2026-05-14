@@ -4,6 +4,7 @@ import com.stockwise.user.application.service.UserService;
 import com.stockwise.user.application.port.in.AuthenticateUserUseCase;
 import com.stockwise.user.application.port.in.RegisterUserUseCase;
 import com.stockwise.user.dto.AuthResponse;
+import com.stockwise.user.dto.ChangePasswordRequest;
 import com.stockwise.user.dto.LoginRequest;
 import com.stockwise.user.dto.RefreshRequest;
 import com.stockwise.user.dto.RegisterRequest;
@@ -79,5 +80,15 @@ public class AuthController {
         String token = authHeader.substring(7);
         String userId = jwtTokenProvider.getUserIdFromToken(token);
         return ResponseEntity.ok(userService.updateProfile(userId, request));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        String token = authHeader.substring(7);
+        String userId = jwtTokenProvider.getUserIdFromToken(token);
+        userService.changePassword(userId, request);
+        return ResponseEntity.ok().build();
     }
 }

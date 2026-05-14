@@ -59,6 +59,11 @@ public class RouteController {
         return forward(userServiceUrl + "/auth/profile", HttpMethod.PUT, body, headers);
     }
 
+    @PutMapping("/password")
+    public ResponseEntity<?> password(@RequestBody String body, @RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/password", HttpMethod.PUT, body, headers);
+    }
+
     private ResponseEntity<?> forward(String url, HttpMethod method, String body, HttpHeaders requestHeaders) {
         try {
             HttpHeaders upstreamHeaders = new HttpHeaders();

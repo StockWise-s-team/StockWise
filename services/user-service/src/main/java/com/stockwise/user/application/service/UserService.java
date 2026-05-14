@@ -5,6 +5,7 @@ import com.stockwise.user.application.port.in.RegisterUserUseCase;
 import com.stockwise.user.application.port.out.UserPersistencePort;
 import com.stockwise.user.domain.entity.User;
 import com.stockwise.user.dto.AuthResponse;
+import com.stockwise.user.dto.ChangePasswordRequest;
 import com.stockwise.user.dto.LoginRequest;
 import com.stockwise.user.dto.RegisterRequest;
 import com.stockwise.user.dto.UpdateProfileRequest;
@@ -91,6 +92,20 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         return toUserDto(saved);
     }
 
+    public void changePassword(String userId, ChangePasswordRequest request) {
+        UUID id = UUID.fromString(userId);
+        User user = userPersistencePort.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IncorrectPasswordException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userPersistencePort.save(user);
+        log.info("Password changed for user: {}", user.getEmail());
+    }
+
     private UserDto toUserDto(User user) {
         return new UserDto(user.getId(), user.getEmail(), user.getRole(), user.getFullName(), user.getCreatedAt());
     }
@@ -109,6 +124,12 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
 
     public static class UserNotFoundException extends RuntimeException {
         public UserNotFoundException(String message) {
+            super(message);
+        }
+    }
+
+    public static class IncorrectPasswordException extends RuntimeException {
+        public IncorrectPasswordException(String message) {
             super(message);
         }
     }

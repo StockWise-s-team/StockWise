@@ -1,5 +1,5 @@
 import api from "./api";
-import type { AuthResponse, LoginRequest, RegisterRequest, User, UpdateProfileRequest } from "./types";
+import type { AuthResponse, LoginRequest, RegisterRequest, User, UpdateProfileRequest, ChangePasswordRequest } from "./types";
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>("/auth/login", { email, password } as LoginRequest);
@@ -54,6 +54,10 @@ export const updateProfile = async (fullName: string): Promise<User> => {
   const user = response.data;
   localStorage.setItem("user", JSON.stringify(user));
   return user;
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  await api.put("/auth/password", { currentPassword, newPassword } as ChangePasswordRequest);
 };
 
 export const getAccessToken = (): string | null => {

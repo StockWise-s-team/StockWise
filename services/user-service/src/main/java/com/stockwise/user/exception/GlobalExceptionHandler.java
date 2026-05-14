@@ -31,6 +31,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("USER_NOT_FOUND", ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(UserService.IncorrectPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleIncorrectPassword(UserService.IncorrectPasswordException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INCORRECT_PASSWORD", ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
