@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.api.v1.router import api_router
+from app.core.error_handler import register_error_handlers
 
 
 @asynccontextmanager
@@ -25,5 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_error_handlers(app)
 
 app.include_router(api_router, prefix="/api/v1")
