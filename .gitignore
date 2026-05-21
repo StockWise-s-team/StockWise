@@ -51,4 +51,8 @@ logs/
 coverage/
 .nyc_output/
 
+# AI context (not for commit)
+.ai-context/
+contributing.md
+
 .agent/
