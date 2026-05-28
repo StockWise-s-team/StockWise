@@ -1,4 +1,4 @@
-from app.stream_a.transformers.base_transformer import BaseTransformer
+from app.shared.base_transformer import BaseTransformer
 from typing import Any
 
 class PriceTransformer(BaseTransformer):
