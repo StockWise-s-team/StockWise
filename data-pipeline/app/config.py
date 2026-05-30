@@ -1,4 +1,12 @@
+import os
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
+
+
+def _root_dir() -> Path:
+    return Path(__file__).resolve().parent.parent.parent
+
 
 class Settings(BaseSettings):
     POSTGRES_HOST: str = "postgres"
@@ -16,12 +24,12 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = 6333
 
     GEMINI_API_KEY: str = ""
-
-    CK_API_BASE_URL: str = ""
-    CK_API_KEY: str = ""
+    FMP_API_KEY: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = _root_dir() / ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
+
 
 settings = Settings()
