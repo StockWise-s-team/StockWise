@@ -37,3 +37,58 @@ export interface SSEEvent {
   type: "thought" | "answer" | "error";
   content: string;
 }
+
+// ─── Admin / Pipeline ───────────────────────────────────────────────────────────
+
+export interface NewsSource {
+  id: string;
+  name: string;
+  baseUrl: string;
+  crawlerType: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface TrackedSymbol {
+  symbol: string;
+  addedAt: string;
+}
+
+export interface WikiData {
+  symbol: string;
+  companyName: string;
+  sector: string;
+  businessSummary: string;
+  recentPerformance: {
+    trend: string;
+    notable: string;
+  };
+  keyRisks: string[];
+  sentiment: string;
+  lastNewsSummary: string;
+  financialsSnapshot: {
+    pe: number;
+    pb: number;
+    roe: number;
+  };
+  version: number;
+  updatedAt: string;
+}
+
+export interface PipelineStatus {
+  streamA: {
+    lastRun: string | null;
+    status: "idle" | "running" | "error";
+    symbolsProcessed: number;
+  };
+  streamB: {
+    lastRun: string | null;
+    status: "idle" | "running" | "error";
+    articlesIngested: number;
+  };
+  synthesis: {
+    lastRun: string | null;
+    status: "idle" | "running" | "error";
+    wikisUpdated: number;
+  };
+}

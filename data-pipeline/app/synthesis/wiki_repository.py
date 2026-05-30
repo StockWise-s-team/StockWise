@@ -108,13 +108,16 @@ class WikiRepository:
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         try:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT id, title, content, url, symbols, published_at, crawled_at
                 FROM news_articles
-                WHERE symbols @> %s
+                WHERE %s = ANY(symbols)
                 ORDER BY published_at DESC NULLS LAST
                 LIMIT %s
-            """, (symbol, limit))
+            """,
+                (symbol, limit),
+            )
             return [dict(row) for row in cur.fetchall()]
         except Exception as e:
             logger.error("[WikiRepository] Failed to get articles for %s: %s", symbol, e)

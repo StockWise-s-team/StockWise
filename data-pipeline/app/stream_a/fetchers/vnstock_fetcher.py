@@ -81,7 +81,8 @@ class VnStockFetcher(BaseFetcher):
     def _call_history(
         symbol: str, start_date: datetime, end_date: datetime
     ) -> pd.DataFrame:
-        q = vnstock.Quote(symbol=symbol)
+        vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
+        q = vnstock.Quote(source="kbs", symbol=symbol)
         return q.history(
             start=start_date.strftime("%Y-%m-%d"),
             end=end_date.strftime("%Y-%m-%d"),

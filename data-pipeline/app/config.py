@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
     FMP_API_KEY: str = ""
+    VNSTOCK_API_KEY: str = ""
 
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"

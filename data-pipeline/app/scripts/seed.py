@@ -59,6 +59,8 @@ def _seed_prices(symbols: list[str], dry_run: bool = False) -> dict[str, int]:
         logger.error("[Seed] vnstock not installed — price seeding skipped")
         return {}
 
+    vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
+
     seeded: dict[str, int] = {}
     today = date.today()
     end_date = today.isoformat()
@@ -66,11 +68,8 @@ def _seed_prices(symbols: list[str], dry_run: bool = False) -> dict[str, int]:
 
     for symbol in symbols:
         try:
-            df = vnstock.stock.price_historical(
-                symbol=symbol,
-                start_date=start_date,
-                end_date=end_date,
-            )
+            q = vnstock.Quote(source="kbs", symbol=symbol)
+            df = q.ohlcv(start=start_date, end=end_date)
             rows = df.tail(PRICE_DAYS)
 
             if rows.empty:
@@ -102,7 +101,12 @@ def _upsert_prices(symbol: str, rows: list[dict[str, Any]], dry_run: bool) -> in
     cur = conn.cursor()
     try:
         for row in rows:
-            trade_date = row.get("date") or row.get("trade_date") or row.get(" TradingDate")
+            trade_date = (
+                row.get("time")
+                or row.get("date")
+                or row.get("trade_date")
+                or row.get(" TradingDate")
+            )
             close = row.get("close") or row.get("Close") or row.get("close_price")
             open_price = row.get("open") or row.get("Open") or row.get("open_price")
             high = row.get("high") or row.get("High") or row.get("high_price")
