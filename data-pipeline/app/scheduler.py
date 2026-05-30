@@ -147,27 +147,11 @@ async def run_stream_b() -> None:
                 all_sources.append(result[0].get("source_name", ""))
 
         if not all_articles:
-            logger.info("[StreamB] No articles scraped, skipping publish")
+            logger.info("[StreamB] No articles scraped, skipping")
         else:
             normalized = news_transformer.transform(all_articles)
-            inserted = news_repo.insert_articles_bulk(normalized)
-            logger.info("[StreamB] Inserted %d articles into DB", inserted)
-
-            chunks_embedded = embedder.embed_and_upsert(normalized)
-            logger.info("[StreamB] Embedded %d chunks into Qdrant", chunks_embedded)
-
-            all_symbols = _collect_symbols(normalized)
-
-            await producer.publish(
-                exchange_name=_EXCHANGE_NEWS,
-                routing_key=_ROUTING_NEWS,
-                data={
-                    "symbols": all_symbols,
-                    "source": all_sources[0] if all_sources else "unknown",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "record_count": len(all_articles),
-                    "action": _ROUTING_NEWS,
-                },
+            await _embed_and_publish(
+                normalized, news_repo, embedder, producer, all_sources
             )
 
     finally:
@@ -176,6 +160,34 @@ async def run_stream_b() -> None:
             await close_coro
         else:
             close_coro.close()
+
+
+async def _embed_and_publish(
+    normalized: list[dict],
+    news_repo: NewsRepository,
+    embedder: Embedder,
+    producer: RabbitMQProducer,
+    all_sources: list[str],
+) -> None:
+    inserted = news_repo.insert_articles_bulk(normalized)
+    logger.info("[StreamB] Inserted %d articles into DB", inserted)
+
+    chunks_embedded = embedder.embed_and_upsert(normalized)
+    logger.info("[StreamB] Embedded %d chunks into Qdrant", chunks_embedded)
+
+    all_symbols = _collect_symbols(normalized)
+
+    await producer.publish(
+        exchange_name=_EXCHANGE_NEWS,
+        routing_key=_ROUTING_NEWS,
+        data={
+            "symbols": all_symbols,
+            "source": all_sources[0] if all_sources else "unknown",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "record_count": len(normalized),
+            "action": _ROUTING_NEWS,
+        },
+    )
 
 
 def _collect_symbols(articles: list[dict]) -> list[str]:

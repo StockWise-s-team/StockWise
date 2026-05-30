@@ -85,18 +85,15 @@ class PriceTransformer(BaseTransformer):
             )
         return price
 
-    def _transform_bar(self, symbol: str, bar: Dict[str, Any], crawled_at: str) -> NormalizedPrice:
-        # Parse date
+    def _transform_bar(self, symbol: str, bar: Dict[str, Any]) -> NormalizedPrice:
         date_str = bar.get("date")
         if not date_str:
-            raise ValueError(f"Missing 'date' in bar")
-        # Parse numeric fields với Decimal (tránh float error)
+            raise ValueError("Missing 'date' in bar")
         price_open  = self._parse_price(bar.get("open"), "open")
         price_high  = self._parse_price(bar.get("high"), "high")
         price_low   = self._parse_price(bar.get("low"),  "low")
         price_close = self._parse_price(bar.get("close"), "close")
         volume      = self._parse_volume(bar.get("volume"))
-        # Validate OHLC logic
         self._validate_ohlc(price_high, price_low, price_open, price_close)
         return NormalizedPrice(
             symbol=symbol,
