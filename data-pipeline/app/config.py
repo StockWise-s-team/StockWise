@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     FMP_API_KEY: str = ""
 
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    EMBEDDING_MODEL: str = "openai"
+    EMBEDDING_DIM: int = 1536
+
     class Config:
         env_file = _root_dir() / ".env"
         env_file_encoding = "utf-8"

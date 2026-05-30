@@ -1,14 +1,16 @@
 import asyncio
 import logging
-import sys
 
-logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+import pytest
 
 from app.stream_a.fetchers.vnstock_fetcher import VnStockFetcher
 from app.stream_a.fetchers.ck_api_fetcher import CkApiFetcher
 from app.stream_a.transformers.ratio_transformer import RatioTransformer
 
+logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
+
+@pytest.mark.asyncio
 async def test_vnstock_fetcher():
     print("\n=== Test VnStockFetcher ===")
     fetcher = VnStockFetcher(days_back=7)
@@ -29,10 +31,17 @@ async def test_vnstock_fetcher():
                 print(f"    First: {first.get('date')} O={first.get('open')} H={first.get('high')} L={first.get('low')} C={first.get('close')} V={first.get('volume')}")
                 print(f"    Last:  {last.get('date')} O={last.get('open')} H={last.get('high')} L={last.get('low')} C={last.get('close')} V={last.get('volume')}")
 
-    return result
+
+@pytest.mark.asyncio
+async def test_ck_api_fetcher():
+    print("\n=== Test CkApiFetcher ===")
+    fetcher = CkApiFetcher()
+    result = await fetcher.fetch(["VNM", "HPG"])
+    for r in result:
+        print(f"  [{r.get('symbol')}] ratios={r.get('ratios')}")
 
 
-def test_ratio_transformer(fetched_data):
+def test_ratio_transformer():
     print("\n=== Test RatioTransformer ===")
     transformer = RatioTransformer()
 
@@ -66,23 +75,3 @@ def test_ratio_transformer(fetched_data):
     }
     result2 = transformer.transform(invalid_data)
     print(f"  Invalid data result: {result2}")
-
-
-async def test_ck_api_fetcher():
-    print("\n=== Test CkApiFetcher ===")
-    fetcher = CkApiFetcher()
-    result = await fetcher.fetch(["VNM", "HPG"])
-    for r in result:
-        print(f"  [{r.get('symbol')}] ratios={r.get('ratios')}")
-    return result
-
-
-async def main():
-    await test_vnstock_fetcher()
-    test_ratio_transformer(None)
-    await test_ck_api_fetcher()
-    print("\n=== All tests done ===")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
