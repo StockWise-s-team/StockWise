@@ -15,12 +15,11 @@ class PriceTransformer(BaseTransformer):
     def transform(self, raw_data: Dict[str, Any]) -> List[NormalizedPrice]:
         symbol = self._normalize_symbol(raw_data.get("symbol", ""))
         bars = raw_data.get("prices", [])
-        crawled_at = datetime.now(timezone.utc).isoformat()
         results: List[NormalizedPrice] = []
 
         for bar in bars:
             try:
-                normalized = self._transform_bar(symbol, bar, crawled_at)
+                normalized = self._transform_bar(symbol, bar)
                 results.append(normalized)
             except ValueError as e:
                 logger.warning(
@@ -101,11 +100,10 @@ class PriceTransformer(BaseTransformer):
         self._validate_ohlc(price_high, price_low, price_open, price_close)
         return NormalizedPrice(
             symbol=symbol,
-            trade_date=date_str,     # có thể parse thành date object nếu cần
+            trade_date=date_str,
             open=price_open,
             high=price_high,
             low=price_low,
             close=price_close,
             volume=volume,
-            crawled_at=crawled_at,
-        ) 
+        )
