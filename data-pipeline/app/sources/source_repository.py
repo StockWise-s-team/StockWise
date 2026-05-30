@@ -37,22 +37,29 @@ class SourceRepository:
             logger.debug("[SourceRepository] Returning cached sources (%d)", len(self._cache))
             return self._cache
 
-        conn = self.get_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         try:
-            cur.execute(
-                "SELECT id, name, base_url, crawler_type, is_active "
-                "FROM news_sources WHERE is_active = true"
-            )
-            rows = cur.fetchall()
-            sources = [self._map_row(row) for row in rows]
-            self._cache = sources
-            self._cache_timestamp = time.monotonic()
-            logger.info("[SourceRepository] Fetched %d active sources from DB", len(sources))
-            return sources
-        finally:
-            cur.close()
-            conn.close()
+            conn = self.get_connection()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            try:
+                cur.execute(
+                    "SELECT id, name, base_url, crawler_type, is_active "
+                    "FROM news_sources WHERE is_active = true"
+                )
+                rows = cur.fetchall()
+                sources = [self._map_row(row) for row in rows]
+                self._cache = sources
+                self._cache_timestamp = time.monotonic()
+                logger.info("[SourceRepository] Fetched %d active sources from DB", len(sources))
+                return sources
+            finally:
+                cur.close()
+                conn.close()
+        except Exception as exc:
+            logger.error("[SourceRepository] DB error fetching sources: %s", exc)
+            if self._cache is not None:
+                logger.warning("[SourceRepository] Returning stale cache due to DB error")
+                return self._cache
+            return []
 
     def _is_cache_valid(self) -> bool:
         if self._cache is None:

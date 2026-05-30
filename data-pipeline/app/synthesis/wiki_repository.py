@@ -49,6 +49,9 @@ class WikiRepository:
             wiki["symbol"] = symbol
             wiki["version"] = row["version"]
             return wiki
+        except Exception as e:
+            logger.error("[WikiRepository] Failed to get wiki for %s: %s", symbol, e)
+            raise
         finally:
             cur.close()
             conn.close()
@@ -113,6 +116,9 @@ class WikiRepository:
                 LIMIT %s
             """, (symbol, limit))
             return [dict(row) for row in cur.fetchall()]
+        except Exception as e:
+            logger.error("[WikiRepository] Failed to get articles for %s: %s", symbol, e)
+            raise
         finally:
             cur.close()
             conn.close()
@@ -129,6 +135,9 @@ class WikiRepository:
                 LIMIT %s
             """, (symbol, limit))
             return [dict(row) for row in cur.fetchall()]
+        except Exception as e:
+            logger.error("[WikiRepository] Failed to get prices for %s: %s", symbol, e)
+            raise
         finally:
             cur.close()
             conn.close()

@@ -41,7 +41,7 @@ class PriceRepository:
         return psycopg2.connect(
             host=settings.POSTGRES_HOST,
             port=settings.POSTGRES_PORT,
-            database=settings.POSTGRES_DB,
+            dbname=settings.POSTGRES_DB,
             user=settings.POSTGRES_USER,
             password=settings.POSTGRES_PASSWORD
         )
@@ -149,6 +149,9 @@ class PriceRepository:
             """, (symbol, limit))
             rows = cur.fetchall()
             return [dict(row) for row in rows]
+        except Exception as e:
+            logger.error("[PriceRepository] Failed to get latest prices for %s: %s", symbol, e)
+            raise
         finally:
             cur.close()
             conn.close()
@@ -163,6 +166,9 @@ class PriceRepository:
                 ORDER BY symbol
             """)
             return [row[0] for row in cur.fetchall()]
+        except Exception as e:
+            logger.error("[PriceRepository] Failed to get tracked symbols: %s", e)
+            raise
         finally:
             cur.close()
             conn.close()

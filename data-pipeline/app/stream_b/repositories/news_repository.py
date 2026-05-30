@@ -155,6 +155,9 @@ class NewsRepository:
                 LIMIT %s
             """, (limit,))
             return [dict(row) for row in cur.fetchall()]
+        except Exception as e:
+            logger.error("[NewsRepository] Failed to get unembedded articles: %s", e)
+            raise
         finally:
             cur.close()
             conn.close()
@@ -172,6 +175,9 @@ class NewsRepository:
                 LIMIT %s
             """, (symbol, limit))
             return [dict(row) for row in cur.fetchall()]
+        except Exception as e:
+            logger.error("[NewsRepository] Failed to get articles by symbol %s: %s", symbol, e)
+            raise
         finally:
             cur.close()
             conn.close()
