@@ -16,3 +16,8 @@ class GeminiParseError(SynthesisError):
 class WikiNotFoundError(SynthesisError):
     """Raised when a wiki record cannot be found for a given symbol."""
     pass
+
+
+class RateLimitExceeded(SynthesisError):
+    """Raised when an external API rate limit is hit."""
+    pass

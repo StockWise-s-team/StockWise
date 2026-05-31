@@ -19,6 +19,7 @@ from typing import Any
 import httpx
 import psycopg2
 import psycopg2.extras
+from pandas import DataFrame, Series
 
 from app.config import settings
 from app.synthesis.synthesis_agent import SynthesisAgent
@@ -158,7 +159,7 @@ def _seed_news_sources(dry_run: bool = False) -> int:
             VALUES
                 ('00000000-0000-0000-0000-000000000001', 'CafeF', 'https://cafef.vn', 'cafef', true),
                 ('00000000-0000-0000-0000-000000000002', 'Vietstock', 'https://vietstock.vn', 'vietstock', true),
-                ('00000000-0000-0000-0000-000000000003', 'Reuters VN', 'https://www.reuters.com/world/asia-pacific', 'reuters_vn', true)
+                ('00000000-0000-0000-0000-000000000003', 'Reuters VN', 'https://www.reuters.com/world/asia-pacific', 'reuters_vn', false)
             ON CONFLICT (name) DO NOTHING
         """)
         conn.commit()
@@ -194,61 +195,113 @@ async def _seed_wikis(symbols: list[str], dry_run: bool = False) -> dict[str, bo
 
 
 def _seed_financial_ratios(symbols: list[str], dry_run: bool = False) -> dict[str, bool]:
-    import httpx
+    import time
+    import vnstock
 
     results: dict[str, bool] = {}
-    FMP_BASE = "https://financialmodelingprep.com/stable"
+    vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
 
-    for symbol in symbols:
-        try:
-            if not settings.FMP_API_KEY or settings.FMP_API_KEY.startswith("your-"):
-                logger.warning("[Seed] FMP_API_KEY not configured — skipping ratios")
-                break
+    ITEM_MAP = {
+        "P/E": ["P/E", "pe"],
+        "P/B": ["P/B", "pb"],
+        "ROE (%)": ["ROE (%)", "roe"],
+        "ROA (%)": ["ROA (%)", "roa"],
+    }
 
-            resp = httpx.get(
-                f"{FMP_BASE}/ratios-ttm",
-                params={"symbol": symbol, "apikey": settings.FMP_API_KEY},
-                timeout=15,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+    for i, symbol in enumerate(symbols):
+        if dry_run:
+            logger.info("[Seed] [dry-run] Would seed ratios for %s", symbol)
+            results[symbol] = True
+            continue
 
-            if not isinstance(data, list) or not data:
-                logger.warning("[Seed] No ratio data for %s", symbol)
-                results[symbol] = False
-                continue
+        if i > 0:
+            time.sleep(4)
 
-            ratios = data[0]
-            pe = _safe_float(ratios.get("priceToEarningsRatioTTM"))
-            pb = _safe_float(ratios.get("priceToBookRatioTTM"))
-            eps = _safe_float(ratios.get("epsTTM"))
-            roe = _safe_float(ratios.get("returnOnEquityTTM"))
-            roa = _safe_float(ratios.get("returnOnAssetsTTM"))
+        success = False
+        retries = 0
+        max_retries = 3
+        df = None
 
-            if dry_run:
-                results[symbol] = True
-                continue
-
-            conn = _get_connection()
-            cur = conn.cursor()
+        while retries <= max_retries:
             try:
+                from vnstock.api.financial import Finance
+                finance = Finance(symbol=symbol, source="vci")
+                df = finance.ratio(period="annual")
+                success = True
+                break
+            except SystemExit:
+                if retries < max_retries:
+                    logger.warning("[Seed] Ratio rate limited for %s — waiting 60s (%d/%d)", symbol, retries + 1, max_retries)
+                    time.sleep(60)
+                    retries += 1
+                    continue
+                else:
+                    logger.warning("[Seed] Ratio rate limit persists — skipping %s", symbol)
+                    break
+            except Exception as exc:
+                exc_msg = str(exc)
+                if "rate limit" in exc_msg.lower() or "Rate Limit" in exc_msg:
+                    if retries < max_retries:
+                        logger.warning("[Seed] Ratio rate limit for %s — waiting 60s (%d/%d)", symbol, retries + 1, max_retries)
+                        time.sleep(60)
+                        retries += 1
+                        continue
+                    else:
+                        logger.warning("[Seed] Ratio rate limit persists — skipping %s", symbol)
+                        break
+                else:
+                    logger.error("[Seed] Failed to fetch ratios for %s: %s", symbol, exc)
+                    break
+
+        if not success or df is None:
+            results[symbol] = False
+            continue
+
+        try:
+            if isinstance(df, DataFrame) and not df.empty:
+                metric_rows = df[~df["item"].isin(("Năm", "Quý", "Mã TTM"))].copy() if "item" in df.columns else df.copy()
+
+                # Find first non-metadata year column
+                year_col = None
+                for c in df.columns:
+                    if c not in ("item", "item_en", "item_id", "period"):
+                        year_col = c
+                        break
+
+                val_map = {}
+                for key, aliases in ITEM_MAP.items():
+                    val = None
+                    for _, row in metric_rows.iterrows():
+                        item_name = str(row.get("item", "")).strip()
+                        item_en = str(row.get("item_en", "")).strip().lower()
+                        if item_name == key or any(a.lower() == item_en for a in aliases):
+                            if year_col:
+                                raw = row.get(year_col)
+                                while isinstance(raw, Series):
+                                    raw = raw.iloc[0]
+                                val = _safe_float(raw)
+                            break
+                    val_map[key] = val
+
+                conn = _get_connection()
+                cur = conn.cursor()
                 cur.execute("""
                     INSERT INTO financial_ratios (symbol, period, pe_ratio, pb_ratio, eps, roe, roa)
-                    VALUES (%s, 'ttm', %s, %s, %s, %s, %s)
+                    VALUES (%s, 'annual', %s, %s, NULL, %s, %s)
                     ON CONFLICT (symbol, period) DO UPDATE SET
                         pe_ratio = EXCLUDED.pe_ratio,
                         pb_ratio = EXCLUDED.pb_ratio,
-                        eps = EXCLUDED.eps,
                         roe = EXCLUDED.roe,
                         roa = EXCLUDED.roa
-                """, (symbol, pe, pb, eps, roe, roa))
+                """, (symbol, val_map.get("P/E"), val_map.get("P/B"), val_map.get("ROE (%)"), val_map.get("ROA (%)")))
                 conn.commit()
-                results[symbol] = True
-                logger.info("[Seed] Seeded ratios for %s", symbol)
-            finally:
                 cur.close()
                 conn.close()
-
+                results[symbol] = True
+                logger.info("[Seed] Seeded ratios for %s | P/E=%s P/B=%s ROE=%s ROA=%s",
+                    symbol, val_map.get("P/E"), val_map.get("P/B"), val_map.get("ROE (%)"), val_map.get("ROA (%)"))
+            else:
+                results[symbol] = False
         except Exception as exc:
             logger.error("[Seed] Failed to seed ratios for %s: %s", symbol, exc)
             results[symbol] = False
@@ -265,6 +318,112 @@ def _safe_float(value: Any) -> float | None:
         return None
 
 
+def _seed_company_info(symbols: list[str], dry_run: bool = False) -> dict[str, bool]:
+    import time
+    import re
+    import vnstock
+
+    results: dict[str, bool] = {}
+    vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
+
+    for i, symbol in enumerate(symbols):
+        if dry_run:
+            logger.info("[Seed] [dry-run] Would seed company info for %s", symbol)
+            results[symbol] = True
+            continue
+
+        # Base delay between requests
+        if i > 0:
+            time.sleep(4)
+
+        success = False
+        retries = 0
+        max_retries = 3
+
+        while retries <= max_retries:
+            try:
+                from vnstock.api.company import Company
+                company_api = Company(symbol=symbol, source="vci")
+                df = company_api.info()
+                success = True
+                break
+            except SystemExit:
+                if retries < max_retries:
+                    logger.warning("[Seed] Rate limited — waiting 60s to retry (%d/%d)", retries + 1, max_retries)
+                    time.sleep(60)
+                    retries += 1
+                    continue
+                else:
+                    logger.warning("[Seed] Rate limit persists after %d retries — skipping %s", max_retries, symbol)
+                    break
+            except Exception as exc:
+                exc_msg = str(exc)
+                if "rate limit" in exc_msg.lower() or "Rate Limit" in exc_msg or \
+                   "GIỚI HẠN API" in exc_msg or "request limit" in exc_msg.lower():
+                    if retries < max_retries:
+                        wait_match = re.search(r"Chờ (\d+) giây|Wait (\d+) second", exc_msg)
+                        wait_sec = int(wait_match.group(1) or wait_match.group(2)) + 5 if wait_match else 60
+                        logger.warning("[Seed] Rate limited — waiting %ds before retry (%d/%d)", wait_sec, retries + 1, max_retries)
+                        time.sleep(wait_sec)
+                        retries += 1
+                        continue
+                    else:
+                        logger.warning("[Seed] Rate limit persists after %d retries — skipping %s", max_retries, symbol)
+                        break
+                else:
+                    logger.error("[Seed] Failed to fetch company info for %s: %s", symbol, exc)
+                    break
+
+        if not success:
+            results[symbol] = False
+            continue
+
+        if df is None or (isinstance(df, list) and len(df) == 0):
+            logger.warning("[Seed] No company info for %s from vnstock", symbol)
+            results[symbol] = False
+            continue
+
+        if isinstance(df, list):
+            df = df[0] if df else {}
+        elif hasattr(df, "iloc") and not df.empty:
+            df = df.iloc[0].to_dict()
+        else:
+            df = dict(df)
+
+        company_name = str(df.get("organ_name") or df.get("organ_short_name") or symbol).strip()
+        sector = str(df.get("sector") or "Unknown").strip()
+        industry = str(df.get("icb_code_lv2") or "Unknown").strip()
+        summary = str(df.get("company_profile") or "").strip()
+        market_cap = _safe_float(df.get("market_cap"))
+
+        conn = _get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO company_info (symbol, company_name, sector, industry, market_cap, business_summary, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (symbol) DO UPDATE SET
+                    company_name = EXCLUDED.company_name,
+                    sector = EXCLUDED.sector,
+                    industry = EXCLUDED.industry,
+                    market_cap = COALESCE(EXCLUDED.market_cap, company_info.market_cap),
+                    business_summary = EXCLUDED.business_summary,
+                    updated_at = NOW()
+            """, (symbol, company_name, sector, industry, market_cap, summary))
+            conn.commit()
+            results[symbol] = True
+            logger.info("[Seed] Seeded: %s | %s | %s", symbol, company_name, sector)
+        except Exception as exc:
+            conn.rollback()
+            logger.error("[Seed] Failed to seed company info for %s: %s", symbol, exc)
+            results[symbol] = False
+        finally:
+            cur.close()
+            conn.close()
+
+    return results
+
+
 def _validate_db_connection() -> bool:
     try:
         conn = _get_connection()
@@ -278,7 +437,7 @@ def _validate_db_connection() -> bool:
         return False
 
 
-async def _run(symbols: list[str], seed_prices: bool, seed_wiki: bool, seed_ratios: bool, dry_run: bool):
+async def _run(symbols: list[str], seed_prices: bool, seed_wiki: bool, seed_ratios: bool, seed_company: bool, dry_run: bool):
     if dry_run:
         logger.info("=== DRY RUN MODE — no data will be written ===")
 
@@ -286,6 +445,12 @@ async def _run(symbols: list[str], seed_prices: bool, seed_wiki: bool, seed_rati
         sys.exit(1)
 
     logger.info("=== Seeding %d symbols: %s ===", len(symbols), symbols)
+
+    if seed_company:
+        logger.info("--- Seeding company metadata (FMP API) ---")
+        results = _seed_company_info(symbols, dry_run)
+        success = sum(1 for v in results.values() if v)
+        logger.info("--- Company info: %d/%d succeeded ---", success, len(results))
 
     if seed_prices:
         logger.info("--- Seeding price data (%d days) ---", PRICE_DAYS)
@@ -315,6 +480,7 @@ def main():
     parser.add_argument("--prices", action="store_true", help="Seed price data only")
     parser.add_argument("--wiki", action="store_true", help="Seed initial wikis only")
     parser.add_argument("--ratios", action="store_true", help="Seed financial ratios only")
+    parser.add_argument("--company", action="store_true", help="Seed company metadata from FMP API")
     parser.add_argument(
         "--symbols",
         type=str,
@@ -327,11 +493,12 @@ def main():
     if not symbols:
         symbols = VN30_SYMBOLS
 
-    seed_prices = not (args.wiki or args.ratios)
-    seed_wiki = not (args.prices or args.ratios)
+    seed_prices = not (args.wiki or args.ratios or args.company)
+    seed_wiki = not (args.prices or args.ratios or args.company)
     seed_ratios = args.ratios
+    seed_company = args.company
 
-    asyncio.run(_run(symbols, seed_prices, seed_wiki, seed_ratios, args.dry_run))
+    asyncio.run(_run(symbols, seed_prices, seed_wiki, seed_ratios, seed_company, args.dry_run))
 
 
 if __name__ == "__main__":

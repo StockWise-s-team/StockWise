@@ -47,6 +47,11 @@ export interface NewsSource {
   crawlerType: string;
   isActive: boolean;
   createdAt: string;
+  // snake_case variants from API
+  base_url?: string;
+  crawler_type?: string;
+  is_active?: boolean;
+  created_at?: string;
 }
 
 export interface TrackedSymbol {
@@ -91,4 +96,88 @@ export interface PipelineStatus {
     status: "idle" | "running" | "error";
     wikisUpdated: number;
   };
+}
+
+export interface PipelineProgress {
+  task?: "seed" | "synthesis";
+  phase: "idle" | "running" | "done" | "error";
+  progress: number; // 0.0 – 1.0
+  currentSymbol?: string | null;
+  totalSymbols?: number;
+  processedSymbols?: number;
+  message?: string;
+  errors?: string[];
+  // snake_case variants from SSE
+  current_symbol?: string | null;
+  total_symbols?: number;
+  processed_symbols?: number;
+}
+
+export interface PipelineProgressState {
+  seed: PipelineProgress;
+  synthesis: PipelineProgress;
+}
+
+export type PipelinePhase = "idle" | "seed" | "synth" | "done" | "error";
+
+// ─── Pipeline Run History ────────────────────────────────────────────────────────
+
+export type PipelineRunType = "seed" | "synthesis" | "stream_a" | "stream_b" | "stream_c";
+export type PipelineRunTrigger = "scheduled" | "manual" | "api";
+export type PipelineRunStatus = "running" | "success" | "partial" | "failed";
+
+export interface PipelineRunSymbol {
+  id: string;
+  run_id: string;
+  symbol: string;
+  status: "success" | "error";
+  error_message: string | null;
+  processed_at: string;
+}
+
+export interface PipelineRun {
+  id: string;
+  run_type: PipelineRunType;
+  trigger_type: PipelineRunTrigger;
+  status: PipelineRunStatus;
+  symbols_requested: number | null;
+  symbols_processed: number | null;
+  errors: string[];
+  duration_seconds: number | null;
+  started_at: string;
+  finished_at: string | null;
+  success_count: number;
+  error_count: number;
+}
+
+export interface PipelineRunDetail extends PipelineRun {
+  symbols_detail: PipelineRunSymbol[];
+}
+
+export interface PaginatedResponse<T> {
+  runs?: T[];
+  wikis?: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface PipelineStatsSummary {
+  run_type: string;
+  total_runs: number;
+  total_symbols: number | null;
+  avg_duration: number | null;
+  first_run: string | null;
+  last_run: string | null;
+}
+
+export interface PipelineStats {
+  by_type_status: Array<{
+    run_type: string;
+    status: string;
+    count: number;
+    avg_duration: number | null;
+    last_run: string | null;
+  }>;
+  summary: PipelineStatsSummary[];
 }

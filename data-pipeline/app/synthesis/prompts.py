@@ -39,13 +39,17 @@ Merge new information into the existing company wiki. Return ONLY valid JSON.
 {new_price_data}
 ```
 
+## Financial Ratios (from structured DB — authoritative)
+```json
+{financial_ratios}
+```
+
 ## Instructions
 1. Compare new articles with existing wiki data
-2. Update business_summary if companies or sectors have changed
-3. Update recent_performance based on price trends (up = bullish, down = bearish, flat = neutral)
-4. Extract key_risks from negative news
-5. Summarize last_news_summary from the most recent articles
-6. Extract PE, PB, ROE from financial_ratios if available
-7. Increment version from old_wiki
-8. Return ONLY the JSON response, no markdown fences or explanation
+2. Update recent_performance based on price trends (up = bullish, down = bearish, flat = neutral)
+3. Extract key_risks from negative news
+4. Summarize last_news_summary from the most recent articles
+5. Use the financial_ratios above for PE, PB, ROE — these come from the database and are authoritative
+6. Increment version from old_wiki
+7. Return ONLY the JSON response, no markdown fences or explanation
 """

@@ -12,12 +12,11 @@ logger = logging.getLogger(__name__)
 
 _CACHE_TTL_SECONDS = 5 * 60  # 5 minutes
 
+_cache: Optional[List[NewsSource]] = None
+_cache_timestamp: float = 0.0
+
 
 class SourceRepository:
-    def __init__(self):
-        self._cache: Optional[List[NewsSource]] = None
-        self._cache_timestamp: float = 0.0
-
     def get_connection(self):
         return psycopg2.connect(
             host=settings.POSTGRES_HOST,
@@ -28,14 +27,16 @@ class SourceRepository:
         )
 
     def invalidate(self) -> None:
-        self._cache = None
-        self._cache_timestamp = 0.0
+        global _cache, _cache_timestamp
+        _cache = None
+        _cache_timestamp = 0.0
         logger.debug("[SourceRepository] Cache invalidated")
 
     def get_active_sources(self) -> List[NewsSource]:
+        global _cache, _cache_timestamp
         if self._is_cache_valid():
-            logger.debug("[SourceRepository] Returning cached sources (%d)", len(self._cache))
-            return self._cache
+            logger.debug("[SourceRepository] Returning cached sources (%d)", len(_cache))
+            return _cache
 
         try:
             conn = self.get_connection()
@@ -47,8 +48,8 @@ class SourceRepository:
                 )
                 rows = cur.fetchall()
                 sources = [self._map_row(row) for row in rows]
-                self._cache = sources
-                self._cache_timestamp = time.monotonic()
+                _cache = sources
+                _cache_timestamp = time.monotonic()
                 logger.info("[SourceRepository] Fetched %d active sources from DB", len(sources))
                 return sources
             finally:
@@ -56,15 +57,16 @@ class SourceRepository:
                 conn.close()
         except Exception as exc:
             logger.error("[SourceRepository] DB error fetching sources: %s", exc)
-            if self._cache is not None:
+            if _cache is not None:
                 logger.warning("[SourceRepository] Returning stale cache due to DB error")
-                return self._cache
+                return _cache
             return []
 
     def _is_cache_valid(self) -> bool:
-        if self._cache is None:
+        global _cache, _cache_timestamp
+        if _cache is None:
             return False
-        elapsed = time.monotonic() - self._cache_timestamp
+        elapsed = time.monotonic() - _cache_timestamp
         return elapsed < _CACHE_TTL_SECONDS
 
     @staticmethod

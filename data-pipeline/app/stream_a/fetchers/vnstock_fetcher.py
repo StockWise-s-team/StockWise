@@ -1,13 +1,14 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 import vnstock
 
 from app.config import settings
 from app.stream_a.fetchers.base_fetcher import BaseFetcher
+from app.synthesis.exceptions import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -66,14 +67,36 @@ class VnStockFetcher(BaseFetcher):
                 )
                 if df is not None and not df.empty:
                     return self._df_to_price_list(df, norm_symbol)
-            except Exception as e:
+            except RateLimitExceeded as e:
                 logger.warning(
-                    f"[VnStockFetcher] attempt {attempt}/{MAX_RETRIES} failed for "
-                    f"{symbol}: {type(e).__name__}: {e}"
+                    "[VnStockFetcher] Rate limit on attempt %d/%d for %s — "
+                    "waiting 60s before retry",
+                    attempt, MAX_RETRIES, symbol,
                 )
-                if attempt == MAX_RETRIES:
+                if attempt < MAX_RETRIES:
+                    await asyncio.sleep(60)
+                else:
                     raise
-                await asyncio.sleep(RETRY_DELAY_SECONDS * attempt)
+            except Exception as e:
+                err_msg = str(e).lower()
+                if "rate limit" in err_msg or "giới hạn api" in err_msg or "request limit" in err_msg:
+                    logger.warning(
+                        "[VnStockFetcher] Rate limit hint on attempt %d/%d for %s — "
+                        "waiting 60s before retry",
+                        attempt, MAX_RETRIES, symbol,
+                    )
+                    if attempt < MAX_RETRIES:
+                        await asyncio.sleep(60)
+                    else:
+                        raise
+                else:
+                    logger.warning(
+                        "[VnStockFetcher] attempt %d/%d failed for %s: %s: %s",
+                        attempt, MAX_RETRIES, symbol, type(e).__name__, e,
+                    )
+                    if attempt == MAX_RETRIES:
+                        raise
+                    await asyncio.sleep(RETRY_DELAY_SECONDS * attempt)
 
         raise ValueError(f"All sources failed for {symbol}")
 
@@ -83,11 +106,16 @@ class VnStockFetcher(BaseFetcher):
     ) -> pd.DataFrame:
         vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
         q = vnstock.Quote(source="kbs", symbol=symbol)
-        return q.history(
-            start=start_date.strftime("%Y-%m-%d"),
-            end=end_date.strftime("%Y-%m-%d"),
-            interval="1D",
-        )
+        try:
+            return q.history(
+                start=start_date.strftime("%Y-%m-%d"),
+                end=end_date.strftime("%Y-%m-%d"),
+                interval="1D",
+            )
+        except SystemExit:
+            raise RateLimitExceeded(
+                "VNStock rate limit exceeded, process terminated"
+            ) from None
 
     @staticmethod
     def _normalize_symbol(raw: str) -> str:

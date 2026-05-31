@@ -30,8 +30,8 @@ EMBEDDING_DIM_OPENAI = 1536
 class Embedder:
     def __init__(self, qdrant_client: QdrantClient | None = None):
         self._qdrant = qdrant_client or QdrantClient(
-            host=settings.QDRANT_HOST,
-            port=settings.QDRANT_PORT,
+            host=settings.APP_QDRANT_HOST,
+            port=settings.APP_QDRANT_PORT,
         )
         self._openai_client: OpenAI | None = None
         self._sentence_model = None

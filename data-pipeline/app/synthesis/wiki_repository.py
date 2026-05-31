@@ -126,6 +126,52 @@ class WikiRepository:
             cur.close()
             conn.close()
 
+    def get_ratios(self, symbol: str) -> Optional[Dict[str, Any]]:
+        conn = self.get_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        try:
+            cur.execute("""
+                SELECT symbol, pe_ratio, pb_ratio, eps, roe, roa, period
+                FROM financial_ratios
+                WHERE symbol = %s
+                ORDER BY period DESC NULLS LAST
+                LIMIT 1
+            """, (symbol,))
+            row = cur.fetchone()
+            if row:
+                numeric = ("pe_ratio", "pb_ratio", "eps", "roe", "roa")
+                return {
+                    k: float(v) if v is not None and k in numeric else (v if k == "period" else 0.0)
+                    for k, v in dict(row).items()
+                }
+            return None
+        except Exception as e:
+            logger.warning("[WikiRepository] Failed to get ratios for %s: %s", symbol, e)
+            return None
+        finally:
+            cur.close()
+            conn.close()
+
+    def get_company_info(self, symbol: str) -> Optional[Dict[str, Any]]:
+        conn = self.get_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        try:
+            cur.execute("""
+                SELECT company_name, sector, industry, market_cap, business_summary
+                FROM company_info
+                WHERE symbol = %s
+            """, (symbol,))
+            row = cur.fetchone()
+            if row:
+                return dict(row)
+            return None
+        except Exception as e:
+            logger.warning("[WikiRepository] Failed to get company info for %s: %s", symbol, e)
+            return None
+        finally:
+            cur.close()
+            conn.close()
+
     def get_recent_prices(self, symbol: str, limit: int = 5) -> List[Dict[str, Any]]:
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

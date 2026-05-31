@@ -18,13 +18,16 @@ logger = logging.getLogger(__name__)
 SITEMAP_URL = "https://vietstock.vn/sitemap.xml"
 TIMEOUT_SECONDS = 15
 REQUEST_DELAY_SECONDS = 1.0
-MAX_ARTICLES = 50
+MAX_ARTICLES = 20
+CUTOFF_DAYS = 30
 
 RELATIVE_TIME_RE = re.compile(
     r"(\d+)\s*(giờ|phút|ngày|tuần|tháng)\s*(trước)?"
 )
+URL_DATE_RE = re.compile(r"/(\d{4})/(\d{2})/")
 
 NOW_VN = datetime.now(timezone.utc)
+CUTOFF_DATE = NOW_VN - timedelta(days=CUTOFF_DAYS)
 
 
 def _parse_relative_date(text: str) -> datetime | None:
@@ -54,7 +57,9 @@ class VietstockCrawler(BaseCrawler):
     def source_name(self) -> str:
         return "vietstock"
 
-    async def crawl(self) -> list[dict[str, Any]]:
+    async def crawl(
+        self, tracked_symbols: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         try:
             urls = await self._fetch_article_urls()
         except Exception as exc:
@@ -64,21 +69,59 @@ class VietstockCrawler(BaseCrawler):
         results: list[dict[str, Any]] = []
         seen_urls: set[str] = set()
 
+        logger.info("[VietstockCrawler] Sitemap returned %d URLs", len(urls))
+
+        # Pre-sort: articles with dates first (most recent), then categories last.
+        # This ensures we crawl real articles before hitting category pages.
+        article_urls: list[tuple[str, tuple[int, int]]] = []
         for url in urls:
+            m = URL_DATE_RE.search(url)
+            if m:
+                # Sort key: (year, month) descending — newest first
+                article_urls.append((url, (int(m.group(1)), int(m.group(2)))))
+            else:
+                article_urls.append((url, (0, 0)))
+
+        # Sort so articles come first (sorted by date desc), then categories
+        article_urls.sort(key=lambda x: x[1], reverse=True)
+        logger.info("[VietstockCrawler] Sorted %d URLs (with dates: %d, without: %d)",
+                    len(article_urls),
+                    sum(1 for _, d in article_urls if d != (0, 0)),
+                    sum(1 for _, d in article_urls if d == (0, 0)))
+
+        fetched_count = 0
+        for url, _ in article_urls:
             if url in seen_urls or len(results) >= self.max_articles:
                 continue
             seen_urls.add(url)
 
+            if not self._is_within_cutoff(url):
+                continue
+
+            fetched_count += 1
+            logger.debug("[VietstockCrawler] Fetching %d/%d: %s", fetched_count, len(article_urls), url[:80])
             try:
                 article = await self._fetch_article(url)
                 if article:
                     results.append(article)
+                    logger.info("[VietstockCrawler] Got article: %s (symbols=%s)", article["title"][:50], article["symbols"])
                 await asyncio.sleep(REQUEST_DELAY_SECONDS)
             except Exception as exc:
                 logger.warning(
                     "[VietstockCrawler] Skipping article %s: %s", url, exc
                 )
                 continue
+
+            if len(results) >= self.max_articles:
+                break
+
+        if tracked_symbols:
+            tracked_set = {s.upper() for s in tracked_symbols}
+            results.sort(
+                key=lambda a: not bool(
+                    tracked_set & {s.upper() for s in a.get("symbols", [])}
+                )
+            )
 
         return results
 
@@ -103,16 +146,42 @@ class VietstockCrawler(BaseCrawler):
 
     @staticmethod
     def _parse_sitemap(xml_text: str) -> list[str]:
+        # Vietstock sitemap is huge (32MB) and often truncated — ET.parse fails.
+        # Use regex as primary extraction for reliability, then try ET for any remaining.
+        import re as _re
+        cleaned = xml_text.lstrip("\ufeff").replace("\r\n", "\n")
+        locs = _re.findall(r"<loc>(https?://[^<\s]+)</loc>", cleaned)
+        if locs:
+            return locs
+        # Fallback: try ET
         urls: list[str] = []
         try:
-            root = ET.fromstring(xml_text.encode("utf-8"))
-            ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-            for loc in root.findall("sm:url/sm:loc", ns):
-                if loc.text:
-                    urls.append(loc.text.strip())
+            root = ET.fromstring(cleaned.encode("utf-8"))
         except ET.ParseError:
-            pass
+            return []
+        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        for loc in root.findall("sm:url/sm:loc", ns):
+            text = "".join(loc.itertext()).strip() if loc is not None else ""
+            if text:
+                urls.append(text)
+        if not urls:
+            for loc in root.findall("url/loc"):
+                text = "".join(loc.itertext()).strip() if loc is not None else ""
+                if text:
+                    urls.append(text)
         return urls
+
+    def _is_within_cutoff(self, url: str) -> bool:
+        m = URL_DATE_RE.search(url)
+        if not m:
+            return True
+        try:
+            year, month = int(m.group(1)), int(m.group(2))
+            # Compare year-month only — sitemap URL only gives month granularity
+            # CUTOFF_DATE is the start of the cutoff month
+            return (year, month) >= (CUTOFF_DATE.year, CUTOFF_DATE.month)
+        except ValueError:
+            return True
 
     async def _fetch_article(self, url: str) -> dict[str, Any] | None:
         headers = {
@@ -137,14 +206,17 @@ class VietstockCrawler(BaseCrawler):
         soup = BeautifulSoup(html, "lxml")
 
         title_el = (
-            soup.select_one("h1.title-detail")
+            soup.select_one("h1.article-title")
+            or soup.select_one("h1.title-detail")
             or soup.select_one("h1[itemprop='headline']")
             or soup.select_one("h1")
         )
         title = title_el.get_text(strip=True) if title_el else ""
 
         content_el = (
-            soup.select_one(".detail-content")
+            soup.select_one(".article-content")
+            or soup.select_one(".single_post_text")
+            or soup.select_one(".detail-content")
             or soup.select_one("#content-detail")
             or soup.select_one("article")
         )
@@ -183,6 +255,7 @@ class VietstockCrawler(BaseCrawler):
         symbol_tags = list(dict.fromkeys(symbol_tags))
 
         if not title or not content:
+            logger.debug("[VietstockCrawler] Skipping article (no title or content): %s", url)
             return None
 
         return {

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any, List, Optional
 
 class BaseCrawler(ABC):
     @property
@@ -7,4 +7,4 @@ class BaseCrawler(ABC):
     def source_name(self) -> str: ...
 
     @abstractmethod
-    async def crawl(self) -> List[Any]: ...
+    async def crawl(self, tracked_symbols: Optional[list[str]] = None) -> List[Any]: ...

@@ -98,6 +98,17 @@ CREATE TABLE IF NOT EXISTS company_wiki_history (
     UNIQUE(symbol, version)
 );
 
+-- Company metadata (fetched from FMP API)
+CREATE TABLE IF NOT EXISTS company_info (
+    symbol VARCHAR(10) PRIMARY KEY,
+    company_name VARCHAR(255),
+    sector VARCHAR(100),
+    industry VARCHAR(100),
+    market_cap NUMERIC(20, 0),
+    business_summary TEXT,
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- News articles raw store (before embedding)
 CREATE TABLE IF NOT EXISTS news_articles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,3 +125,34 @@ CREATE TABLE IF NOT EXISTS news_articles (
 CREATE INDEX IF NOT EXISTS idx_news_articles_symbols ON news_articles USING GIN(symbols);
 CREATE INDEX IF NOT EXISTS idx_news_articles_published ON news_articles(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_company_wiki_symbol ON company_wiki(symbol);
+
+-- Pipeline execution history (append-only)
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    run_type VARCHAR(20) NOT NULL,  -- 'seed' | 'synthesis' | 'stream_a' | 'stream_b' | 'stream_c'
+    trigger_type VARCHAR(20) NOT NULL DEFAULT 'scheduled',  -- 'scheduled' | 'manual' | 'api'
+    status VARCHAR(20) NOT NULL DEFAULT 'running',  -- 'running' | 'success' | 'partial' | 'failed'
+    symbols_requested INTEGER,
+    symbols_processed INTEGER,
+    errors TEXT[],  -- array of error messages
+    duration_seconds INTEGER,
+    started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_type ON pipeline_runs(run_type);
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_status ON pipeline_runs(status);
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started ON pipeline_runs(started_at DESC);
+
+-- Pipeline run symbols (per-run detail)
+CREATE TABLE IF NOT EXISTS pipeline_run_symbols (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    run_id UUID NOT NULL REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',  -- 'success' | 'error'
+    error_message TEXT,
+    processed_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_run_symbols_run ON pipeline_run_symbols(run_id);

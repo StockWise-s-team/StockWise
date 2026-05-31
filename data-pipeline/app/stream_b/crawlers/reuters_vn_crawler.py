@@ -33,7 +33,9 @@ class ReutersVNCrawler(BaseCrawler):
     def source_name(self) -> str:
         return "reuters_vn"
 
-    async def crawl(self) -> list[dict[str, Any]]:
+    async def crawl(
+        self, tracked_symbols: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         try:
             page_data = await self._fetch_listing()
         except Exception as exc:

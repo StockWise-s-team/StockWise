@@ -12,14 +12,21 @@ from app.api.schemas import (
     CompanyWikiResponse,
     NewsSourceResponse,
     NewsSourceToggle,
+    PipelineProgress,
+    PipelineRunResponse,
+    PipelineRunDetailResponse,
+    PipelineRunSymbolResponse,
+    PipelineStatsResponse,
     PipelineStatus,
     SeedRequest,
     SeedResponse,
     SynthesisRequest,
     SynthesisResponse,
     TrackedSymbolAdd,
+    progress_store,
 )
 from app.config import settings
+from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
 from app.scripts.seed import VN30_SYMBOLS
 from app.sources.source_repository import SourceRepository
 from app.synthesis.synthesis_agent import SynthesisAgent
@@ -53,7 +60,7 @@ def _get_conn():
 def list_news_sources():
     repo = SourceRepository()
     sources = repo.get_active_sources()
-    return [NewsSourceResponse(**s.__dict__) for s in sources]
+    return [NewsSourceResponse(id=str(s.id), name=s.name, base_url=s.base_url, crawler_type=s.crawler_type, is_active=s.is_active) for s in sources]
 
 
 @router.patch("/news-sources/{source_id}", response_model=NewsSourceResponse)
@@ -63,7 +70,7 @@ def toggle_source(source_id: str, body: NewsSourceToggle):
     try:
         cur.execute(
             "UPDATE news_sources SET is_active = %s WHERE id = %s RETURNING *",
-            (body.is_active, source_id),
+            (body.isActive, source_id),
         )
         row = cur.fetchone()
         conn.commit()
@@ -94,7 +101,7 @@ def list_tracked_symbols():
     conn = _get_conn()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT DISTINCT symbol FROM stock_prices ORDER BY symbol")
+        cur.execute("SELECT symbol FROM tracked_symbols ORDER BY symbol")
         rows = cur.fetchall()
         return [r[0] for r in rows]
     finally:
@@ -103,7 +110,7 @@ def list_tracked_symbols():
 
 
 @router.post("/tracked-symbols", response_model=dict, status_code=201)
-def add_tracked_symbol(body: TrackedSymbolAdd):
+def add_tracked_symbol(body: TrackedSymbolAdd, background_tasks: BackgroundTasks):
     conn = _get_conn()
     cur = conn.cursor()
     try:
@@ -112,10 +119,67 @@ def add_tracked_symbol(body: TrackedSymbolAdd):
             (body.symbol,),
         )
         conn.commit()
-        return {"symbol": body.symbol}
     finally:
         cur.close()
         conn.close()
+
+    async def _run():
+        from app.synthesis.synthesis_agent import SynthesisAgent
+        from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
+        from app.scripts.seed import (
+            _seed_company_info,
+            _seed_financial_ratios,
+            _seed_prices,
+        )
+
+        run_repo = PipelineRunsRepository()
+        run_id = None
+        symbol = body.symbol
+        try:
+            run_id = run_repo.create_run(
+                run_type="synthesis",
+                trigger_type="tracked_symbol",
+                symbols_requested=1,
+            )
+        except Exception as e:
+            logger.error("[API/tracked-symbols] Failed to create run record: %s", e)
+
+        # ── Auto-seed company info, ratios, and prices for new symbol ──
+        try:
+            logger.info("[API/tracked-symbols] Auto-seeding company info for %s", symbol)
+            _seed_company_info([symbol])
+        except Exception as e:
+            logger.warning("[API/tracked-symbols] Company info seed failed for %s: %s", symbol, e)
+
+        try:
+            logger.info("[API/tracked-symbols] Auto-seeding financial ratios for %s", symbol)
+            _seed_financial_ratios([symbol])
+        except Exception as e:
+            logger.warning("[API/tracked-symbols] Financial ratios seed failed for %s: %s", symbol, e)
+
+        try:
+            logger.info("[API/tracked-symbols] Auto-seeding price data for %s", symbol)
+            _seed_prices([symbol])
+        except Exception as e:
+            logger.warning("[API/tracked-symbols] Price seed failed for %s: %s", symbol, e)
+
+        # ── Now run synthesis with the freshly seeded data ──
+        agent = SynthesisAgent()
+        try:
+            await agent.synthesize([symbol])
+            logger.info("[API/tracked-symbols] Synthesis done for %s", symbol)
+            if run_id:
+                run_repo.add_symbol_result(run_id, symbol, "success")
+        except Exception as e:
+            logger.error("[API/tracked-symbols] Synthesis failed for %s: %s", symbol, e)
+            if run_id:
+                run_repo.add_symbol_result(run_id, symbol, "error", str(e))
+        finally:
+            if run_id:
+                run_repo.finish_run(run_id, "success")
+
+    background_tasks.add_task(_run)
+    return {"symbol": body.symbol}
 
 
 @router.delete("/tracked-symbols/{symbol}", status_code=204)
@@ -134,16 +198,20 @@ def remove_tracked_symbol(symbol: str):
 
 # ── Company Wiki ────────────────────────────────────────────────────────────────
 
-@router.get("/company-wiki", response_model=List[CompanyWikiResponse])
-def list_wikis():
+@router.get("/company-wiki")
+def list_wikis(limit: int = 50, offset: int = 0):
     conn = _get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
+        cur.execute("SELECT COUNT(*) FROM company_wiki")
+        total = int(cur.fetchone()["count"])
+
         cur.execute("""
             SELECT symbol, wiki_data, version, updated_at
             FROM company_wiki
             ORDER BY updated_at DESC NULLS LAST
-        """)
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
         rows = cur.fetchall()
         results = []
         for row in rows:
@@ -161,13 +229,13 @@ def list_wikis():
                 version=row["version"],
                 updated_at=row["updated_at"],
             ))
-        return results
+        return {"wikis": results, "total": total, "limit": limit, "offset": offset}
     finally:
         cur.close()
         conn.close()
 
 
-@router.get("/company-wiki/{symbol}", response_model=CompanyWikiResponse)
+@router.get("/company-wiki/{symbol}", response_model=CompanyWikiResponse, response_model_by_alias=False)
 def get_wiki(symbol: str):
     repo = WikiRepository()
     wiki = repo.get_wiki(symbol)
@@ -180,10 +248,19 @@ def get_wiki(symbol: str):
 
 @router.post("/scripts/seed", response_model=SeedResponse)
 def trigger_seed(body: SeedRequest, background_tasks: BackgroundTasks):
-    errors: List[str] = []
+    from app.scripts.seed import VN30_SYMBOLS as _VN30
+    from app.stream_a.repositories.price_repository import PriceRepository
+    if body.symbols is None:
+        price_repo = PriceRepository()
+        symbols = price_repo.get_tracked_symbols()
+        if not symbols:
+            symbols = _VN30
+    else:
+        symbols = body.symbols
+    progress_store.reset_seed(len(symbols))
 
     def _run():
-        _seed_sync(body, errors)
+        _seed_sync(body, progress_store)
 
     background_tasks.add_task(_run)
     return SeedResponse(
@@ -195,14 +272,38 @@ def trigger_seed(body: SeedRequest, background_tasks: BackgroundTasks):
     )
 
 
-def _seed_sync(body: SeedRequest, errors: List[str]) -> None:
+def _seed_sync(body: SeedRequest, progress) -> None:
     import time
-    from app.scripts.seed import _get_connection, _upsert_prices, PRICE_DAYS
+    from app.scripts.seed import (
+        _get_connection,
+        _upsert_prices,
+        _seed_company_info,
+        _seed_financial_ratios,
+        PRICE_DAYS,
+    )
+    from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
+
+    run_repo = PipelineRunsRepository()
+    run_id = None
+
+    try:
+        run_id = run_repo.create_run(
+            run_type="seed",
+            trigger_type="api",
+            symbols_requested=len(body.symbols or VN30_SYMBOLS),
+        )
+    except Exception as e:
+        logger.error("[API/seed] Failed to create DB run record: %s", e)
+        run_id = None
 
     vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
     symbols = body.symbols or VN30_SYMBOLS
 
-    if body.prices_only or (not body.prices_only and not body.wiki_only):
+    processed = 0
+    all_errors = []
+
+    def _do_prices():
+        nonlocal processed, all_errors
         today = date.today()
         end_date = today.isoformat()
         start_date = (today - timedelta(days=PRICE_DAYS + 7)).isoformat()
@@ -211,10 +312,11 @@ def _seed_sync(body: SeedRequest, errors: List[str]) -> None:
         for batch_start in range(0, len(symbols), batch_size):
             batch = symbols[batch_start : batch_start + batch_size]
             if batch_start > 0:
-                logger.info("[API/seed] Rate limit pause — sleeping 65s...")
+                logger.info("[API/seed] Rate limit pause -- sleeping 65s...")
+                progress.seed_progress.message = "Rate limit pause -- sleeping 65s..."
                 time.sleep(65)
 
-            for symbol in batch:
+            for i, symbol in enumerate(batch):
                 success = False
                 for attempt in range(3):
                     try:
@@ -222,7 +324,6 @@ def _seed_sync(body: SeedRequest, errors: List[str]) -> None:
                         df = q.ohlcv(start=start_date, end=end_date)
                         rows = df.tail(PRICE_DAYS)
                         if rows.empty:
-                            errors.append(f"{symbol}: no price data")
                             success = True
                             break
                         rows_list = rows.rename(columns=lambda c: c.lower()).to_dict("records")
@@ -240,41 +341,156 @@ def _seed_sync(body: SeedRequest, errors: List[str]) -> None:
                             logger.warning("[API/seed] Rate limited for %s, waiting %ds (attempt %d)", symbol, wait, attempt + 1)
                             time.sleep(wait)
                         else:
-                            errors.append(f"{symbol}: {e}")
                             logger.error("[API/seed] Failed for %s: %s", symbol, e)
                             break
-                if not success and not any(symbol in e for e in errors):
-                    errors.append(f"{symbol}: max retries exceeded")
+                processed += 1
+                progress.step_seed(symbol, processed)
+                if success:
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "success")
+                else:
+                    err_msg = f"{symbol}: failed after retries"
+                    all_errors.append(err_msg)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
 
-    if body.wiki_only or (not body.prices_only and not body.wiki_only):
-        import asyncio
+    def _do_company():
+        nonlocal all_errors
+        logger.info("[API/seed] Seeding company info for %d symbols", len(symbols))
+        try:
+            results = _seed_company_info(symbols, dry_run=body.dry_run)
+            for sym, ok in results.items():
+                if not ok:
+                    err_msg = f"{sym}: company info failed"
+                    all_errors.append(err_msg)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, sym, "error", err_msg)
+                elif run_id:
+                    run_repo.add_symbol_result(run_id, sym, "success")
+        except Exception as e:
+            logger.error("[API/seed] Company info seeding failed: %s", e)
+            all_errors.append(f"company_info: {e}")
+
+    def _do_ratios():
+        nonlocal all_errors
+        logger.info("[API/seed] Seeding financial ratios for %d symbols", len(symbols))
+        try:
+            results = _seed_financial_ratios(symbols, dry_run=body.dry_run)
+            for sym, ok in results.items():
+                if not ok:
+                    err_msg = f"{sym}: ratios failed"
+                    all_errors.append(err_msg)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, sym, "error", err_msg)
+                elif run_id:
+                    run_repo.add_symbol_result(run_id, sym, "success")
+        except Exception as e:
+            logger.error("[API/seed] Ratios seeding failed: %s", e)
+            all_errors.append(f"ratios: {e}")
+
+    def _do_wiki():
+        nonlocal processed, all_errors
         agent = SynthesisAgent()
         for symbol in symbols:
             try:
+                import asyncio
                 asyncio.run(agent.synthesize([symbol]))
                 logger.info("[API/seed] Seeded wiki for %s", symbol)
+                processed += 1
+                progress.step_seed(symbol, processed)
+                if run_id:
+                    run_repo.add_symbol_result(run_id, symbol, "success")
             except Exception as e:
-                errors.append(f"{symbol}/wiki: {e}")
                 logger.error("[API/seed] Failed wiki for %s: %s", symbol, e)
+                err_msg = f"{symbol}/wiki: {e}"
+                all_errors.append(err_msg)
+                if run_id:
+                    run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
+
+    try:
+        if body.company_only:
+            _do_company()
+        elif body.ratios_only:
+            _do_ratios()
+        elif body.prices_only:
+            _do_prices()
+        elif body.wiki_only:
+            _do_wiki()
+        else:
+            _do_prices()
+            _do_company()
+            _do_ratios()
+            _do_wiki()
+    except Exception as e:
+        logger.error("[API/seed] Unhandled exception in seed sync: %s", e)
+        progress.seed_progress.errors.append(f"Fatal: {e}")
+        all_errors.append(f"Fatal: {e}")
+    finally:
+        if run_id:
+            final_status = "success" if not all_errors else "partial"
+            run_repo.finish_run(run_id, final_status, all_errors)
+        progress.finish_seed(progress.seed_progress.errors)
 
 
 # ── Synthesis ─────────────────────────────────────────────────────────────────
 
 @router.post("/synthesis/trigger", response_model=SynthesisResponse)
 def trigger_synthesis(body: SynthesisRequest, background_tasks: BackgroundTasks):
-    errors: List[str] = []
+    from app.scripts.seed import VN30_SYMBOLS as _VN30
+    from app.stream_a.repositories.price_repository import PriceRepository
+    if body.symbols is None:
+        # Default: process all tracked symbols from DB
+        price_repo = PriceRepository()
+        symbols = price_repo.get_tracked_symbols()
+        if not symbols:
+            symbols = _VN30
+    else:
+        symbols = body.symbols
+    progress_store.reset_synthesis(len(symbols))
 
-    def _run():
-        import asyncio
-        symbols = body.symbols or VN30_SYMBOLS
+    async def _run():
+        from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
+        run_repo = PipelineRunsRepository()
+        run_id = None
+        all_errors = []
+
+        try:
+            run_id = run_repo.create_run(
+                run_type="synthesis",
+                trigger_type="api",
+                symbols_requested=len(symbols),
+            )
+        except Exception as e:
+            logger.error("[API/synthesis] Failed to create DB run record: %s", e)
+            run_id = None
+
         agent = SynthesisAgent()
-        for symbol in symbols:
-            try:
-                asyncio.run(agent.synthesize([symbol]))
-                logger.info("[API/synthesis] Synthesized %s", symbol)
-            except Exception as e:
-                errors.append(f"{symbol}: {e}")
-                logger.error("[API/synthesis] Failed %s: %s", symbol, e)
+        processed = 0
+        try:
+            for symbol in symbols:
+                try:
+                    await agent.synthesize([symbol])
+                    logger.info("[API/synthesis] Synthesized %s", symbol)
+                    processed += 1
+                    progress_store.step_synthesis(symbol, processed)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "success")
+                except Exception as e:
+                    logger.error("[API/synthesis] Failed %s: %s", symbol, e)
+                    err_msg = f"{symbol}: {e}"
+                    all_errors.append(err_msg)
+                    progress_store.synthesis_progress.errors.append(err_msg)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
+        except Exception as e:
+            logger.error("[API/synthesis] Unhandled exception: %s", e)
+            all_errors.append(f"Fatal: {e}")
+            progress_store.synthesis_progress.errors.append(f"Fatal: {e}")
+        finally:
+            if run_id:
+                final_status = "success" if not all_errors else "partial"
+                run_repo.finish_run(run_id, final_status, all_errors)
+            progress_store.finish_synthesis(progress_store.synthesis_progress.errors)
 
     background_tasks.add_task(_run)
     return SynthesisResponse(
@@ -310,3 +526,110 @@ def pipeline_status():
         next_stream_b=next_dt("stream_b"),
         next_synthesis=next_dt("synthesis"),
     )
+
+
+# ── SSE Progress Stream ────────────────────────────────────────────────────────
+
+@router.get("/pipeline/progress")
+def pipeline_progress():
+    """
+    Server-Sent Events stream — pushes progress updates for seed/synthesis tasks.
+    Each event is a JSON line:  data: {...}\n\n
+    """
+
+    async def event_generator():
+        import asyncio, json
+
+        pending_tasks = set()
+
+        while True:
+            seed = progress_store.seed_progress
+            synth = progress_store.synthesis_progress
+
+            for prog in [seed, synth]:
+                if prog.phase == "idle":
+                    continue
+                key = f"{prog.task}:{prog.phase}"
+                if key not in pending_tasks:
+                    pending_tasks.add(key)
+                    dumped = prog.model_dump()
+                    yield f"data: {json.dumps(dumped)}\n\n"
+
+            # Only close stream when BOTH tasks have settled (done/error)
+            seed_done = seed.phase in ("done", "error")
+            synth_done = synth.phase in ("done", "error")
+
+            if pending_tasks and seed_done and synth_done:
+                # Send final terminal event for each settled task
+                for prog in [seed, synth]:
+                    if prog.phase != "idle":
+                        dumped = prog.model_dump()
+                        yield f"data: {json.dumps(dumped)}\n\n"
+                return
+
+            await asyncio.sleep(1.5)
+
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/pipeline/progress/poll")
+def pipeline_progress_poll():
+    """Polling fallback — returns current progress state as JSON."""
+    def _dump(p):
+        d = p.model_dump()
+        d["current_symbol"] = d.pop("currentSymbol")
+        d["total_symbols"] = d.pop("totalSymbols")
+        d["processed_symbols"] = d.pop("processedSymbols")
+        return d
+
+    return {
+        "seed": _dump(progress_store.seed_progress),
+        "synthesis": _dump(progress_store.synthesis_progress),
+    }
+
+
+# ── Pipeline Run History ────────────────────────────────────────────────────────
+
+@router.get("/pipeline/runs")
+def list_pipeline_runs(
+    run_type: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    """List recent pipeline execution history with pagination."""
+    repo = PipelineRunsRepository()
+    return repo.list_runs(run_type=run_type, status=status, limit=limit, offset=offset)
+
+
+@router.get("/pipeline/runs/stats", response_model=PipelineStatsResponse)
+def pipeline_run_stats():
+    """Get aggregated statistics from recent runs."""
+    repo = PipelineRunsRepository()
+    return repo.get_stats()
+
+
+@router.get("/pipeline/runs/recent", response_model=List[PipelineRunResponse])
+def recent_pipeline_runs(limit: int = 10):
+    """Get N most recent pipeline runs."""
+    repo = PipelineRunsRepository()
+    return repo.get_recent_runs(limit=limit)
+
+
+@router.get("/pipeline/runs/{run_id}", response_model=PipelineRunDetailResponse)
+def get_pipeline_run(run_id: str):
+    """Get detail of a specific pipeline run, including per-symbol results."""
+    repo = PipelineRunsRepository()
+    run = repo.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Pipeline run not found")
+    return run

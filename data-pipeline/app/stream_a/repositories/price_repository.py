@@ -161,8 +161,8 @@ class PriceRepository:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT DISTINCT symbol
-                FROM stock_prices
+                SELECT symbol
+                FROM tracked_symbols
                 ORDER BY symbol
             """)
             return [row[0] for row in cur.fetchall()]

@@ -94,17 +94,18 @@ class NewsRepository:
                 )
                 for a in articles
             ]
-            cur.execute("""
+            psycopg2.extras.execute_values(
+                cur,
+                """
                 INSERT INTO news_articles
                     (source_id, title, content, url, symbols, published_at, crawled_at)
                 VALUES %s
                 ON CONFLICT (url) DO NOTHING
-            """, psycopg2.extras.execute_values(cur, """
-                INSERT INTO news_articles
-                    (source_id, title, content, url, symbols, published_at, crawled_at)
-                VALUES %s
-                ON CONFLICT (url) DO NOTHING
-            """, data, template=None, page_size=100))
+                """,
+                data,
+                template=None,
+                page_size=100,
+            )
             rows_inserted = cur.rowcount
             conn.commit()
             logger.info(

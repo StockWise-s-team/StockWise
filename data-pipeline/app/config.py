@@ -15,13 +15,13 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "stockwise"
     POSTGRES_PASSWORD: str = "stockwise_dev_password"
 
-    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_HOST: str = "localhost"
     RABBITMQ_PORT: int = 5672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASS: str = "guest"
 
-    QDRANT_HOST: str = "qdrant"
-    QDRANT_PORT: int = 6333
+    APP_QDRANT_HOST: str = "qdrant"
+    APP_QDRANT_PORT: int = 16333
 
     GEMINI_API_KEY: str = ""
     FMP_API_KEY: str = ""

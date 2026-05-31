@@ -1,6 +1,7 @@
 import re
 import uuid
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -10,7 +11,7 @@ from bs4 import BeautifulSoup
 from app.config import settings
 from app.sources.models import NewsSource
 from app.stream_b.exceptions import SourceMapError, TransformError
-from app.stream_b.repositories.news_repository import NewsRepository
+from app.stream_b.repositories.news_repository import NewsRepository, NormalizedArticle
 from app.shared.base_transformer import BaseTransformer
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ class NewsTransformer(BaseTransformer):
             return [self._transform_one(item) for item in raw_data]
         return self._transform_one(raw_data)
 
-    def _transform_one(self, raw: dict[str, Any]) -> dict[str, Any]:
+    def _transform_one(self, raw: dict[str, Any]) -> NormalizedArticle:
         try:
             content_clean = self._strip_html(raw.get("content", ""))
             content_for_extraction = (
@@ -59,15 +60,15 @@ class NewsTransformer(BaseTransformer):
 
             published_at = self._parse_published_at(raw.get("published_at"))
 
-            return {
-                "title": raw.get("title", "").strip(),
-                "content": content_clean,
-                "url": raw.get("url", "").strip(),
-                "symbols": symbols,
-                "source_id": source_id,
-                "published_at": published_at,
-                "crawled_at": crawled_at,
-            }
+            return NormalizedArticle(
+                source_id=str(source_id),
+                title=raw.get("title", "").strip(),
+                content=content_clean,
+                url=raw.get("url", "").strip(),
+                symbols=symbols,
+                published_at=published_at,
+                crawled_at=crawled_at,
+            )
         except Exception as exc:
             raise TransformError(
                 raw.get("source_name", "unknown"), str(exc)
@@ -110,7 +111,7 @@ class NewsTransformer(BaseTransformer):
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id FROM news_sources WHERE name = %s LIMIT 1",
+                    "SELECT id FROM news_sources WHERE crawler_type = %s LIMIT 1",
                     (source_name,),
                 )
                 row = cur.fetchone()
