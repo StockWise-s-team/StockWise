@@ -187,11 +187,16 @@ function NewsSourcesSection() {
 function TrackedSymbolsSection({
   symbols,
   onRemove,
+  onAdd,
 }: {
   symbols: string[];
   onRemove: (sym: string) => void;
+  onAdd: (sym: string) => void;
 }) {
   const [removing, setRemoving] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [addInput, setAddInput] = useState("");
+  const [addError, setAddError] = useState("");
 
   const remove = async (sym: string) => {
     setRemoving(sym);
@@ -203,16 +208,82 @@ function TrackedSymbolsSection({
     }
   };
 
+  const addSymbol = async () => {
+    const s = addInput.toUpperCase().trim();
+    if (!s) return;
+    if (!/^[A-Z]{3,5}$/.test(s)) {
+      setAddError("Invalid format (e.g. ACB, VNM)");
+      return;
+    }
+    if (symbols.includes(s)) {
+      setAddError(`${s} already tracked`);
+      return;
+    }
+    try {
+      await trackedSymbolsApi.add(s);
+      onAdd(s);
+      setAddInput("");
+      setAddError("");
+      setAdding(false);
+    } catch {
+      setAddError("Failed to add — check if symbol is valid");
+    }
+  };
+
   return (
     <section>
-      <SectionHeader
-        icon={Radio}
-        title="Tracked Symbols"
-        subtitle={`${symbols.length} symbols in pipeline`}
-      />
+      <div className="flex items-center justify-between mb-3">
+        <SectionHeader
+          icon={Radio}
+          title="Tracked Symbols"
+          subtitle={`${symbols.length} symbols in pipeline`}
+        />
+        <button
+          onClick={() => setAdding(true)}
+          className="flex items-center gap-1 rounded border border-terminal-accent/30 bg-terminal-accent/5 px-2 py-1 font-mono text-[10px] text-terminal-accent hover:bg-terminal-accent/10 hover:border-terminal-accent/50 transition-all"
+        >
+          <Plus className="h-3 w-3" />
+          Add
+        </button>
+      </div>
+
+      {adding && (
+        <div className="mb-3 rounded border border-terminal-accent/30 bg-terminal-accent/5 p-2.5 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <input
+              autoFocus
+              value={addInput}
+              onChange={(e) => { setAddInput(e.target.value.toUpperCase()); setAddError(""); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addSymbol();
+                if (e.key === "Escape") { setAdding(false); setAddInput(""); setAddError(""); }
+              }}
+              placeholder="e.g. VNM"
+              maxLength={10}
+              className="flex-1 bg-terminal-bg border border-terminal-border rounded px-2 py-1 font-mono text-xs text-terminal-text placeholder:text-terminal-muted/40 focus:outline-none focus:border-terminal-accent/50 uppercase"
+            />
+            <button
+              onClick={addSymbol}
+              className="rounded border border-terminal-accent/40 bg-terminal-accent/10 px-2 py-1 font-mono text-[10px] text-terminal-accent hover:bg-terminal-accent/20 transition-all"
+            >
+              Add
+            </button>
+            <button
+              onClick={() => { setAdding(false); setAddInput(""); setAddError(""); }}
+              className="rounded border border-terminal-border px-2 py-1 font-mono text-[10px] text-terminal-muted hover:text-terminal-text transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+          {addError && (
+            <p className="font-mono text-[10px] text-terminal-red pl-0.5">{addError}</p>
+          )}
+        </div>
+      )}
+
       {symbols.length === 0 ? (
         <p className="font-mono text-xs text-terminal-muted text-center py-8">
-          No symbols tracked. Add via Pipeline Queue.
+          No symbols tracked. Click Add above.
         </p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
@@ -732,6 +803,7 @@ export default function AdminPage() {
             <TrackedSymbolsSection
               symbols={trackedSymbols}
               onRemove={(sym) => setTrackedSymbols((prev) => prev.filter((s) => s !== sym))}
+              onAdd={(sym) => setTrackedSymbols((prev) => [...prev, sym])}
             />
           </div>
 
