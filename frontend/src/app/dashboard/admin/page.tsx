@@ -322,17 +322,18 @@ function WikiSection({ trackedSymbols }: { trackedSymbols: string[] }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await wikiApi.list({ limit: PAGE_SIZE * 10, offset: 0 });
+      const data = await wikiApi.list({ limit: 1000, offset: 0 });
       const tracked = new Set(trackedSymbols);
       const filtered = (data.wikis ?? data).filter((w: WikiData) => tracked.has(w.symbol));
-      setWikis(filtered.slice(0, PAGE_SIZE));
       setTotal(filtered.length);
+      const start = (page - 1) * PAGE_SIZE;
+      setWikis(filtered.slice(start, start + PAGE_SIZE));
     } catch {
       // silently handle
     } finally {
       setLoading(false);
     }
-  }, [trackedSymbols]);
+  }, [trackedSymbols, page]);
 
   useEffect(() => { load(); }, [load]);
 
