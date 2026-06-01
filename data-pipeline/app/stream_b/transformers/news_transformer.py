@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from app.config import settings
 from app.sources.models import NewsSource
+from app.shared.ticker_validator import is_valid_ticker
 from app.stream_b.exceptions import SourceMapError, TransformError
 from app.stream_b.repositories.news_repository import NewsRepository, NormalizedArticle
 from app.shared.base_transformer import BaseTransformer
@@ -36,6 +37,10 @@ ARTICLES_PER_SYMBOL_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Currency/cash flow codes that appear as 3-char caps but are not stock tickers
+# and sometimes slip through the valid_tickers filter.
+CURRENCY_CODES = {"USD", "VND", "EUR", "GBP", "JPY", "CNY", "SGD", "THB", "AUD", "CAD"}
+
 
 class NewsTransformer(BaseTransformer):
     def __init__(self):
@@ -44,16 +49,20 @@ class NewsTransformer(BaseTransformer):
 
     def transform(self, raw_data: Any) -> dict[str, Any]:
         if isinstance(raw_data, list):
-            return [self._transform_one(item) for item in raw_data]
-        return self._transform_one(raw_data)
+            return [t for item in raw_data if (t := self._transform_one(item)) is not None]
+        result = self._transform_one(raw_data)
+        return result if result is not None else []
 
-    def _transform_one(self, raw: dict[str, Any]) -> NormalizedArticle:
+    def _transform_one(self, raw: dict[str, Any]) -> NormalizedArticle | None:
         try:
             content_clean = self._strip_html(raw.get("content", ""))
             content_for_extraction = (
                 f"{raw.get('title', '')} {raw.get('excerpt', '')} {content_clean}"
             )
             symbols = self._extract_symbols(content_for_extraction)
+            if not symbols:
+                logger.info("[NewsTransformer] Skipping article (no symbols): %s", raw.get("title", "")[:60])
+                return None
             source_name = raw.get("source_name", "")
             source_id = self._resolve_source_id(source_name)
             crawled_at = datetime.now(timezone.utc)
@@ -93,10 +102,20 @@ class NewsTransformer(BaseTransformer):
         for sym in raw:
             if sym in seen:
                 continue
-            if sym in {"THE", "AND", "FOR", "THIS", "THAT", "WITH", "FROM",
-                       "HAVE", "HAS", "NOT", "ARE", "WERE", "VNINDEX",
-                       "VN30", "VN100", "HNX", "HSX", "HOSE", "UPCAM",
-                       "HERE", "WHEN", "SUCH", "MORE", "THAN", "THEN"}:
+            if sym in CURRENCY_CODES:
+                continue
+            # Always skip known English words and Vietnamese market terms
+            if sym in {
+                "THE", "AND", "FOR", "THIS", "THAT", "WITH", "FROM",
+                "HAVE", "HAS", "NOT", "ARE", "WERE", "VNINDEX",
+                "VN30", "VN100", "HNX", "HSX", "HOSE", "UPCAM",
+                "HERE", "WHEN", "SUCH", "MORE", "THAN", "THEN",
+                "CHIA", "THU", "MUA", "THEO", "QUAN", "SAU", "GIAO",
+                "KINH", "CHO", "KHI", "NGAY", "BAO", "NAY", "HAI",
+                "QUY", "NAM", "CAO", "DUY", "THAY", "HCM", "TIN",
+            }:
+                continue
+            if not is_valid_ticker(sym):
                 continue
             seen.add(sym)
             symbols.append(sym)

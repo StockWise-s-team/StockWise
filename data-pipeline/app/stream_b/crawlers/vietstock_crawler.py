@@ -3,54 +3,57 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from xml.etree import ElementTree as ET
 
 import httpx
-from bs4 import BeautifulSoup
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-from app.config import settings
 from app.stream_b.crawlers.base_crawler import BaseCrawler
-from app.stream_b.exceptions import CrawlError
 
 logger = logging.getLogger(__name__)
 
-SITEMAP_URL = "https://vietstock.vn/sitemap.xml"
+SEARCH_API = "https://dc.vietstock.vn/api/Search/SearchArticleNewAsync"
 TIMEOUT_SECONDS = 15
-REQUEST_DELAY_SECONDS = 1.0
-MAX_ARTICLES = 20
-CUTOFF_DAYS = 30
+MAX_ARTICLES_PER_SYMBOL = 20
+PAGE_SIZE = 20
+REQUEST_DELAY_SECONDS = 0.5
 
-RELATIVE_TIME_RE = re.compile(
-    r"(\d+)\s*(giờ|phút|ngày|tuần|tháng)\s*(trước)?"
-)
-URL_DATE_RE = re.compile(r"/(\d{4})/(\d{2})/")
+HEADERS = {
+    "Accept": "*/*",
+    "Accept-Language": "vi,en-US;q=0.9,en;q=0.8",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Origin": "https://vietstock.vn",
+    "Referer": "https://vietstock.vn/",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+}
 
-NOW_VN = datetime.now(timezone.utc)
-CUTOFF_DATE = NOW_VN - timedelta(days=CUTOFF_DAYS)
 
+def _is_real_stock_article(item: dict, symbol: str) -> bool:
+    """Keep articles that are real news (not SYSTEM exchange announcements)."""
+    author = (item.get("By") or "").strip()
+    word_count = item.get("WordCount") or 0
+    title = (item.get("Title") or "").lower()
+    source = (item.get("Source") or "").strip()
 
-def _parse_relative_date(text: str) -> datetime | None:
-    m = RELATIVE_TIME_RE.search(text)
-    if not m:
-        return None
-    value = int(m.group(1))
-    unit = m.group(2)
-    if unit == "phút":
-        return NOW_VN - timedelta(minutes=value)
-    if unit == "giờ":
-        return NOW_VN - timedelta(hours=value)
-    if unit == "ngày":
-        return NOW_VN - timedelta(days=value)
-    if unit == "tuần":
-        return NOW_VN - timedelta(weeks=value)
-    if unit == "tháng":
-        return NOW_VN - timedelta(days=value * 30)
-    return None
+    # Reject SYSTEM-generated exchange announcements
+    if author == "SYSTEM" or not author:
+        return False
+
+    # Reject warrant/certificate listings (chứng quyền)
+    title_lower = title.lower()
+    if "chứng quyền" in title_lower or "quyết định" in title_lower and "niêm yết" in title_lower:
+        return False
+
+    # Reject articles with no real content
+    if word_count < 50:
+        return False
+
+    return True
 
 
 class VietstockCrawler(BaseCrawler):
-    def __init__(self, max_articles: int = MAX_ARTICLES):
+    def __init__(self, max_articles: int = MAX_ARTICLES_PER_SYMBOL):
         self.max_articles = max_articles
 
     @property
@@ -60,210 +63,155 @@ class VietstockCrawler(BaseCrawler):
     async def crawl(
         self, tracked_symbols: list[str] | None = None
     ) -> list[dict[str, Any]]:
-        try:
-            urls = await self._fetch_article_urls()
-        except Exception as exc:
-            logger.warning("[VietstockCrawler] Failed to fetch sitemap: %s", exc)
+        """
+        Crawl Vietstock news using the per-symbol search API.
+        For each symbol, fetches up to max_articles real news articles
+        (excluding SYSTEM exchange announcements and warrant listings).
+        Falls back to sitemap crawl if API fails.
+        """
+        if not tracked_symbols:
+            logger.warning("[VietstockCrawler] No tracked symbols — skipping")
             return []
 
-        results: list[dict[str, Any]] = []
-        seen_urls: set[str] = set()
+        symbols = [s.upper().strip() for s in tracked_symbols if s.strip()]
 
-        logger.info("[VietstockCrawler] Sitemap returned %d URLs", len(urls))
+        # Run all symbol searches concurrently with rate limiting
+        semaphore = asyncio.Semaphore(3)
 
-        # Pre-sort: articles with dates first (most recent), then categories last.
-        # This ensures we crawl real articles before hitting category pages.
-        article_urls: list[tuple[str, tuple[int, int]]] = []
-        for url in urls:
-            m = URL_DATE_RE.search(url)
-            if m:
-                # Sort key: (year, month) descending — newest first
-                article_urls.append((url, (int(m.group(1)), int(m.group(2)))))
-            else:
-                article_urls.append((url, (0, 0)))
-
-        # Sort so articles come first (sorted by date desc), then categories
-        article_urls.sort(key=lambda x: x[1], reverse=True)
-        logger.info("[VietstockCrawler] Sorted %d URLs (with dates: %d, without: %d)",
-                    len(article_urls),
-                    sum(1 for _, d in article_urls if d != (0, 0)),
-                    sum(1 for _, d in article_urls if d == (0, 0)))
-
-        fetched_count = 0
-        for url, _ in article_urls:
-            if url in seen_urls or len(results) >= self.max_articles:
-                continue
-            seen_urls.add(url)
-
-            if not self._is_within_cutoff(url):
-                continue
-
-            fetched_count += 1
-            logger.debug("[VietstockCrawler] Fetching %d/%d: %s", fetched_count, len(article_urls), url[:80])
-            try:
-                article = await self._fetch_article(url)
-                if article:
-                    results.append(article)
-                    logger.info("[VietstockCrawler] Got article: %s (symbols=%s)", article["title"][:50], article["symbols"])
+        async def search_symbol(symbol: str) -> list[dict[str, Any]]:
+            async with semaphore:
                 await asyncio.sleep(REQUEST_DELAY_SECONDS)
-            except Exception as exc:
-                logger.warning(
-                    "[VietstockCrawler] Skipping article %s: %s", url, exc
-                )
+                try:
+                    return await self._search_symbol(symbol)
+                except Exception as exc:
+                    logger.warning("[VietstockCrawler] API failed for %s: %s — trying sitemap", symbol, exc)
+                    try:
+                        return await self._fallback_sitemap(symbol)
+                    except Exception as exc2:
+                        logger.warning("[VietstockCrawler] Sitemap fallback also failed for %s: %s", symbol, exc2)
+                        return []
+
+        results_per_symbol = await asyncio.gather(
+            *[search_symbol(s) for s in symbols], return_exceptions=True
+        )
+
+        # Flatten results
+        all_articles: list[dict[str, Any]] = []
+        seen_urls: set[str] = set()
+        seen_ids: set[int] = set()
+
+        for result in results_per_symbol:
+            if isinstance(result, Exception):
+                logger.warning("[VietstockCrawler] Exception for symbol: %s", result)
+                continue
+            for article in result:
+                article_id = article.get("article_id")
+                url = article.get("url", "")
+                if article_id and article_id in seen_ids:
+                    continue
+                if url and url in seen_urls:
+                    continue
+                if article_id:
+                    seen_ids.add(article_id)
+                if url:
+                    seen_urls.add(url)
+                all_articles.append(article)
+
+        logger.info(
+            "[VietstockCrawler] Total unique articles: %d (from %d symbols)",
+            len(all_articles), len(symbols)
+        )
+        return all_articles
+
+    async def _search_symbol(self, symbol: str) -> list[dict[str, Any]]:
+        """Fetch articles for a single symbol via the search API."""
+        articles: list[dict[str, Any]] = []
+
+        # Fetch up to max_articles (1 page = 20, which equals our limit)
+        params, body = self._make_payload(symbol, page=1)
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS, follow_redirects=True) as client:
+            resp = await client.post(SEARCH_API, params=params, content=body, headers=HEADERS)
+            resp.raise_for_status()
+            result = resp.json()
+
+        total = result.get("totalCount", 0)
+        data = result.get("data", [])
+
+        if total == 0:
+            logger.info("[VietstockCrawler] No results for symbol %s", symbol)
+            return []
+
+        logger.info(
+            "[VietstockCrawler] Symbol %s: total=%d, fetching up to %d",
+            symbol, total, self.max_articles
+        )
+
+        # Filter and transform
+        for item in data:
+            if not _is_real_stock_article(item, symbol):
                 continue
 
-            if len(results) >= self.max_articles:
+            title = (item.get("Title") or "").strip()
+            url = f"https://vietstock.vn{item.get('URL', '')}"
+            content = self._extract_content(item)
+            publish_time = item.get("PublishTime", "") or ""
+
+            articles.append({
+                "title": title,
+                "content": content,
+                "excerpt": (item.get("Head") or "").strip(),
+                "url": url,
+                "published_at": publish_time,
+                "symbols": [symbol],
+                "source_name": "vietstock",
+            })
+
+            if len(articles) >= self.max_articles:
                 break
 
-        if tracked_symbols:
-            tracked_set = {s.upper() for s in tracked_symbols}
-            results.sort(
-                key=lambda a: not bool(
-                    tracked_set & {s.upper() for s in a.get("symbols", [])}
-                )
-            )
-
-        return results
-
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((httpx.HTTPError, asyncio.TimeoutError)),
-    )
-    async def _fetch_article_urls(self) -> list[str]:
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "application/xml, text/xml, */*",
-        }
-        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS, headers=headers) as client:
-            response = await client.get(SITEMAP_URL)
-            response.raise_for_status()
-            return self._parse_sitemap(response.text)
+        logger.info("[VietstockCrawler] %s: got %d real articles", symbol, len(articles))
+        return articles
 
     @staticmethod
-    def _parse_sitemap(xml_text: str) -> list[str]:
-        # Vietstock sitemap is huge (32MB) and often truncated — ET.parse fails.
-        # Use regex as primary extraction for reliability, then try ET for any remaining.
-        import re as _re
-        cleaned = xml_text.lstrip("\ufeff").replace("\r\n", "\n")
-        locs = _re.findall(r"<loc>(https?://[^<\s]+)</loc>", cleaned)
-        if locs:
-            return locs
-        # Fallback: try ET
-        urls: list[str] = []
-        try:
-            root = ET.fromstring(cleaned.encode("utf-8"))
-        except ET.ParseError:
-            return []
-        ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-        for loc in root.findall("sm:url/sm:loc", ns):
-            text = "".join(loc.itertext()).strip() if loc is not None else ""
-            if text:
-                urls.append(text)
-        if not urls:
-            for loc in root.findall("url/loc"):
-                text = "".join(loc.itertext()).strip() if loc is not None else ""
-                if text:
-                    urls.append(text)
-        return urls
-
-    def _is_within_cutoff(self, url: str) -> bool:
-        m = URL_DATE_RE.search(url)
-        if not m:
-            return True
-        try:
-            year, month = int(m.group(1)), int(m.group(2))
-            # Compare year-month only — sitemap URL only gives month granularity
-            # CUTOFF_DATE is the start of the cutoff month
-            return (year, month) >= (CUTOFF_DATE.year, CUTOFF_DATE.month)
-        except ValueError:
-            return True
-
-    async def _fetch_article(self, url: str) -> dict[str, Any] | None:
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "text/html,application/xhtml+xml,*/*",
-            "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8",
+    def _make_payload(symbol: str, page: int) -> tuple[dict, str]:
+        skip = (page - 1) * PAGE_SIZE
+        params = {
+            "keySearch": symbol,
+            "currentPage": page,
+            "pageSize": PAGE_SIZE,
+            "skip": skip,
+            "filterTime": "all",
         }
-        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS, headers=headers) as client:
-            response = await client.get(url)
-            if response.status_code == 403:
-                return None
-            response.raise_for_status()
-            return self._parse_article(response.text, url)
-
-    def _parse_article(
-        self, html: str, url: str
-    ) -> dict[str, Any] | None:
-        soup = BeautifulSoup(html, "lxml")
-
-        title_el = (
-            soup.select_one("h1.article-title")
-            or soup.select_one("h1.title-detail")
-            or soup.select_one("h1[itemprop='headline']")
-            or soup.select_one("h1")
+        body = (
+            f"keySearch={symbol}&currentPage={page}"
+            f"&pageSize={PAGE_SIZE}&skip={skip}&filterTime=all"
         )
-        title = title_el.get_text(strip=True) if title_el else ""
+        return params, body
 
-        content_el = (
-            soup.select_one(".article-content")
-            or soup.select_one(".single_post_text")
-            or soup.select_one(".detail-content")
-            or soup.select_one("#content-detail")
-            or soup.select_one("article")
-        )
-        if content_el:
-            for tag in content_el.find_all(["script", "style", "iframe", "noscript"]):
+    @staticmethod
+    def _extract_content(item: dict) -> str:
+        """Extract readable content from the API item, fall back to Head if no full content."""
+        content = item.get("Content") or ""
+        if content:
+            # Clean HTML from content
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(content, "lxml")
+            for tag in soup.find_all(["script", "style", "table"]):
                 tag.decompose()
-            content = content_el.decode_contents()
-        else:
-            content = ""
+            return soup.get_text(separator=" ", strip=True)
+        # Fallback: use Head (summary) if no full content
+        return (item.get("Head") or "").strip()
 
-        excerpt_el = (
-            soup.select_one(".sapo")
-            or soup.select_one("[itemprop='description']")
-        )
-        excerpt = excerpt_el.get_text(strip=True) if excerpt_el else ""
+    async def _fallback_sitemap(self, symbol: str) -> list[dict[str, Any]]:
+        """
+        Fallback: use sitemap crawl (original approach).
+        Only used when the search API is unavailable.
+        """
+        from app.stream_b.crawlers.vietstock_sitemap_crawler import VietstockSitemapCrawler
 
-        time_el = (
-            soup.select_one(".date-time")
-            or soup.select_one("time")
-            or soup.select_one("meta[property='article:published_time']")
-        )
-        published_at = None
-        if time_el:
-            if time_el.name == "meta":
-                published_at = time_el.get("content", "")
-            else:
-                time_text = time_el.get_text(strip=True)
-                parsed = _parse_relative_date(time_text)
-                published_at = parsed.isoformat() if parsed else time_text
-
-        symbol_tags: list[str] = []
-        for tag in soup.select(".tag-list a, .tags a, .tag a"):
-            tag_text = tag.get_text(strip=True).upper()
-            if re.fullmatch(r"[A-Z]{3,4}", tag_text):
-                symbol_tags.append(tag_text)
-        symbol_tags = list(dict.fromkeys(symbol_tags))
-
-        if not title or not content:
-            logger.debug("[VietstockCrawler] Skipping article (no title or content): %s", url)
-            return None
-
-        return {
-            "title": title,
-            "content": content,
-            "excerpt": excerpt,
-            "url": url,
-            "published_at": published_at,
-            "symbols": symbol_tags,
-            "source_name": "vietstock",
-        }
+        sitemap_crawler = VietstockSitemapCrawler(max_articles=self.max_articles)
+        articles = await sitemap_crawler.crawl(tracked_symbols=[symbol])
+        # Re-tag with the searched symbol
+        for article in articles:
+            article["symbols"] = [symbol]
+        return articles
