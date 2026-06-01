@@ -28,13 +28,8 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    try {
-      await register(email, password, fullName || undefined);
-    } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await register(email, password, fullName || undefined);
+    setLoading(false);
   };
 
   return (

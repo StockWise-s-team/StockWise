@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { clearAuthData } from "./api";
 import type { AuthResponse, LoginRequest, RegisterRequest, User, UpdateProfileRequest, ChangePasswordRequest } from "./types";
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
@@ -20,14 +20,12 @@ export const register = async (email: string, password: string, fullName?: strin
 };
 
 export const logout = async (): Promise<void> => {
+  const refreshToken = localStorage.getItem("refreshToken");
   try {
-    await api.post("/auth/logout");
+    await api.post("/auth/logout", { refreshToken });
   } catch {
-    // Token có thể đã hết hạn, vẫn xóa local storage
   } finally {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+    clearAuthData();
   }
 };
 

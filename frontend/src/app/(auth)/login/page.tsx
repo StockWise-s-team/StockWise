@@ -8,20 +8,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { login, error } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
-    try {
-      await login(email, password);
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await login(email, password);
+    setLoading(false);
   };
 
   return (

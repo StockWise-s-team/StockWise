@@ -49,11 +49,6 @@ public class RouteController {
         return forward(userServiceUrl + "/auth/me", HttpMethod.GET, null, headers);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader HttpHeaders headers) {
-        return forward(userServiceUrl + "/auth/logout", HttpMethod.POST, null, headers);
-    }
-
     @PutMapping("/profile")
     public ResponseEntity<?> profile(@RequestBody String body, @RequestHeader HttpHeaders headers) {
         return forward(userServiceUrl + "/auth/profile", HttpMethod.PUT, body, headers);

@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import type { User } from "@/lib/types";
+import api, { clearAuthData } from "@/lib/api";
+import type { User, LoginRequest, RegisterRequest } from "@/lib/types";
 
 interface AuthContextType {
   user: User | null;
@@ -75,89 +76,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const text = await res.text();
-      if (!res.ok) {
-        let errorCode: string | undefined;
-        try {
-          const json = JSON.parse(text);
-          errorCode = json.error || json.message;
-        } catch {
-          // body rong hoac khong phai json
-        }
-        const friendly = mapErrorToMessage(errorCode, "login");
-        throw new Error(friendly);
-      }
-
-      const data = JSON.parse(text);
+      const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
+        "/auth/login",
+        { email, password } as LoginRequest
+      );
+      const data = res.data;
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
-      throw err;
+      const friendly = mapErrorToMessage(err.response?.data?.error, "login");
+      setError(friendly);
     }
   };
 
   const register = async (email: string, password: string, fullName?: string) => {
     setError(null);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, fullName }),
-      });
-
-      const text = await res.text();
-      if (!res.ok) {
-        let errorCode: string | undefined;
-        try {
-          const json = JSON.parse(text);
-          errorCode = json.error || json.message;
-        } catch {
-          // body rong hoac khong phai json
-        }
-        const friendly = mapErrorToMessage(errorCode, "register");
-        throw new Error(friendly);
-      }
-
-      const data = JSON.parse(text);
+      const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
+        "/auth/register",
+        { email, password, fullName } as RegisterRequest
+      );
+      const data = res.data;
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));
       setUser(data.user);
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
-      throw err;
+      const friendly = mapErrorToMessage(err.response?.data?.error, "register");
+      setError(friendly);
     }
   };
 
   const logout = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
     try {
       const token = localStorage.getItem("accessToken");
       if (token) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        });
+        await api.post("/auth/logout", { refreshToken });
       }
     } catch {
-      // ignore
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
+      clearAuthData();
       setUser(null);
       router.push("/login");
     }

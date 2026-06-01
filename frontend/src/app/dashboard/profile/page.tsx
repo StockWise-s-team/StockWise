@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { User, Mail, Shield, Calendar, Lock } from "lucide-react";
 import type { User as UserType } from "@/lib/types";
-import { changePassword } from "@/lib/auth";
+import { changePassword, updateProfile, getCurrentUserFromApi } from "@/lib/auth";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -26,19 +26,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setProfile(data);
-          setFullName(data.fullName || "");
-          localStorage.setItem("user", JSON.stringify(data));
-        } else {
-          setProfile(user);
-          setFullName(user?.fullName || "");
-        }
+        const data = await getCurrentUserFromApi();
+        setProfile(data);
+        setFullName(data.fullName || "");
       } catch {
         setProfile(user);
         setFullName(user?.fullName || "");
@@ -54,26 +44,13 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage(null);
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ fullName: fullName.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to update profile");
-      }
-      const updated = { ...profile, fullName: data.fullName, createdAt: data.createdAt };
-      setProfile(updated);
-      localStorage.setItem("user", JSON.stringify(updated));
+      const data = await updateProfile(fullName.trim());
+      setProfile(data);
+      localStorage.setItem("user", JSON.stringify(data));
       setMessage({ type: "success", text: "Profile updated successfully!" });
       setEditing(false);
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message });
+      setMessage({ type: "error", text: err.response?.data?.message || err.message || "Failed to update profile" });
     } finally {
       setSaving(false);
     }
