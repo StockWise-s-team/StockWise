@@ -1,20 +1,23 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { TrendingUp } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, error } = useAuth();
+  const { login, error, setError } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await login(email, password);
-    setLoading(false);
+    try {
+      await login(email, password);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,7 +55,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(null); }}
               className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               placeholder="you@example.com"
               required
@@ -70,7 +73,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError(null); }}
               className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               placeholder="Enter your password"
               required

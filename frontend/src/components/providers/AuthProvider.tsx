@@ -1,9 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
-import api, { clearAuthData } from "@/lib/api";
-import type { User, LoginRequest, RegisterRequest } from "@/lib/types";
+import api from "@/lib/api";
+import { setAccessToken, clearAccessToken } from "@/lib/tokenStore";
+import type {
+  User,
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
+} from "@/lib/types";
 
 interface AuthContextType {
   user: User | null;
@@ -11,34 +25,76 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  updateProfile: (fullName: string) => Promise<User>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   error: string | null;
+  setError: (error: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const STORAGE_KEY = "stockwise_user";
+
+function getStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
+  const userStr = localStorage.getItem(STORAGE_KEY);
+  if (!userStr) return null;
+  try {
+    return JSON.parse(userStr) as User;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredUser(user: User | null) {
+  if (typeof window === "undefined") return;
+  if (user) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
 
 function mapErrorToMessage(errorCode: string | undefined, action: "login" | "register"): string {
   if (!errorCode) return action === "login" ? "Sai tài khoản hoặc mật khẩu." : "Không thể kết nối đến server. Vui lòng thử lại.";
 
   const messages: Record<string, string> = {
-    // Auth errors
     INVALID_CREDENTIALS: "Email hoặc mật khẩu không đúng. Vui lòng kiểm tra lại.",
-    EMAIL_ALREADY_EXISTS: "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
-    EMAIL_ALREADY_REGISTERED: "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
-    USER_NOT_FOUND: "Tài khoản không tồn tại. Vui lòng đăng ký trước.",
-    INVALID_REFRESH_TOKEN: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-    UNAUTHORIZED: "Bạn không có quyền thực hiện thao tác này.",
-    ACCESS_DENIED: "Bạn không có quyền truy cập trang này.",
-    // Validation errors
-    VALIDATION_ERROR: "Thông tin nhập không hợp lệ. Vui lòng kiểm tra lại.",
-    // Service errors
-    SERVICE_UNAVAILABLE: "Server đang bận. Vui lòng thử lại sau vài phút.",
-    INTERNAL_ERROR: "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+EMAIL_ALREADY_EXISTS: "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
+EMAIL_ALREADY_REGISTERED: "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
+USER_NOT_FOUND: "Tài khoản không tồn tại. Vui lòng đăng ký trước.",
+INVALID_REFRESH_TOKEN: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+UNAUTHORIZED: "Bạn không có quyền thực hiện thao tác này.",
+
+ACCESS_DENIED: "Bạn không có quyền truy cập trang này.",
+VALIDATION_ERROR: "Thông tin nhập không hợp lệ. Vui lòng kiểm tra lại.",
+INCORRECT_PASSWORD: "Mật khẩu hiện tại không đúng. Vui lòng thử lại.",
+SERVICE_UNAVAILABLE: "Server đang bận. Vui lòng thử lại sau vài phút.",
+INTERNAL_ERROR: "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
   };
 
   return messages[errorCode] || (action === "login"
     ? "Đăng nhập thất bại. Vui lòng thử lại."
     : "Đăng ký thất bại. Vui lòng thử lại.");
+}
+
+// Refresh access token using HttpOnly cookie (no manual token needed)
+async function tryRestoreToken(): Promise<boolean> {
+  try {
+    const response = await api.post<{ accessToken?: string }>("/auth/refresh");
+    const newToken = response.data?.accessToken;
+    if (newToken) {
+      setAccessToken(newToken);
+      return true;
+    }
+  } catch {
+    // Refresh cookie expired or invalid — user must re-login
+  }
+  saveStoredUser(null);
+  clearAccessToken();
+  return false;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -48,19 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // On mount: restore token from refresh cookie if user profile exists in localStorage.
+  // Access token in memory is already gone on reload, so we must rehydrate from /auth/refresh.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("accessToken");
-      const userStr = localStorage.getItem("user");
-      if (token && userStr) {
-        try {
-          setUser(JSON.parse(userStr) as User);
-        } catch {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
-        }
-      }
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      tryRestoreToken();
     }
     setIsLoading(false);
   }, []);
@@ -76,54 +126,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setError(null);
     try {
-      const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
-        "/auth/login",
-        { email, password } as LoginRequest
-      );
-      const data = res.data;
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
+      const response = await api.post<AuthResponse>("/auth/login", { email, password } as LoginRequest);
+      const userData = response.data.user;
+      const accessToken = response.data.accessToken;
+      if (accessToken) {
+        // Store access token in memory only — never persist to localStorage
+        setAccessToken(accessToken);
+      }
+      saveStoredUser(userData);
+      setUser(userData);
       router.push("/dashboard");
     } catch (err: any) {
-      const friendly = mapErrorToMessage(err.response?.data?.error, "login");
+      const friendly = mapErrorToMessage(err.response?.data?.err, "login");
       setError(friendly);
+      throw err;
     }
   };
 
   const register = async (email: string, password: string, fullName?: string) => {
     setError(null);
     try {
-      const res = await api.post<{ accessToken: string; refreshToken: string; user: User }>(
-        "/auth/register",
-        { email, password, fullName } as RegisterRequest
-      );
-      const data = res.data;
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
+      const response = await api.post<AuthResponse>("/auth/register", { email, password, fullName } as RegisterRequest);
+      const userData = response.data.user;
+      const accessToken = response.data.accessToken;
+      if (accessToken) {
+        // Store access token in memory only — never persist to localStorage
+        setAccessToken(accessToken);
+      }
+      saveStoredUser(userData);
+      setUser(userData);
       router.push("/dashboard");
     } catch (err: any) {
-      const friendly = mapErrorToMessage(err.response?.data?.error, "register");
+      const friendly = mapErrorToMessage(err.response?.data?.err, "register");
       setError(friendly);
+      throw err;
     }
   };
 
   const logout = async () => {
-    const refreshToken = localStorage.getItem("refreshToken");
     try {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        await api.post("/auth/logout", { refreshToken });
-      }
+      await api.post("/auth/logout");
     } catch {
+      // Ignore logout errors — clear everything regardless
     } finally {
-      clearAuthData();
+      saveStoredUser(null);
+      clearAccessToken();
       setUser(null);
       router.push("/login");
     }
+  };
+
+  const refreshUser = async () => {
+    const response = await api.get<User>("/auth/me");
+    const userData = response.data;
+    saveStoredUser(userData);
+    setUser(userData);
+  };
+
+  const updateProfile = async (fullName: string): Promise<User> => {
+    const response = await api.put<User>("/auth/profile", { fullName } as UpdateProfileRequest);
+    const userData = response.data;
+    saveStoredUser(userData);
+    setUser(userData);
+    return userData;
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    await api.put("/auth/password", { currentPassword, newPassword } as ChangePasswordRequest);
   };
 
   return (
@@ -135,7 +204,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        updateProfile,
+        changePassword,
+        refreshUser,
         error,
+        setError,
       }}
     >
       {children}

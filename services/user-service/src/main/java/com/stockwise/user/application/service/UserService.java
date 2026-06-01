@@ -3,6 +3,7 @@ package com.stockwise.user.application.service;
 import com.stockwise.user.application.port.in.AuthenticateUserUseCase;
 import com.stockwise.user.application.port.in.RegisterUserUseCase;
 import com.stockwise.user.application.port.out.UserPersistencePort;
+import com.stockwise.user.adapter.out.persistence.TokenManagementService;
 import com.stockwise.user.domain.entity.User;
 import com.stockwise.user.dto.AuthResponse;
 import com.stockwise.user.dto.ChangePasswordRequest;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +30,7 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
     private final UserPersistencePort userPersistencePort;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenManagementService tokenManagementService;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -36,7 +39,6 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         }
 
         User user = new User();
-        user.setId(UUID.randomUUID());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole("ROLE_USER");
@@ -48,6 +50,11 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId().toString(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
+
+        String refreshJti = jwtTokenProvider.getRefreshTokenJti(refreshToken);
+        long refreshTtlMs = jwtTokenProvider.getExpiration(refreshToken) - System.currentTimeMillis();
+        tokenManagementService.registerRefreshToken(
+                refreshJti, user.getId().toString(), Duration.ofMillis(refreshTtlMs));
 
         log.info("User registered: {}", user.getEmail());
         return new AuthResponse(accessToken, refreshToken, toUserDto(user));
@@ -70,6 +77,11 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId().toString(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
+
+        String refreshJti = jwtTokenProvider.getRefreshTokenJti(refreshToken);
+        long refreshTtlMs = jwtTokenProvider.getExpiration(refreshToken) - System.currentTimeMillis();
+        tokenManagementService.registerRefreshToken(
+                refreshJti, user.getId().toString(), Duration.ofMillis(refreshTtlMs));
 
         log.info("User authenticated: {}", user.getEmail());
         return new AuthResponse(accessToken, refreshToken, toUserDto(user));

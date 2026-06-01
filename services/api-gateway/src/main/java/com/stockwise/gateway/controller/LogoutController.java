@@ -1,47 +1,39 @@
 package com.stockwise.gateway.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockwise.gateway.security.JwtTokenProvider;
 import com.stockwise.gateway.service.TokenBlacklistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
-import java.util.Base64;
 
-@Slf4j
-@RestController
+@Controller
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class LogoutController {
 
     private static final long ACCESS_TOKEN_TTL_MS = 900000;
+    private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
 
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final WebClient webClient;
 
     @Value("${user-service.url}")
     private String userServiceUrl;
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
-            @RequestBody(required = false) String body,
-            @RequestHeader HttpHeaders headers) {
-
+    public ResponseEntity<?> logout(@RequestHeader HttpHeaders headers) {
         String authHeader = headers.getFirst("Authorization");
         String accessToken = null;
 
@@ -49,20 +41,13 @@ public class LogoutController {
             accessToken = authHeader.substring(7);
         }
 
-        String refreshToken = null;
-        try {
-            if (body != null && !body.isEmpty()) {
-                JsonNode node = objectMapper.readTree(body);
-                refreshToken = node.has("refreshToken") ? node.get("refreshToken").asText() : null;
-            }
-        } catch (Exception e) {
-            log.warn("Could not parse logout body for refresh token");
-        }
+        String cookieHeader = headers.getFirst("Cookie");
+        String refreshToken = extractRefreshTokenFromCookie(cookieHeader);
 
         if (accessToken != null) {
             if (jwtTokenProvider.validateToken(accessToken)) {
                 String tokenJti = jwtTokenProvider.getTokenId(accessToken);
-                long ttlMs = extractTtl(accessToken);
+                long ttlMs = extractTtlFromProvider(accessToken);
                 tokenBlacklistService.blacklistAccessToken(tokenJti, Duration.ofMillis(ttlMs));
                 log.info("Access token blacklisted on logout");
             }
@@ -81,13 +66,27 @@ public class LogoutController {
         try {
             HttpHeaders upstreamHeaders = new HttpHeaders();
             upstreamHeaders.setContentType(MediaType.APPLICATION_JSON);
+            upstreamHeaders.add("Cookie", "refresh_token=" + (refreshToken != null ? refreshToken : ""));
             headers.forEach((key, values) -> {
-                if (!key.equalsIgnoreCase("Content-Length") && !key.equalsIgnoreCase("Host")) {
+                if (!key.equalsIgnoreCase("Content-Length")
+                        && !key.equalsIgnoreCase("Host")
+                        && !key.equalsIgnoreCase("Cookie")) {
                     upstreamHeaders.addAll(key, values);
                 }
             });
-            HttpEntity<String> entity = new HttpEntity<>(body, upstreamHeaders);
-            restTemplate.exchange(userServiceUrl + "/auth/logout", HttpMethod.POST, entity, String.class);
+
+            String body = refreshToken != null
+                    ? "{\"refreshToken\":\"" + refreshToken + "\"}"
+                    : "{}";
+
+            webClient.post()
+                    .uri(userServiceUrl + "/auth/logout")
+                    .headers(h -> h.addAll(upstreamHeaders))
+                    .bodyValue(body)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
         } catch (Exception e) {
             log.warn("Could not forward logout to user-service: {}", e.getMessage());
         }
@@ -95,19 +94,26 @@ public class LogoutController {
         return ResponseEntity.ok().build();
     }
 
-    private long extractTtl(String token) {
+    private long extractTtlFromProvider(String token) {
         try {
-            String[] parts = token.split("\\.");
-            if (parts.length == 3) {
-                String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
-                JsonNode node = objectMapper.readTree(payload);
-                long exp = node.get("exp").asLong();
-                long now = System.currentTimeMillis() / 1000;
-                return Math.max(0, (exp - now) * 1000);
-            }
+            long expMs = jwtTokenProvider.getExpiration(token);
+            return Math.max(0, expMs - System.currentTimeMillis());
         } catch (Exception e) {
             log.warn("Could not extract TTL from token, using default");
+            return ACCESS_TOKEN_TTL_MS;
         }
-        return ACCESS_TOKEN_TTL_MS;
+    }
+
+    private String extractRefreshTokenFromCookie(String cookieHeader) {
+        if (cookieHeader == null || cookieHeader.isEmpty()) {
+            return null;
+        }
+        for (String part : cookieHeader.split(";")) {
+            String trimmed = part.trim();
+            if (trimmed.startsWith(REFRESH_TOKEN_COOKIE + "=")) {
+                return trimmed.substring(REFRESH_TOKEN_COOKIE.length() + 1);
+            }
+        }
+        return null;
     }
 }

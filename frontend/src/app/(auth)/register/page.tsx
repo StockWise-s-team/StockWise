@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { TrendingUp } from "lucide-react";
 
 export default function RegisterPage() {
@@ -28,8 +28,11 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    await register(email, password, fullName || undefined);
-    setLoading(false);
+    try {
+      await register(email, password, fullName || undefined);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,7 +87,7 @@ export default function RegisterPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(null); }}
               className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               placeholder="you@example.com"
               required
@@ -102,7 +105,7 @@ export default function RegisterPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError(null); }}
               className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               placeholder="At least 6 characters"
               required
@@ -120,7 +123,7 @@ export default function RegisterPage() {
               id="confirmPassword"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => { setConfirmPassword(e.target.value); setError(null); }}
               className="h-10 w-full rounded-md border border-emerald-800/50 bg-[#162e22] px-4 text-sm text-[#e8f5ef] placeholder:text-emerald-700 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               placeholder="Re-enter your password"
               required

@@ -98,4 +98,17 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
         Claims claims = getClaims(token);
         return claims.get("jti", String.class);
     }
+
+    @Override
+    public String getTokenType(String token) {
+        Claims claims = getClaims(token);
+        String type = claims.get("type", String.class);
+        return type != null ? type : "unknown";
+    }
+
+    @Override
+    public long getExpiration(String token) {
+        Claims claims = getClaims(token);
+        return claims.getExpiration().getTime();
+    }
 }

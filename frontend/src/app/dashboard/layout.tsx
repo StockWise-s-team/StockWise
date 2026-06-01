@@ -9,7 +9,7 @@ import {
   LogOut,
   User,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },

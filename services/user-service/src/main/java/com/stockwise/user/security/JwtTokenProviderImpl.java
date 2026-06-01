@@ -42,6 +42,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
                 .claim("email", email)
                 .claim("role", role)
                 .claim("type", "access")
+                .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(secretKey)
@@ -126,5 +127,18 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
     public String getRefreshTokenJti(String token) {
         Claims claims = getClaims(token);
         return claims.get("jti", String.class);
+    }
+
+    @Override
+    public String getTokenType(String token) {
+        Claims claims = getClaims(token);
+        String type = claims.get("type", String.class);
+        return type != null ? type : "unknown";
+    }
+
+    @Override
+    public long getExpiration(String token) {
+        Claims claims = getClaims(token);
+        return claims.getExpiration().getTime();
     }
 }

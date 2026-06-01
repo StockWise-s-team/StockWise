@@ -8,7 +8,7 @@ export interface User {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null;
   user: User;
 }
 

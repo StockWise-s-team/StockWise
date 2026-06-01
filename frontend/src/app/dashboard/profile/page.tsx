@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Shield, Calendar, Lock } from "lucide-react";
-import type { User as UserType } from "@/lib/types";
-import { changePassword, updateProfile, getCurrentUserFromApi } from "@/lib/auth";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { User as UserIcon, Mail, Shield, Calendar, Lock } from "lucide-react";
+import type { User } from "@/lib/types";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<UserType | null>(null);
+  const { user, refreshUser, updateProfile, changePassword } = useAuth();
+  const [profile, setProfile] = useState<User | null>(null);
   const [fullName, setFullName] = useState("");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -26,9 +25,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await getCurrentUserFromApi();
-        setProfile(data);
-        setFullName(data.fullName || "");
+        await refreshUser();
+        setProfile(user);
+        setFullName(user?.fullName || "");
       } catch {
         setProfile(user);
         setFullName(user?.fullName || "");
@@ -37,7 +36,7 @@ export default function ProfilePage() {
       }
     };
     fetchProfile();
-  }, []);
+  }, [refreshUser, user]);
 
   const handleSave = async () => {
     if (!fullName.trim()) return;
@@ -46,7 +45,6 @@ export default function ProfilePage() {
     try {
       const data = await updateProfile(fullName.trim());
       setProfile(data);
-      localStorage.setItem("user", JSON.stringify(data));
       setMessage({ type: "success", text: "Profile updated successfully!" });
       setEditing(false);
     } catch (err: any) {
@@ -147,7 +145,7 @@ export default function ProfilePage() {
           {/* Full Name */}
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-sm font-medium text-[#929aa5]">
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               Display Name
             </label>
             {editing ? (

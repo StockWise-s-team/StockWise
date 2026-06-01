@@ -9,4 +9,6 @@ public interface JwtTokenProvider {
     String getRoleFromToken(String token);
     String getTokenId(String token);
     String getRefreshTokenJti(String token);
+    String getTokenType(String token);
+    long getExpiration(String token);
 }
