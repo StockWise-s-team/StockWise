@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ENTITY-004: Transaction</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="ENTITY-004" class="h3 mb-0">ENTITY-004: Transaction</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3"><span class="badge text-bg-primary">Service: portfolio-service</span></div>
+
+        <h2 class="h5">Current JPA Model</h2>
+        <div class="mermaid diagram-block">erDiagram
+    PORTFOLIO ||--o{ TRANSACTION : records
+    TRANSACTION {
+        uuid id PK
+        uuid portfolioId FK
+        string symbol
+        string type
+        decimal price
+        int quantity
+        datetime executedAt
+    }</div>
+
+        <h2 class="h5 mt-4">Data Dictionary</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <thead><tr><th>Field</th><th>Java Type</th><th>Database Mapping</th><th>Business Meaning</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td><code>UUID</code></td><td>Primary key, generated value</td><td>Transaction identifier.</td></tr>
+              <tr><td><code>portfolioId</code></td><td><code>UUID</code></td><td><code>portfolio_id</code>; init SQL defines FK to <code>portfolios(id)</code></td><td>Portfolio that owns the transaction.</td></tr>
+              <tr><td><code>symbol</code></td><td><code>String</code></td><td><code>symbol VARCHAR(10) NOT NULL</code></td><td>Executed or returned symbol.</td></tr>
+              <tr><td><code>type</code></td><td><code>String</code></td><td>Init SQL check <code>IN ('BUY', 'SELL')</code></td><td>Transaction direction.</td></tr>
+              <tr><td><code>price</code></td><td><code>BigDecimal</code></td><td><code>price NUMERIC(20, 2) NOT NULL</code></td><td>Transaction price.</td></tr>
+              <tr><td><code>quantity</code></td><td><code>Integer</code></td><td>Init SQL check <code>&gt; 0</code></td><td>Transaction quantity.</td></tr>
+              <tr><td><code>executedAt</code></td><td><code>LocalDateTime</code></td><td><code>executed_at TIMESTAMP DEFAULT NOW()</code></td><td>Execution or response creation timestamp.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Repository</h2>
+        <ul class="list-group">
+          <li class="list-group-item"><code>TransactionRepository extends JpaRepository&lt;Transaction, UUID&gt;</code>.</li>
+          <li class="list-group-item">History lookup: <code>findByPortfolioIdOrderByExecutedAtDesc(UUID portfolioId)</code>.</li>
+        </ul>
+
+        <h2 class="h5 mt-4">Append-Only Constraint</h2>
+        <ul class="list-group">
+          <li class="list-group-item">Per <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-07"><code>FR-PORTFOLIO-07</code></a> / <a href="../../srs/nfr/portfolio-service/nfr-portfolio.html#NFR-REL-03"><code>NFR-REL-03</code></a>, transactions are append-only — never updated or deleted.</li>
+          <li class="list-group-item">This entity holds executed BUY/SELL records. The SRS also describes an order with a status lifecycle (PENDING/CANCELLED), modelled separately as <a href="entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>.</li>
+        </ul>
+
+        <h2 class="h5 mt-4">References</h2>
+        <ul class="list-group">
+          <li class="list-group-item"><a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-03"><code>FR-PORTFOLIO-03</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-04"><code>FR-PORTFOLIO-04</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-07"><code>FR-PORTFOLIO-07</code></a>, <a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a>, <a href="../../api-contracts/portfolio-service/api-post-portfolio-order.html#API-002"><code>API-002</code></a></li>
+        </ul>
+      </div>
+    </article>
+  </main>
+  <script>
+    window.onload = function () {
+      if (window.mermaid) mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'default' });
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UC-001: View Portfolio Summary</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="UC-001" class="h3 mb-0">UC-001: View Portfolio Summary</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">Service: portfolio-service</span>
+          <span class="badge text-bg-warning">Status: Partial</span>
+        </div>
+
+        <h2 class="h5">Use Case Specification (SRS)</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped align-middle">
+            <thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
+            <tbody>
+              <tr><td>Name</td><td>View Portfolio Summary</td></tr>
+              <tr><td>Primary Actor</td><td>User (investor). Also visible to Manager and Admin.</td></tr>
+              <tr><td>Pre-conditions</td><td>The caller is authenticated and a valid user id (UUID) is available (<a href="../../business-rules/portfolio-service/br-order-validation.html#BR-001"><code>BR-001</code></a>).</td></tr>
+              <tr><td>Main Flow</td><td>
+                1. Caller sends <code>GET /portfolio?userId={uuid}</code>.<br>
+                2. System loads the user's portfolio (cash and holdings).<br>
+                3. System loads the holding list and transaction history.<br>
+                4. System computes market value, total value, and unrealized PnL.<br>
+                5. System returns the portfolio summary (<a href="../../api-contracts/portfolio-service/api-get-portfolio.html#API-001"><code>API-001</code></a>); total PnL can also be read via <a href="../../api-contracts/portfolio-service/api-get-portfolio-pnl.html#API-004"><code>API-004</code></a>.
+              </td></tr>
+              <tr><td>Post-conditions</td><td>Read-only: the request returns portfolio data and changes no state.</td></tr>
+              <tr><td>Linked FRs</td><td><a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-01"><code>FR-PORTFOLIO-01</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-02"><code>FR-PORTFOLIO-02</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-08"><code>FR-PORTFOLIO-08</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-09"><code>FR-PORTFOLIO-09</code></a></td></tr>
+              <tr><td>Linked APIs</td><td><a href="../../api-contracts/portfolio-service/api-get-portfolio.html#API-001"><code>API-001</code></a>, <a href="../../api-contracts/portfolio-service/api-get-portfolio-pnl.html#API-004"><code>API-004</code></a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

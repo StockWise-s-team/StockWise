@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API-004: GET /portfolio/pnl</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="API-004" class="h3 mb-0">API-004: GET /portfolio/pnl</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">Service: portfolio-service</span>
+          <span class="badge text-bg-warning">Status: Partial</span>
+        </div>
+
+        <h2 class="h5">HTTP Contract</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <tbody>
+              <tr><th>Method</th><td><code>GET</code></td></tr>
+              <tr><th>Path</th><td><code>/portfolio/pnl</code></td></tr>
+              <tr><th>Query Parameters</th><td><code>userId</code> as a UUID string (required).</td></tr>
+              <tr><th>Success Status</th><td><code>200 OK</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Response Shape</h2>
+        <pre class="openapi-block"><code>{
+  "totalPnl": 500.00
+}</code></pre>
+
+        <h2 class="h5 mt-4">References</h2>
+        <ul class="list-group">
+          <li class="list-group-item"><a href="../../use-cases/portfolio-service/uc-001-view-portfolio-summary.html#UC-001"><code>UC-001</code></a>, <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-09"><code>FR-PORTFOLIO-09</code></a></li>
+        </ul>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
