@@ -1,0 +1,258 @@
+{
+  "generated_at": "2026-06-02T00:00:00+00:00",
+  "project_root": "services/portfolio-service",
+  "artifacts": [
+    {
+      "id": "BFLOW-ORDER-EXECUTION",
+      "type": "business-flow",
+      "group": "business-flows",
+      "path": "business-flows/order-execution.html",
+      "status": "documented"
+    },
+    {
+      "id": "BFLOW-PNL-REVIEW",
+      "type": "business-flow",
+      "group": "business-flows",
+      "path": "business-flows/pnl-review.html",
+      "status": "documented"
+    },
+    {
+      "id": "BFLOW-PORTFOLIO-REVIEW",
+      "type": "business-flow",
+      "group": "business-flows",
+      "path": "business-flows/portfolio-review.html",
+      "status": "documented"
+    },
+    {
+      "id": "BFLOW-PRICE-UPDATE-INGEST",
+      "type": "business-flow",
+      "group": "business-flows",
+      "path": "business-flows/price-update-ingest.html",
+      "status": "partial"
+    },
+    {
+      "id": "BR-PORTFOLIO",
+      "type": "business-rule",
+      "group": "domain",
+      "path": "domain/business-rules.html",
+      "status": "documented"
+    },
+    {
+      "id": "DBM-SCHEMA-PORTFOLIO",
+      "type": "db-migration",
+      "group": "platform",
+      "path": "platform/db-migrations/schema-portfolio.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-BUSINESS-FLOWS",
+      "type": "group",
+      "group": "business-flows",
+      "path": "groups/business-flows.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-DEPS",
+      "type": "deployment",
+      "group": "platform",
+      "path": "platform/deployment/dependencies.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-DOCKER",
+      "type": "deployment",
+      "group": "platform",
+      "path": "platform/deployment/docker.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-DOMAIN",
+      "type": "group",
+      "group": "domain",
+      "path": "groups/domain.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-INTERFACES",
+      "type": "group",
+      "group": "interfaces",
+      "path": "groups/interfaces.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-MESSAGING",
+      "type": "group",
+      "group": "messaging",
+      "path": "groups/messaging.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-OVERVIEW",
+      "type": "group",
+      "group": "overview",
+      "path": "groups/overview.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-PLATFORM",
+      "type": "group",
+      "group": "platform",
+      "path": "groups/platform.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-TRACEABILITY",
+      "type": "group",
+      "group": "traceability",
+      "path": "groups/traceability.html",
+      "status": "documented"
+    },
+    {
+      "id": "DOC-USE-CASES",
+      "type": "group",
+      "group": "use-cases",
+      "path": "groups/use-cases.html",
+      "status": "documented"
+    },
+    {
+      "id": "ENTITY-HOLDING",
+      "type": "entity",
+      "group": "domain",
+      "path": "domain/entity-holding.html",
+      "status": "documented"
+    },
+    {
+      "id": "ENTITY-PORTFOLIO",
+      "type": "entity",
+      "group": "domain",
+      "path": "domain/entity-portfolio.html",
+      "status": "documented"
+    },
+    {
+      "id": "ENTITY-TRANSACTION",
+      "type": "entity",
+      "group": "domain",
+      "path": "domain/entity-transaction.html",
+      "status": "documented"
+    },
+    {
+      "id": "FR-PORTFOLIO",
+      "type": "requirement",
+      "group": "domain",
+      "path": "domain/functional-requirements.html",
+      "status": "documented"
+    },
+    {
+      "id": "NFR-PORTFOLIO",
+      "type": "nfr",
+      "group": "domain",
+      "path": "domain/non-functional-requirements.html",
+      "status": "documented"
+    },
+    {
+      "id": "RERR-PORTFOLIO",
+      "type": "api",
+      "group": "interfaces",
+      "path": "interfaces/rest/error-catalog.html",
+      "status": "partial"
+    },
+    {
+      "id": "REST-GET-PNL",
+      "type": "api",
+      "group": "interfaces",
+      "path": "interfaces/rest/api-get-pnl.html",
+      "status": "documented"
+    },
+    {
+      "id": "REST-GET-PORTFOLIO",
+      "type": "api",
+      "group": "interfaces",
+      "path": "interfaces/rest/api-get-portfolio.html",
+      "status": "documented"
+    },
+    {
+      "id": "REST-POST-ORDER",
+      "type": "api",
+      "group": "interfaces",
+      "path": "interfaces/rest/api-post-order.html",
+      "status": "documented"
+    },
+    {
+      "id": "REX-MARKET",
+      "type": "messaging",
+      "group": "messaging",
+      "path": "messaging/rabbitmq/exchange-market.html",
+      "status": "documented"
+    },
+    {
+      "id": "RKEY-PRICE-UPDATE",
+      "type": "messaging",
+      "group": "messaging",
+      "path": "messaging/rabbitmq/binding-price-update.html",
+      "status": "documented"
+    },
+    {
+      "id": "RMQ-CONSUMER-PRICE-UPDATE",
+      "type": "messaging",
+      "group": "messaging",
+      "path": "messaging/rabbitmq/consumer-price-update.html",
+      "status": "documented"
+    },
+    {
+      "id": "RQ-PORTFOLIO-PRICE",
+      "type": "messaging",
+      "group": "messaging",
+      "path": "messaging/rabbitmq/queue-portfolio-price.html",
+      "status": "documented"
+    },
+    {
+      "id": "TRACE-PORTFOLIO",
+      "type": "traceability",
+      "group": "traceability",
+      "path": "traceability/matrix.html",
+      "status": "documented"
+    },
+    {
+      "id": "UC-BUY",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-case-buy.html",
+      "status": "documented"
+    },
+    {
+      "id": "UC-CANCEL",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-case-cancel.html",
+      "status": "partial"
+    },
+    {
+      "id": "UC-PORTFOLIO",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-cases.html",
+      "status": "documented"
+    },
+    {
+      "id": "UC-REVIEW-PNL",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-case-review-pnl.html",
+      "status": "documented"
+    },
+    {
+      "id": "UC-REVIEW-PORTFOLIO",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-case-review-portfolio.html",
+      "status": "documented"
+    },
+    {
+      "id": "UC-SELL",
+      "type": "use-case",
+      "group": "use-cases",
+      "path": "domain/use-case-sell.html",
+      "status": "documented"
+    }
+  ]
+}

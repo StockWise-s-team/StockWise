@@ -1,0 +1,40 @@
+{
+  "project_root": "services/portfolio-service",
+  "output_root": "docs/portfolio-service",
+  "run_type": "full-regeneration",
+  "skill": "project-documentation-writer",
+  "generated_at": "2026-06-02T00:00:00+00:00",
+  "active_extensions": [
+    "rest-openapi-writer",
+    "rabbitmq-amqp-writer",
+    "db-migration-writer"
+  ],
+  "rendering": "Rebuilt on the skill bootstrap-shell design system (sidebar layout, Inter/JetBrains fonts, .doc-* components, styled Mermaid, tabbed API contracts).",
+  "pages_generated": 37,
+  "search_index_path": "_meta/search-index.json",
+  "stable_ids_preserved": true,
+  "files_removed": [
+    "traceability/traceability-matrix.html (redundant legacy mirror of traceability/matrix.html)"
+  ],
+  "assumptions": [
+    "ASSUMPTION: API Gateway is the normal caller for user-authenticated traffic; service-local auth is unspecified in these docs.",
+    "ASSUMPTION: Business-flow boundaries are derived from the three current REST operations and the RabbitMQ price-update consumer.",
+    "ASSUMPTION: UC-CANCEL remains documented as a business requirement, but current source evidence is unspecified."
+  ],
+  "unresolved_unspecified_items": [
+    "PortfolioService currently constructs response objects; repository-backed persistence behavior is partial.",
+    "Order lifecycle state, cancellation endpoint, matching rules, and settlement behavior are unspecified.",
+    "PnL calculation method and market-price integration are unspecified; current implementation returns a fixed value.",
+    "RabbitMQ retry, dead-letter handling, payload schema, and acknowledgement policy are unspecified.",
+    "Production migration/versioning strategy is unspecified; schema evidence comes from init.sql and JPA mappings.",
+    "Service-level authentication/authorization contract is unspecified beyond source-level security evidence."
+  ],
+  "self_audit_result": "pass",
+  "document_check_result": "pass",
+  "document_check_notes": "scripts/check_documents.py reports errors=0 warnings=0 against docs/portfolio-service.",
+  "documentation_notes": [
+    "Anchors: every artifact page carries id=<STABLE-ID> on its hero so cross-page #ID links resolve.",
+    "Search index inline JSON uses id=projectDocSearchIndex and matches _meta/search-index.json exactly.",
+    "Business-flow and API flow pages load the Mermaid CDN script with an initializer."
+  ]
+}
