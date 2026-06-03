@@ -75,8 +75,7 @@ CREATE TABLE IF NOT EXISTS news_sources (
 
 INSERT INTO news_sources (name, base_url, crawler_type) VALUES
     ('CafeF', 'https://cafef.vn', 'cafef'),
-    ('Vietstock', 'https://vietstock.vn', 'vietstock'),
-    ('Reuters VN', 'https://www.reuters.com/world/asia-pacific', 'reuters_vn')
+    ('Vietstock', 'https://vietstock.vn', 'vietstock')
 ON CONFLICT DO NOTHING;
 
 -- Company wiki (living state — Karpathy pattern)

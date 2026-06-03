@@ -63,6 +63,6 @@ class SynthesisAgent:
                         error=f"{type(exc).__name__}: {exc}",
                     )
                 )
-                raise  # re-raise so caller can track per-symbol failures
+                # continue to next symbol (per-symbol isolation)
 
         return results

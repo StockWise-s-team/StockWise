@@ -58,19 +58,6 @@ def sample_vietstock_article():
 
 
 @pytest.fixture
-def sample_reuters_vn_article():
-    return {
-        "title": "Vietnam manufacturing PMI rises to 54.2 in May",
-        "content": "<p>Vietnam's factory activity expanded for the 13th straight month.</p>",
-        "excerpt": "Strong PMI data for Vietnam.",
-        "url": "https://www.reuters.com/world/asia-pacific/vietnam-pmi-2026",
-        "published_at": "2026-05-30T08:00:00Z",
-        "symbols": [],
-        "source_name": "reuters_vn",
-    }
-
-
-@pytest.fixture
 def sample_normalized_article():
     return {
         "title": "VNM Reports Record Profit",

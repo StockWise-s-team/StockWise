@@ -3,13 +3,13 @@ class SynthesisError(Exception):
     pass
 
 
-class GeminiRateLimitError(SynthesisError):
-    """Raised when Gemini API returns a rate limit error."""
+class LLMRateLimitError(SynthesisError):
+    """Raised when the LLM API returns a rate limit error."""
     pass
 
 
-class GeminiParseError(SynthesisError):
-    """Raised when Gemini returns malformed or invalid JSON."""
+class LLMParseError(SynthesisError):
+    """Raised when the LLM returns malformed or invalid JSON."""
     pass
 
 

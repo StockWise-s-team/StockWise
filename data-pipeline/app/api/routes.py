@@ -27,7 +27,7 @@ from app.api.schemas import (
 )
 from app.config import settings
 from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
-from app.scripts.seed import VN30_SYMBOLS
+from app.config import settings as _cfg
 from app.sources.source_repository import SourceRepository
 from app.synthesis.synthesis_agent import SynthesisAgent
 from app.synthesis.wiki_repository import WikiRepository
@@ -58,13 +58,70 @@ def _get_conn():
 
 @router.get("/news-sources", response_model=List[NewsSourceResponse])
 def list_news_sources():
-    repo = SourceRepository()
-    sources = repo.get_active_sources()
-    return [NewsSourceResponse(id=str(s.id), name=s.name, base_url=s.base_url, crawler_type=s.crawler_type, is_active=s.is_active) for s in sources]
+    import json
+    from datetime import datetime
+    _log_path = "d:/StockWise/debug-07e1c9.log"
+    _log_id = f"log_{int(datetime.now().timestamp()*1000)}"
+    try:
+        with open(_log_path, "a") as _f:
+            _f.write(json.dumps({
+                "id": _log_id, "timestamp": int(datetime.now().timestamp()*1000),
+                "location": "routes.py:list_news_sources:entry",
+                "message": "GET /news-sources entry",
+                "runId": "hypothesis-test", "hypothesisId": "H1+H2+H3",
+                "data": {}
+            }) + "\n")
+    except: pass
+    conn = _get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute("SELECT id, name, base_url, crawler_type, is_active FROM news_sources ORDER BY name")
+        rows = cur.fetchall()
+        sources = [NewsSourceResponse(
+            id=str(row["id"]), name=row["name"],
+            base_url=row["base_url"], crawler_type=row["crawler_type"],
+            is_active=row["is_active"]
+        ) for row in rows]
+        _src_ids = [str(row["id"]) for row in rows]
+        _src_count = len(sources)
+        try:
+            with open(_log_path, "a") as _f:
+                _f.write(json.dumps({
+                    "id": f"{_log_id}_exit", "timestamp": int(datetime.now().timestamp()*1000),
+                    "location": "routes.py:list_news_sources:exit",
+                    "message": f"GET /news-sources returning {_src_count} sources (ALL)",
+                    "runId": "hypothesis-test", "hypothesisId": "H1+H2+H3",
+                    "data": {"source_count": _src_count, "source_ids": _src_ids}
+                }) + "\n")
+        except: pass
+        return sources
+    finally:
+        cur.close()
+        conn.close()
 
 
 @router.patch("/news-sources/{source_id}", response_model=NewsSourceResponse)
 def toggle_source(source_id: str, body: NewsSourceToggle):
+    import json
+    from datetime import datetime
+    _log_path = "d:/StockWise/debug-07e1c9.log"
+    _log_id = f"log_{int(datetime.now().timestamp()*1000)}"
+    _entry_ts = int(datetime.now().timestamp()*1000)
+
+    def _w(loc, msg, hid, extra=None):
+        try:
+            d = {"id": f"{_log_id}_{loc}", "timestamp": int(datetime.now().timestamp()*1000),
+                 "location": f"routes.py:toggle_source:{loc}", "message": msg,
+                 "runId": "hypothesis-test", "hypothesisId": hid}
+            if extra:
+                d["data"] = extra
+            with open(_log_path, "a") as _f:
+                _f.write(json.dumps(d) + "\n")
+        except: pass
+
+    _w("entry", "PATCH toggle_source entry", "H1+H2+H3",
+       {"source_id": source_id, "body_isActive": body.isActive})
+
     conn = _get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
@@ -73,12 +130,18 @@ def toggle_source(source_id: str, body: NewsSourceToggle):
             (body.isActive, source_id),
         )
         row = cur.fetchone()
+        _w("after_update", "After UPDATE, row fetched", "H1+H2",
+           {"row": dict(row) if row else None, "source_id": source_id, "is_active": body.isActive})
         conn.commit()
         if not row:
+            _w("not_found", "Source not found in DB", "H1",
+               {"source_id": source_id})
             raise HTTPException(status_code=404, detail="Source not found")
         SourceRepository().invalidate()
+        _w("before_response", "Returning NewsSourceResponse", "H2",
+           {"id": str(row["id"]), "name": row["name"], "is_active": row["is_active"]})
         return NewsSourceResponse(
-            id=row["id"],
+            id=str(row["id"]),
             name=row["name"],
             base_url=row["base_url"],
             crawler_type=row["crawler_type"],
@@ -88,10 +151,13 @@ def toggle_source(source_id: str, body: NewsSourceToggle):
         raise
     except Exception as e:
         conn.rollback()
+        _w("exception", f"PATCH exception: {type(e).__name__}: {e}", "H1+H2+H3",
+           {"source_id": source_id, "isActive": body.isActive})
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
+        _w("finally", "toggle_source cleanup done", "H1+H2+H3", {})
 
 
 # ── Tracked Symbols ────────────────────────────────────────────────────────────
@@ -248,13 +314,12 @@ def get_wiki(symbol: str):
 
 @router.post("/scripts/seed", response_model=SeedResponse)
 def trigger_seed(body: SeedRequest, background_tasks: BackgroundTasks):
-    from app.scripts.seed import VN30_SYMBOLS as _VN30
     from app.stream_a.repositories.price_repository import PriceRepository
     if body.symbols is None:
         price_repo = PriceRepository()
         symbols = price_repo.get_tracked_symbols()
         if not symbols:
-            symbols = _VN30
+            symbols = _cfg.get_vn30_symbols()
     else:
         symbols = body.symbols
     progress_store.reset_seed(len(symbols))
@@ -290,14 +355,14 @@ def _seed_sync(body: SeedRequest, progress) -> None:
         run_id = run_repo.create_run(
             run_type="seed",
             trigger_type="api",
-            symbols_requested=len(body.symbols or VN30_SYMBOLS),
+            symbols_requested=len(body.symbols or _cfg.get_vn30_symbols()),
         )
     except Exception as e:
         logger.error("[API/seed] Failed to create DB run record: %s", e)
         run_id = None
 
     vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
-    symbols = body.symbols or VN30_SYMBOLS
+    symbols = body.symbols or _cfg.get_vn30_symbols()
 
     processed = 0
     all_errors = []
@@ -436,14 +501,12 @@ def _seed_sync(body: SeedRequest, progress) -> None:
 
 @router.post("/synthesis/trigger", response_model=SynthesisResponse)
 def trigger_synthesis(body: SynthesisRequest, background_tasks: BackgroundTasks):
-    from app.scripts.seed import VN30_SYMBOLS as _VN30
     from app.stream_a.repositories.price_repository import PriceRepository
     if body.symbols is None:
-        # Default: process all tracked symbols from DB
         price_repo = PriceRepository()
         symbols = price_repo.get_tracked_symbols()
         if not symbols:
-            symbols = _VN30
+            symbols = _cfg.get_vn30_symbols()
     else:
         symbols = body.symbols
     progress_store.reset_synthesis(len(symbols))

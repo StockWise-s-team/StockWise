@@ -19,10 +19,10 @@
 #### 1.2 Thu thập chỉ số tài chính (Stream A)
 | # | Chức năng | Trạng thái | File(s) |
 |---|-----------|-----------|---------|
-| 1.2.1 | Gọi Financial Modeling Prep API (TTM ratios: P/E, P/B, EPS, ROE, ROA) | ✅ Hoàn thiện | `app/stream_a/fetchers/ck_api_fetcher.py` |
-| 1.2.2 | Fallback graceful khi FMP_API_KEY không được set | ✅ Hoàn thiện | `ck_api_fetcher.py` lines 23-28 |
+| 1.2.1 | Gọi Yahoo Finance API (TTM ratios: P/E, P/B, EPS, ROE, ROA) | ✅ Hoàn thiện | `app/stream_a/fetchers/yahoo_finance_fetcher.py` |
+| 1.2.2 | Fallback graceful khi không lấy được dữ liệu | ✅ Hoàn thiện | `yahoo_finance_fetcher.py` — `safe_float` trả None |
 | 1.2.3 | Auto-seed company_info + financial_ratios cho mã mới thêm | ✅ Hoàn thiện | `scheduler.py` `_auto_seed_missing_metadata()` |
-| 1.2.4 | ⚠️ **Seed script dùng VnStock cho ratios thay vì FMP** — `seed.py` gọi `vnstock Finance API` (vci source) cho ratios, còn `ck_api_fetcher.py` dùng FMP. Cân nhắc thống nhất nguồn | Cần xem xét | `app/scripts/seed.py` vs `ck_api_fetcher.py` |
+| 1.2.4 | Seed script dùng VnStock/VCI, Stream A dùng Yahoo Finance — nhất quán nguồn annual vs TTM | ⚠️ Đã ghi nhận | Seed lấy annual, Stream A lấy TTM |
 
 #### 1.3 Thu thập tin tức từ CafeF (Stream B)
 | # | Chức năng | Trạng thái | File(s) |
@@ -44,15 +44,7 @@
 | 1.4.5 | Sort URLs theo year/month descending trước khi crawl | ✅ Hoàn thiện | lines 74-84 |
 | 1.4.6 | Retry + delay 1s | ✅ Hoàn thiện | `@retry` + `asyncio.sleep` |
 
-#### 1.5 Thu thập tin tức từ Reuters VN (Stream B)
-| # | Chức năng | Trạng thái | File(s) |
-|---|-----------|-----------|---------|
-| 1.5.1 | Crawl listing page, lọc bài liên quan VN theo từ khóa | ✅ Hoàn thiện | `app/stream_b/crawlers/reuters_vn_crawler.py` |
-| 1.5.2 | VN indicators: vietnam, viet nam, hanoi, ho chi minh city, vn-index... | ✅ Hoàn thiện | `VN_INDICATORS` set |
-| 1.5.3 | Tối đa 30 bài/lần | ✅ Hoàn thiện (MAX_ARTICLES=30) | line 18 |
-| 1.5.4 | Có method `fetch_full_content()` để lấy nội dung chi tiết từng bài | ✅ Hoàn thiện (nhưng **chưa được gọi** trong `crawl()`) | `reuters_vn_crawler.py` lines 128-148 |
-
-#### 1.6 Bật/tắt nguồn tin
+#### 1.5 Bật/tắt nguồn tin
 | # | Chức năng | Trạng thái | File(s) |
 |---|-----------|-----------|---------|
 | 1.6.1 | API bật/tắt nguồn: `PATCH /news-sources/{source_id}` | ✅ Hoàn thiện | `app/api/routes.py` lines 66-94 |
@@ -375,15 +367,13 @@
 
 2. **`seed.py` không upsert `eps` field** — khi seed financial_ratios, EPS luôn là NULL vì INSERT statement thiếu `eps` column.
 
-3. **ReutersVN crawler không gọi `fetch_full_content()`** — `crawl()` chỉ trả về listing (title + excerpt), không fetch nội dung chi tiết từng bài.
-
-4. **SourceRepository cache invalidation race condition** — `routes.py` toggle source tạo instance mới `SourceRepository().invalidate()` nhưng scheduler có thể đang đọc instance cũ.
+3. **SourceRepository cache invalidation race condition** — `routes.py` toggle source tạo instance mới `SourceRepository().invalidate()` nhưng scheduler có thể đang đọc instance cũ.
 
 ### P2 — Cải thiện chất lượng
 
 1. **`price_repository.py` upsert_prices loop per-row** — nên dùng `psycopg2.extras.execute_values` như `news_repository` để bulk upsert.
 
-2. **Nguồn financial ratios không thống nhất** — seed script dùng VnStock Finance API (vci), Stream A dùng FMP API. Nên thống nhất một nguồn.
+2. **Nguồn financial ratios không thống nhất (annual vs TTM)** — seed script dùng VnStock/VCI annual ratios, Stream A dùng Yahoo Finance TTM ratios. Seedupsert ghi đè period='annual', Stream A upsert ghi đè period='ttm' vào cùng bảng `financial_ratios`.
 
 3. **Structured logging** — thay `logging.basicConfig` bằng `structlog` với JSON output để dễ parse trong ELK/Datadog.
 
@@ -416,7 +406,7 @@ data-pipeline/
 │   │   ├── fetchers/
 │   │   │   ├── base_fetcher.py
 │   │   │   ├── vnstock_fetcher.py    # VnStock KBS → OHLCV
-│   │   │   └── ck_api_fetcher.py    # FMP API → TTM ratios
+│   │   │   └── yahoo_finance_fetcher.py  # Yahoo Finance → TTM ratios
 │   │   ├── transformers/
 │   │   │   ├── price_transformer.py  # OHLCV validation (0.001–1M, high≥low)
 │   │   │   └── ratio_transformer.py  # Ratio validation (P/E≤1000, ROE/ROA any)
@@ -426,8 +416,7 @@ data-pipeline/
 │   │   ├── crawlers/
 │   │   │   ├── base_crawler.py
 │   │   │   ├── cafef_crawler.py       # Sitemap → 50 articles/30 days
-│   │   │   ├── vietstock_crawler.py   # Sitemap regex → relative time parse
-│   │   │   └── reuters_vn_crawler.py  # Listing → VN keyword filter
+│   │   │   └── vietstock_crawler.py   # Sitemap regex → relative time parse
 │   │   ├── transformers/
 │   │   │   └── news_transformer.py     # HTML strip + symbol extraction
 │   │   ├── repositories/
@@ -465,7 +454,7 @@ data-pipeline/
 | `news_articles` | `(url)` | Raw crawled articles |
 | `company_wiki` | `(symbol)` | Living synthesized wiki |
 | `company_wiki_history` | `(symbol, version)` | Append-only version history |
-| `company_info` | `(symbol)` | Authoritative metadata from FMP |
+| `company_info` | `(symbol)` | Authoritative metadata from VnStock/VCI |
 | `pipeline_runs` | `(id)` UUID | Execution log all streams |
 | `pipeline_run_symbols` | `(run_id, symbol)` | Per-symbol results |
 | `tracked_symbols` | `(symbol)` | Watchlist |

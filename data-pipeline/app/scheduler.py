@@ -12,7 +12,6 @@ from app.stream_a.transformers.ratio_transformer import RatioTransformer
 from app.stream_a.repositories.price_repository import PriceRepository
 from app.stream_b.crawlers.cafef_crawler import CafeFCrawler
 from app.stream_b.crawlers.vietstock_crawler import VietstockCrawler
-from app.stream_b.crawlers.reuters_vn_crawler import ReutersVNCrawler
 from app.stream_b.transformers.news_transformer import NewsTransformer
 from app.stream_b.repositories.news_repository import NewsRepository
 from app.stream_b.embedder import Embedder
@@ -30,7 +29,6 @@ _ROUTING_NEWS = "raw.ingested"
 _CRAWLER_MAP = {
     "cafef": CafeFCrawler,
     "vietstock": VietstockCrawler,
-    "reuters_vn": ReutersVNCrawler,
 }
 
 

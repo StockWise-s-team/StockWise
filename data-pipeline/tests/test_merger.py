@@ -4,7 +4,7 @@ import pytest
 
 from app.synthesis import merger as merger_module
 from app.synthesis.merger import Merger
-from app.synthesis.exceptions import GeminiParseError, GeminiRateLimitError, SynthesisError
+from app.synthesis.exceptions import LLMParseError, LLMRateLimitError, SynthesisError
 
 
 class TestMerger:
@@ -102,7 +102,7 @@ class TestMerger:
             side_effect=Exception("429 Too Many Requests")
         )
 
-        with pytest.raises(GeminiRateLimitError):
+        with pytest.raises(LLMRateLimitError):
             await merger.merge(sample_wiki, [], [], "VNM")
 
     @pytest.mark.asyncio
@@ -111,7 +111,7 @@ class TestMerger:
             return_value=mock_response("not valid json {")
         )
 
-        with pytest.raises(GeminiParseError):
+        with pytest.raises(LLMParseError):
             await merger.merge(sample_wiki, [], [], "VNM")
 
     @pytest.mark.asyncio
@@ -120,7 +120,7 @@ class TestMerger:
             return_value=mock_response('"just a string"')
         )
 
-        with pytest.raises(GeminiParseError):
+        with pytest.raises(LLMParseError):
             await merger.merge(sample_wiki, [], [], "VNM")
 
     @pytest.mark.asyncio

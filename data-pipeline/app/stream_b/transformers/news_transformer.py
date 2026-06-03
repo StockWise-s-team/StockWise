@@ -1,7 +1,6 @@
 import re
 import uuid
 import logging
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
@@ -42,6 +41,16 @@ ARTICLES_PER_SYMBOL_RE = re.compile(
 CURRENCY_CODES = {"USD", "VND", "EUR", "GBP", "JPY", "CNY", "SGD", "THB", "AUD", "CAD"}
 
 
+def _strip_html_static(html: str) -> str:
+    if not html:
+        return ""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(["script", "style", "nav", "header", "footer"]):
+        tag.decompose()
+    text = soup.get_text(separator=" ", strip=True)
+    return re.sub(r"\s{2,}", " ", text)
+
+
 class NewsTransformer(BaseTransformer):
     def __init__(self):
         self._source_cache: dict[str, uuid.UUID] = {}
@@ -56,12 +65,12 @@ class NewsTransformer(BaseTransformer):
     def _transform_one(self, raw: dict[str, Any]) -> NormalizedArticle | None:
         try:
             content_clean = self._strip_html(raw.get("content", ""))
-            content_for_extraction = (
-                f"{raw.get('title', '')} {raw.get('excerpt', '')} {content_clean}"
-            )
-            symbols = self._extract_symbols(content_for_extraction)
+            symbols = self._extract_symbols_from_raw(raw)
             if not symbols:
-                logger.info("[NewsTransformer] Skipping article (no symbols): %s", raw.get("title", "")[:60])
+                logger.info(
+                    "[NewsTransformer] Skipping article (no symbols): %s",
+                    raw.get("title", "")[:60],
+                )
                 return None
             source_name = raw.get("source_name", "")
             source_id = self._resolve_source_id(source_name)
@@ -85,13 +94,7 @@ class NewsTransformer(BaseTransformer):
 
     @staticmethod
     def _strip_html(html: str) -> str:
-        if not html:
-            return ""
-        soup = BeautifulSoup(html, "html.parser")
-        for tag in soup.find_all(["script", "style", "nav", "header", "footer"]):
-            tag.decompose()
-        text = soup.get_text(separator=" ", strip=True)
-        return re.sub(r"\s{2,}", " ", text)
+        return _strip_html_static(html)
 
     @staticmethod
     def _extract_symbols(text: str) -> list[str]:
@@ -102,9 +105,15 @@ class NewsTransformer(BaseTransformer):
         for sym in raw:
             if sym in seen:
                 continue
+            # Priority: valid_tickers.json overrides CURRENCY_CODES exclusion.
+            # VND is a valid stock ticker (VNDIRECT Securities) and must NOT
+            # be filtered out by the currency-code exclusion.
+            if is_valid_ticker(sym):
+                seen.add(sym)
+                symbols.append(sym)
+                continue
             if sym in CURRENCY_CODES:
                 continue
-            # Always skip known English words and Vietnamese market terms
             if sym in {
                 "THE", "AND", "FOR", "THIS", "THAT", "WITH", "FROM",
                 "HAVE", "HAS", "NOT", "ARE", "WERE", "VNINDEX",
@@ -115,12 +124,28 @@ class NewsTransformer(BaseTransformer):
                 "QUY", "NAM", "CAO", "DUY", "THAY", "HCM", "TIN",
             }:
                 continue
-            if not is_valid_ticker(sym):
-                continue
             seen.add(sym)
             symbols.append(sym)
 
         return symbols
+
+    @staticmethod
+    def _extract_symbols_from_raw(raw: dict[str, Any]) -> list[str]:
+        """
+        Extract symbols with priority:
+        1. Use symbols directly from crawler (preferred for API-driven crawlers
+           like Cafef that return pre-tagged symbols via linkStocks field).
+        2. Fall back to regex extraction from text.
+        """
+        direct = raw.get("symbols")
+        if direct and isinstance(direct, list) and len(direct) > 0:
+            validated = [s.upper() for s in direct if is_valid_ticker(s.upper())]
+            if validated:
+                return validated
+
+        content_clean = _strip_html_static(raw.get("content", ""))
+        text = f"{raw.get('title', '')} {raw.get('excerpt', '')} {content_clean}"
+        return NewsTransformer._extract_symbols(text)
 
     def _resolve_source_id(self, source_name: str) -> uuid.UUID:
         if source_name in self._source_cache:

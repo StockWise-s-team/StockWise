@@ -62,7 +62,7 @@ class TestSynthesisAgent:
         mock_wiki_repo.get_recent_prices.return_value = []
         mock_merger.merge.side_effect = [
             AsyncMock(return_value={"version": 1}),
-            RuntimeError("Gemini failed"),
+            RuntimeError("LLM failed"),
         ]
 
         agent = SynthesisAgent()

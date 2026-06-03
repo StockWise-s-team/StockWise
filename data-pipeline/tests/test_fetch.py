@@ -4,7 +4,7 @@ import logging
 import pytest
 
 from app.stream_a.fetchers.vnstock_fetcher import VnStockFetcher
-from app.stream_a.fetchers.ck_api_fetcher import CkApiFetcher
+from app.stream_a.fetchers.yahoo_finance_fetcher import YahooFinanceFetcher
 from app.stream_a.transformers.ratio_transformer import RatioTransformer
 
 logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
@@ -33,9 +33,9 @@ async def test_vnstock_fetcher():
 
 
 @pytest.mark.asyncio
-async def test_ck_api_fetcher():
-    print("\n=== Test CkApiFetcher ===")
-    fetcher = CkApiFetcher()
+async def test_yahoo_finance_fetcher():
+    print("\n=== Test YahooFinanceFetcher ===")
+    fetcher = YahooFinanceFetcher()
     result = await fetcher.fetch(["VNM", "HPG"])
     for r in result:
         print(f"  [{r.get('symbol')}] ratios={r.get('ratios')}")

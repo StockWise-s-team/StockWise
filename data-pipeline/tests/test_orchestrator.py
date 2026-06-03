@@ -74,7 +74,7 @@ class TestSynthesisOrchestrator:
     @pytest.mark.asyncio
     async def test_on_message_handles_synthesis_error_gracefully(self, orchestrator):
         mock_agent = AsyncMock()
-        mock_agent.synthesize = AsyncMock(side_effect=RuntimeError("Gemini failed"))
+        mock_agent.synthesize = AsyncMock(side_effect=RuntimeError("LLM failed"))
 
         message_body = {"symbols": ["VNM"], "source": "cafef", "action": "raw.ingested"}
         mock_message = MagicMock()

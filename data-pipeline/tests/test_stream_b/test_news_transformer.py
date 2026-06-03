@@ -115,6 +115,43 @@ class TestExtractSymbols:
         assert t._extract_symbols("") == []
         assert t._extract_symbols("No symbols here.") == []
 
+    def test_vnd_ticker_not_filtered_by_currency_code(self):
+        """
+        VND is a valid stock ticker (VNDIRECT Securities) in valid_tickers.json.
+        It must NOT be filtered out by the CURRENCY_CODES exclusion,
+        which is meant only for the VND currency abbreviation.
+        """
+        t = NewsTransformer()
+        text = "VND reported net profit of 2,508 billion VND in 2025."
+        symbols = t._extract_symbols(text)
+        assert "VND" in symbols, "VND ticker should be extracted despite being in CURRENCY_CODES"
+
+    def test_other_currency_codes_still_filtered(self):
+        """
+        Currency codes not in valid_tickers.json are filtered out by is_valid_ticker.
+        The CURRENCY_CODES set is a safety net for symbols that pass ticker
+        validation but are known currencies (only relevant if they appear in
+        valid_tickers.json by mistake).
+        """
+        t = NewsTransformer()
+        # EUR is not a stock ticker — not in valid_tickers.json
+        # so is_valid_ticker returns False before CURRENCY_CODES is reached.
+        text = "Stock surged 5% to 100 EUR per share."
+        symbols = t._extract_symbols(text)
+        assert "EUR" not in symbols
+
+    def test_vnd_mixed_with_real_currency_context(self):
+        """
+        When VND appears in a context that clearly means currency (e.g. '100 VND'),
+        it should still be extracted as ticker because it IS a valid ticker
+        in the canonical list. The CURRENCY_CODES filter should not override
+        the explicit valid_tickers.json list.
+        """
+        t = NewsTransformer()
+        text = "Công ty Cổ phần Chứng khoán VNDIRECT (VND) đạt lợi nhuận 2,508 tỷ đồng, tăng 20.1%."
+        symbols = t._extract_symbols(text)
+        assert "VND" in symbols
+
 
 class TestTransform:
     def test_transform_single_article(
@@ -126,12 +163,10 @@ class TestTransform:
             t = NewsTransformer()
             result = t.transform(sample_cafef_article)
 
-        assert result["title"] == sample_cafef_article["title"]
-        assert result["url"] == sample_cafef_article["url"]
-        assert "source_id" in result
-        assert result["source_id"] == mock_source_row[0]
-        assert result["crawled_at"] is not None
-        assert isinstance(result["crawled_at"], datetime)
+        assert result.title == sample_cafef_article["title"]
+        assert result.url == sample_cafef_article["url"]
+        assert result.source_id == str(mock_source_row[0])
+        assert result.crawled_at is not None
 
     def test_transform_strips_html_in_content(self, sample_cafef_article, mock_source_row):
         with patch.object(
@@ -139,8 +174,8 @@ class TestTransform:
         ):
             t = NewsTransformer()
             result = t.transform(sample_cafef_article)
-        assert "<p>" not in result["content"]
-        assert "VNM" in result["content"]
+        assert "<p>" not in result.content
+        assert "VNM" in result.content
 
     def test_transform_list(self, sample_cafef_article, sample_vietstock_article, mock_source_row):
         with patch.object(
@@ -149,7 +184,7 @@ class TestTransform:
             t = NewsTransformer()
             results = t.transform([sample_cafef_article, sample_vietstock_article])
         assert len(results) == 2
-        assert all("title" in r for r in results)
+        assert all(hasattr(r, "title") for r in results)
 
     def test_transform_extracts_symbols_from_content(
         self, sample_cafef_article, mock_source_row
@@ -159,7 +194,26 @@ class TestTransform:
         ):
             t = NewsTransformer()
             result = t.transform(sample_cafef_article)
-        assert len(result["symbols"]) > 0
+        assert len(result.symbols) > 0
+
+    def test_transform_prefers_direct_symbols(self, mock_source_row):
+        """When crawler provides symbols directly, those are used."""
+        article = {
+            "title": "Direct symbol test",
+            "content": "<p>Content mentions VPB and HPG in text.</p>",
+            "excerpt": "",
+            "url": "https://cafef.vn/test.chn",
+            "published_at": "2026-06-01T10:00:00Z",
+            "symbols": ["ACB", "FPT"],  # crawler-provided
+            "source_name": "cafef",
+        }
+        with patch.object(
+            NewsTransformer, "_resolve_source_id", return_value=mock_source_row[0]
+        ):
+            t = NewsTransformer()
+            result = t.transform(article)
+        # Should use the crawler's symbols, not the ones from text
+        assert set(result.symbols) == {"ACB", "FPT"}
 
     def test_transform_raises_on_missing_source(
         self, sample_cafef_article

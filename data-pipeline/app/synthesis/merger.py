@@ -7,8 +7,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 from app.config import settings
 from app.synthesis.exceptions import (
-    GeminiParseError,
-    GeminiRateLimitError,
+    LLMParseError,
+    LLMRateLimitError,
     SynthesisError,
 )
 
@@ -60,7 +60,7 @@ class Merger:
         effective_wiki = old_wiki if old_wiki else dict(self._DEFAULT_WIKI)
         effective_wiki["symbol"] = symbol
 
-        # Fetch authoritative company metadata from DB (populated by FMP API)
+        # Fetch authoritative company metadata from DB (populated by VnStock/VCI API)
         if effective_wiki.get("company_name") in ("Unknown Company", "", None):
             if self._wiki_repo:
                 try:
@@ -85,7 +85,7 @@ class Merger:
         parsed = self._parse_response(response_text)
         parsed["symbol"] = symbol
 
-        # Always override with authoritative company info from DB (FMP API)
+        # Always override with authoritative company info from DB (VnStock/VCI API)
         if self._wiki_repo:
             try:
                 db_info = self._wiki_repo.get_company_info(symbol)
@@ -151,7 +151,7 @@ class Merger:
     @retry(
         stop=stop_after_attempt(MAX_RETRIES),
         wait=wait_exponential(multiplier=1, min=2, max=60),
-        retry=retry_if_exception_type(GeminiRateLimitError),
+        retry=retry_if_exception_type(LLMRateLimitError),
         reraise=True,
     )
     async def _call_llm(self, prompt: str) -> str:
@@ -180,7 +180,7 @@ class Merger:
             )
             if is_rate_limit:
                 logger.warning("[Merger] LLM rate limit hit: %s", exc)
-                raise GeminiRateLimitError(str(exc)) from exc
+                raise LLMRateLimitError(str(exc)) from exc
             logger.error("[Merger] LLM call failed: %s", exc)
             raise SynthesisError(f"LLM call failed: {exc}") from exc
 
@@ -189,10 +189,10 @@ class Merger:
             data = json.loads(response_text.strip())
         except json.JSONDecodeError as e:
             logger.error("[Merger] Invalid JSON from LLM for %s: %s", symbol, e)
-            raise GeminiParseError(f"Invalid JSON for {symbol}: {e}") from e
+            raise LLMParseError(f"Invalid JSON for {symbol}: {e}") from e
 
         if not isinstance(data, dict):
-            raise GeminiParseError(
+                raise LLMParseError(
                 f"Expected JSON object for {symbol}, got {type(data).__name__}"
             )
 

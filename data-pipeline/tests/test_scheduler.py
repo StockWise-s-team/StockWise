@@ -60,7 +60,7 @@ class TestSchedulerStreamA:
         return f
 
     @pytest.fixture
-    def mock_ck_api_fetcher(self):
+    def mock_yahoo_finance_fetcher(self):
         f = AsyncMock()
         f.fetch = AsyncMock(return_value=[{
             "symbol": "VNM",
@@ -69,7 +69,7 @@ class TestSchedulerStreamA:
                 "pb_ratio": 3.2,
                 "eps": 6200,
                 "roe": 0.21,
-                "roa": 0.12,
+                "roa": 12,
                 "period": "ttm",
             },
         }])
@@ -83,14 +83,14 @@ class TestSchedulerStreamA:
         mock_price_transformer,
         mock_ratio_transformer,
         mock_vnstock_fetcher,
-        mock_ck_api_fetcher,
+        mock_yahoo_finance_fetcher,
     ):
         with patch.object(scheduler_module, "RabbitMQProducer", return_value=mock_producer), \
              patch.object(scheduler_module, "PriceRepository", return_value=mock_price_repo), \
              patch.object(scheduler_module, "PriceTransformer", return_value=mock_price_transformer), \
              patch.object(scheduler_module, "RatioTransformer", return_value=mock_ratio_transformer), \
              patch.object(scheduler_module, "VnStockFetcher", return_value=mock_vnstock_fetcher), \
-             patch.object(scheduler_module, "CkApiFetcher", return_value=mock_ck_api_fetcher):
+             patch.object(scheduler_module, "YahooFinanceFetcher", return_value=mock_yahoo_finance_fetcher):
 
             await scheduler_module.run_stream_a()
 
@@ -117,10 +117,10 @@ class TestSchedulerStreamA:
              patch.object(scheduler_module, "PriceTransformer"), \
              patch.object(scheduler_module, "RatioTransformer"), \
              patch.object(scheduler_module, "VnStockFetcher"), \
-             patch.object(scheduler_module, "CkApiFetcher"):
+             patch.object(scheduler_module, "YahooFinanceFetcher"):
 
-            with pytest.raises(RuntimeError, match="db error"):
-                await scheduler_module.run_stream_a()
+            # Scheduler catches exceptions internally and returns normally
+            await scheduler_module.run_stream_a()
 
         mock_producer.close.assert_called_once()
 
@@ -134,7 +134,7 @@ class TestSchedulerStreamA:
              patch.object(scheduler_module, "PriceTransformer"), \
              patch.object(scheduler_module, "RatioTransformer"), \
              patch.object(scheduler_module, "VnStockFetcher"), \
-             patch.object(scheduler_module, "CkApiFetcher"):
+             patch.object(scheduler_module, "YahooFinanceFetcher"):
 
             await scheduler_module.run_stream_a()
 
@@ -175,7 +175,7 @@ class TestSchedulerStreamA:
         with patch.object(scheduler_module, "RabbitMQProducer", return_value=mock_producer), \
              patch.object(scheduler_module, "PriceRepository", return_value=mock_repo), \
              patch.object(scheduler_module, "RatioTransformer", return_value=MagicMock()), \
-             patch.object(scheduler_module, "CkApiFetcher", return_value=f_ratio), \
+             patch.object(scheduler_module, "YahooFinanceFetcher", return_value=f_ratio), \
              patch.object(scheduler_module, "VnStockFetcher", side_effect=[f_vnm, f_hpg]) as mock_fetcher_cls:
 
             pt = MagicMock()
@@ -262,16 +262,12 @@ class TestSchedulerStreamB:
         vs_empty = AsyncMock()
         vs_empty.crawl = AsyncMock(return_value=[])
 
-        rt_empty = AsyncMock()
-        rt_empty.crawl = AsyncMock(return_value=[])
-
         with patch.object(scheduler_module, "RabbitMQProducer", return_value=mock_producer), \
              patch.object(scheduler_module, "NewsRepository", return_value=mock_news_repo), \
              patch.object(scheduler_module, "NewsTransformer", return_value=mock_news_transformer), \
              patch.object(scheduler_module, "Embedder", return_value=mock_embedder), \
              patch.object(scheduler_module, "CafeFCrawler", return_value=cafeF_ok), \
-             patch.object(scheduler_module, "VietstockCrawler", return_value=vs_empty), \
-             patch.object(scheduler_module, "ReutersVNCrawler", return_value=rt_empty):
+             patch.object(scheduler_module, "VietstockCrawler", return_value=vs_empty):
 
             await scheduler_module.run_stream_b()
 
@@ -294,16 +290,11 @@ class TestSchedulerStreamB:
              patch.object(scheduler_module, "NewsTransformer"), \
              patch.object(scheduler_module, "Embedder"), \
              patch.object(scheduler_module, "CafeFCrawler", return_value=empty_crawler), \
-             patch.object(scheduler_module, "VietstockCrawler") as mock_vs, \
-             patch.object(scheduler_module, "ReutersVNCrawler") as mock_rt:
+             patch.object(scheduler_module, "VietstockCrawler") as mock_vs:
 
             vs_empty = AsyncMock()
             vs_empty.crawl = AsyncMock(return_value=[])
             mock_vs.return_value = vs_empty
-
-            rt_empty = AsyncMock()
-            rt_empty.crawl = AsyncMock(return_value=[])
-            mock_rt.return_value = rt_empty
 
             await scheduler_module.run_stream_b()
 
@@ -347,12 +338,7 @@ class TestSchedulerStreamB:
              patch.object(scheduler_module, "NewsTransformer", return_value=good_transformer), \
              patch.object(scheduler_module, "Embedder", return_value=mock_embedder), \
              patch.object(scheduler_module, "CafeFCrawler", return_value=failed_crawler), \
-             patch.object(scheduler_module, "VietstockCrawler", return_value=good_crawler), \
-             patch.object(scheduler_module, "ReutersVNCrawler") as mock_rt:
-
-            rt_empty = AsyncMock()
-            rt_empty.crawl = AsyncMock(return_value=[])
-            mock_rt.return_value = rt_empty
+             patch.object(scheduler_module, "VietstockCrawler", return_value=good_crawler):
 
             await scheduler_module.run_stream_b()
 

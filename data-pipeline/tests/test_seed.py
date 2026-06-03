@@ -132,58 +132,49 @@ class TestSeedNewsSources:
 
 
 class TestSeedFinancialRatios:
-    def test_skips_when_no_fmp_api_key(self):
+    def test_dry_run_returns_true_without_api_call(self):
         with patch("app.scripts.seed.settings") as mock_settings:
-            mock_settings.FMP_API_KEY = "your-fmp-api-key"
-
+            mock_settings.VNSTOCK_API_KEY = "test_key"
             result = _seed_financial_ratios(["VNM"], dry_run=True)
+            assert result == {"VNM": True}
 
-            assert result == {}
-
-    def test_dry_run_returns_false_when_no_data(self):
+    def test_dry_run_returns_false_for_each_symbol(self):
         with patch("app.scripts.seed.settings") as mock_settings:
-            mock_settings.FMP_API_KEY = "real_key_123"
-
-            with patch("httpx.get") as mock_get:
-                mock_resp = MagicMock()
-                mock_resp.json.return_value = []
-                mock_get.return_value = mock_resp
-
-                result = _seed_financial_ratios(["VNM"], dry_run=True)
-
-                assert result == {"VNM": False}
+            mock_settings.VNSTOCK_API_KEY = "test_key"
+            result = _seed_financial_ratios(["VNM", "HPG"], dry_run=True)
+            assert result == {"VNM": True, "HPG": True}
 
     def test_inserts_ratios_into_db(self):
+        import pandas as pd
+
         mock_conn = MagicMock()
         mock_cur = MagicMock()
         mock_conn.cursor.return_value = mock_cur
 
+        mock_df = pd.DataFrame({
+            "item": ["P/E", "P/B", "ROE (%)", "ROA (%)"],
+            "2024": [20.5, 3.2, 0.18, 0.09],
+        })
+
+        mock_finance = MagicMock()
+        mock_finance.ratio.return_value = mock_df
+
         with patch("app.scripts.seed.settings") as mock_settings:
-            mock_settings.FMP_API_KEY = "real_key_123"
+            mock_settings.VNSTOCK_API_KEY = "test_key"
 
-            with patch("httpx.get") as mock_get:
-                mock_resp = MagicMock()
-                mock_resp.json.return_value = [{
-                    "priceToEarningsRatioTTM": "20.5",
-                    "priceToBookRatioTTM": "3.2",
-                    "epsTTM": "5.5",
-                    "returnOnEquityTTM": "0.18",
-                    "returnOnAssetsTTM": "0.09",
-                }]
-                mock_get.return_value = mock_resp
-
-                with patch("app.scripts.seed._get_connection", return_value=mock_conn):
-                    result = _seed_financial_ratios(["VNM"], dry_run=False)
+            with patch("vnstock.api.financial.Finance", return_value=mock_finance), \
+                 patch("app.scripts.seed._get_connection", return_value=mock_conn):
+                result = _seed_financial_ratios(["VNM"], dry_run=False)
 
                 assert result == {"VNM": True}
                 mock_conn.commit.assert_called()
 
     def test_handles_api_error_gracefully(self):
         with patch("app.scripts.seed.settings") as mock_settings:
-            mock_settings.FMP_API_KEY = "real_key_123"
+            mock_settings.VNSTOCK_API_KEY = "test_key"
 
-            with patch("httpx.get", side_effect=Exception("Network error")):
-                result = _seed_financial_ratios(["VNM"], dry_run=True)
+            with patch("vnstock.api.financial.Finance", side_effect=Exception("Network error")):
+                result = _seed_financial_ratios(["VNM"], dry_run=False)
 
                 assert result == {"VNM": False}
 

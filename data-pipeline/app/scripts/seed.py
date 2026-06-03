@@ -6,6 +6,10 @@ Flags:
     --dry-run   Validate data sources without writing to database
     --prices    Seed price data only
     --wiki      Seed initial wikis only
+
+VN30 Symbols: read from VN30_SYMBOLS env var (comma-separated).
+Falls back to the default list in app/config.py if unset.
+Update VN30_SYMBOLS in .env when HOSE rebalances the index.
 """
 from __future__ import annotations
 
@@ -31,13 +35,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-VN30_SYMBOLS = [
-    "VHM", "VND", "VPB", "VCB", "BID", "CTG", "GAS", "GVR",
-    "HDB", "HPG", "MBB", "MSN", "MWG", "NLG", "PDR", "PLX",
-    "PNC", "POW", "SAB", "SHB", "SSB", "SSI", "STB", "TCB",
-    "TPB", "VCA", "VCI", "VGC", "VIB", "VIC", "VJC", "VNM",
-    "VRE",
-]
+VN30_SYMBOLS = settings.get_vn30_symbols()
 
 PRICE_DAYS = 30
 PRICE_RETRY_DAYS = 7
@@ -158,8 +156,7 @@ def _seed_news_sources(dry_run: bool = False) -> int:
             INSERT INTO news_sources (id, name, base_url, crawler_type, is_active)
             VALUES
                 ('00000000-0000-0000-0000-000000000001', 'CafeF', 'https://cafef.vn', 'cafef', true),
-                ('00000000-0000-0000-0000-000000000002', 'Vietstock', 'https://vietstock.vn', 'vietstock', true),
-                ('00000000-0000-0000-0000-000000000003', 'Reuters VN', 'https://www.reuters.com/world/asia-pacific', 'reuters_vn', false)
+                ('00000000-0000-0000-0000-000000000002', 'Vietstock', 'https://vietstock.vn', 'vietstock', true)
             ON CONFLICT (name) DO NOTHING
         """)
         conn.commit()
@@ -447,7 +444,7 @@ async def _run(symbols: list[str], seed_prices: bool, seed_wiki: bool, seed_rati
     logger.info("=== Seeding %d symbols: %s ===", len(symbols), symbols)
 
     if seed_company:
-        logger.info("--- Seeding company metadata (FMP API) ---")
+        logger.info("--- Seeding company metadata (VnStock/VCI API) ---")
         results = _seed_company_info(symbols, dry_run)
         success = sum(1 for v in results.values() if v)
         logger.info("--- Company info: %d/%d succeeded ---", success, len(results))
@@ -480,7 +477,7 @@ def main():
     parser.add_argument("--prices", action="store_true", help="Seed price data only")
     parser.add_argument("--wiki", action="store_true", help="Seed initial wikis only")
     parser.add_argument("--ratios", action="store_true", help="Seed financial ratios only")
-    parser.add_argument("--company", action="store_true", help="Seed company metadata from FMP API")
+    parser.add_argument("--company", action="store_true", help="Seed company metadata from VnStock/VCI API")
     parser.add_argument(
         "--symbols",
         type=str,
