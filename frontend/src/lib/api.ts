@@ -105,7 +105,7 @@ export const wikiApi = {
       } as WikiData;
     }),
 
-  list: (params?: { limit?: number; offset?: number }) =>
+  list: (params?: { limit?: number; offset?: number; search?: string }) =>
     api.get<{ wikis: Record<string, unknown>[]; total: number; limit: number; offset: number }>("/company-wiki", { params }).then((r) => {
       const mapped = r.data.wikis.map((w: Record<string, unknown>): WikiData => {
         const rawDate = String(w.updated_at ?? "");

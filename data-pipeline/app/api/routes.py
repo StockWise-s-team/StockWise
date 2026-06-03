@@ -265,19 +265,36 @@ def remove_tracked_symbol(symbol: str):
 # ── Company Wiki ────────────────────────────────────────────────────────────────
 
 @router.get("/company-wiki")
-def list_wikis(limit: int = 50, offset: int = 0):
+def list_wikis(limit: int = 50, offset: int = 0, search: str = ""):
     conn = _get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        cur.execute("SELECT COUNT(*) FROM company_wiki")
-        total = int(cur.fetchone()["count"])
+        search_pattern = f"%{search}%" if search else None
 
-        cur.execute("""
-            SELECT symbol, wiki_data, version, updated_at
-            FROM company_wiki
-            ORDER BY updated_at DESC NULLS LAST
-            LIMIT %s OFFSET %s
-        """, (limit, offset))
+        if search_pattern:
+            cur.execute(
+                "SELECT COUNT(*) FROM company_wiki WHERE symbol ILIKE %s OR wiki_data->>'company_name' ILIKE %s",
+                (search_pattern, search_pattern),
+            )
+            total = int(cur.fetchone()["count"])
+
+            cur.execute("""
+                SELECT symbol, wiki_data, version, updated_at
+                FROM company_wiki
+                WHERE symbol ILIKE %s OR wiki_data->>'company_name' ILIKE %s
+                ORDER BY updated_at DESC NULLS LAST
+                LIMIT %s OFFSET %s
+            """, (search_pattern, search_pattern, limit, offset))
+        else:
+            cur.execute("SELECT COUNT(*) FROM company_wiki")
+            total = int(cur.fetchone()["count"])
+
+            cur.execute("""
+                SELECT symbol, wiki_data, version, updated_at
+                FROM company_wiki
+                ORDER BY updated_at DESC NULLS LAST
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
         rows = cur.fetchall()
         results = []
         for row in rows:

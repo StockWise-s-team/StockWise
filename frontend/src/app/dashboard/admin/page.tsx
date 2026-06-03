@@ -5,6 +5,7 @@ import {
   Newspaper,
   Radio,
   BookOpen,
+  Search,
   RefreshCw,
   Power,
   Plus,
@@ -318,13 +319,20 @@ function WikiSection({ trackedSymbols }: { trackedSymbols: string[] }) {
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await wikiApi.list({ limit: 1000, offset: 0 });
-      const tracked = new Set(trackedSymbols);
-      const filtered = (data.wikis ?? data).filter((w: WikiData) => tracked.has(w.symbol));
+      const data = await wikiApi.list({ limit: 1000, offset: 0, search: searchQuery });
+      let filtered: WikiData[];
+      if (searchQuery) {
+        filtered = (data.wikis ?? data) as WikiData[];
+      } else {
+        const tracked = new Set(trackedSymbols);
+        filtered = (data.wikis ?? data).filter((w: WikiData) => tracked.has(w.symbol));
+      }
       setTotal(filtered.length);
       const start = (page - 1) * PAGE_SIZE;
       setWikis(filtered.slice(start, start + PAGE_SIZE));
@@ -333,17 +341,55 @@ function WikiSection({ trackedSymbols }: { trackedSymbols: string[] }) {
     } finally {
       setLoading(false);
     }
-  }, [trackedSymbols, page]);
+  }, [trackedSymbols, page, searchQuery]);
+
+  useEffect(() => { setPage(1); }, [searchQuery]);
 
   useEffect(() => { load(); }, [load]);
 
+  const handleSearch = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const submitSearch = () => {
+    setSearchQuery(searchInput.trim());
+  };
+
   return (
     <section>
-      <SectionHeader
-        icon={BookOpen}
-        title="Company Wiki"
-        subtitle="Synthesized from news + market data"
-      />
+      <div className="flex items-center justify-between mb-3">
+        <SectionHeader
+          icon={BookOpen}
+          title="Company Wiki"
+          subtitle="Synthesized from news + market data"
+        />
+        <div className="flex items-center gap-1.5">
+          <div className="relative">
+            <input
+              value={searchInput}
+              onChange={(e) => handleSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); }}
+              placeholder="Search symbol…"
+              maxLength={10}
+              className="w-32 bg-terminal-bg border border-terminal-border rounded px-2 py-1 pr-7 font-mono text-[10px] text-terminal-text placeholder:text-terminal-muted/40 focus:outline-none focus:border-terminal-accent/50 transition-colors uppercase"
+            />
+            {searchInput && (
+              <button
+                onClick={() => { setSearchInput(""); setSearchQuery(""); }}
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-terminal-muted hover:text-terminal-text transition-colors leading-none"
+              >
+                <span className="text-[10px]">✕</span>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={submitSearch}
+            className="flex items-center gap-1 rounded border border-terminal-accent/30 bg-terminal-accent/5 px-1.5 py-1 font-mono text-[10px] text-terminal-accent hover:bg-terminal-accent/10 hover:border-terminal-accent/50 transition-all"
+          >
+            <Search className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
@@ -352,7 +398,7 @@ function WikiSection({ trackedSymbols }: { trackedSymbols: string[] }) {
         </div>
       ) : wikis.length === 0 ? (
         <p className="font-mono text-xs text-terminal-muted text-center py-8">
-          No wiki data. Run synthesis to generate.
+          {searchQuery ? `No results for "${searchQuery}"` : "No wiki data. Run synthesis to generate."}
         </p>
       ) : (
         <div className="space-y-1">
