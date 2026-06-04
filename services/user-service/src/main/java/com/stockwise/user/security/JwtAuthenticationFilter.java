@@ -1,5 +1,6 @@
 package com.stockwise.user.security;
 
+import com.stockwise.user.adapter.out.persistence.TokenManagementService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenManagementService tokenManagementService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,6 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"error\":\"INVALID_TOKEN_TYPE\",\"message\":\"Only access tokens are allowed\"}");
+                    return;
+                }
+
+                String tokenJti = jwtTokenProvider.getTokenId(token);
+                if (tokenJti != null && tokenManagementService.isAccessTokenBlacklisted(tokenJti)) {
+                    log.warn("Blacklisted token used on user-service: {}", tokenJti);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"TOKEN_REVOKED\",\"message\":\"Token has been revoked\"}");
                     return;
                 }
 

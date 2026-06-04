@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RateLimitService {
 
+    // TODO: [P2] Replace with Redis-backed Bucket4j for production
+    // Current in-memory approach resets on restart and doesn't work in multi-instance deployments
     private final Map<String, Bucket> authBuckets = new ConcurrentHashMap<>();
 
     public static final int AUTH_REQUESTS_PER_MINUTE = 10;

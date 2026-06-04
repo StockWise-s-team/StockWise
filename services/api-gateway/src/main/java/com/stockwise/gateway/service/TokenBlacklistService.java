@@ -13,7 +13,6 @@ import java.time.Duration;
 public class TokenBlacklistService {
 
     private static final String BLACKLIST_PREFIX = "token:blacklist:";
-    private static final String REFRESH_TOKEN_PREFIX = "refresh:valid:";
 
     private final StringRedisTemplate redisTemplate;
 
@@ -28,18 +27,8 @@ public class TokenBlacklistService {
     }
 
     public void revokeRefreshToken(String refreshTokenJti) {
-        String key = REFRESH_TOKEN_PREFIX + refreshTokenJti;
+        String key = BLACKLIST_PREFIX + refreshTokenJti;
         redisTemplate.delete(key);
         log.debug("Revoked refresh token JTI: {}", refreshTokenJti);
-    }
-
-    public void registerRefreshToken(String refreshTokenJti, String userId, Duration ttl) {
-        String key = REFRESH_TOKEN_PREFIX + refreshTokenJti;
-        redisTemplate.opsForValue().set(key, userId, ttl);
-        log.debug("Registered refresh token JTI: {} for user: {}", refreshTokenJti, userId);
-    }
-
-    public boolean isRefreshTokenValid(String refreshTokenJti) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_TOKEN_PREFIX + refreshTokenJti));
     }
 }

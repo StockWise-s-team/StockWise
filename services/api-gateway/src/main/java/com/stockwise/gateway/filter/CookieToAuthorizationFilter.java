@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
 
 @Slf4j
 @Component
@@ -55,14 +56,15 @@ public class CookieToAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private String injectRefreshToken(String body, String refreshToken) {
+        String safeToken = Matcher.quoteReplacement(refreshToken);
         if (body == null || body.isEmpty()) {
-            return String.format("{\"refreshToken\":\"%s\"}", refreshToken);
+            return String.format("{\"refreshToken\":\"%s\"}", safeToken);
         }
         if (body.contains("\"refreshToken\"")) {
-            return body.replaceAll("\"refreshToken\"\\s*:\\s*\"[^\"]*\"", "\"refreshToken\":\"" + refreshToken + "\"");
+            return body.replaceAll("\"refreshToken\"\\s*:\\s*\"[^\"]*\"", "\"refreshToken\":\"" + safeToken + "\"");
         }
         if (body.endsWith("}")) {
-            return body.substring(0, body.length() - 1) + ",\"refreshToken\":\"" + refreshToken + "\"}";
+            return body.substring(0, body.length() - 1) + ",\"refreshToken\":\"" + safeToken + "\"}";
         }
         return body;
     }
