@@ -6,16 +6,12 @@ import { useState } from "react";
 
 export default function AdvisorPage() {
   const [message, setMessage] = useState("");
-  const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
-  const events = useSSE(
-    submittedMessage
-      ? `/advisor/chat/stream?message=${encodeURIComponent(submittedMessage)}`
-      : null
-  );
+  const [active, setActive] = useState(false);
+  const events = useSSE(active ? "/api/v1/advisor/chat" : null);
 
   const handleSend = () => {
     if (!message.trim()) return;
-    setSubmittedMessage(message.trim());
+    setActive(true);
   };
 
   return (
@@ -26,7 +22,7 @@ export default function AdvisorPage() {
           {events.map((event, i) => (
             <AgentThoughtStream key={i} event={event} />
           ))}
-          {!submittedMessage && (
+          {!active && (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               <p>Ask the AI advisor anything about stocks, markets, or your portfolio.</p>
             </div>
