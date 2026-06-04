@@ -1,4 +1,4 @@
-package com.stockwise.gateway.security;
+package com.stockwise.user.security;
 
 public interface JwtTokenProvider {
     String generateAccessToken(String userId, String email, String role);

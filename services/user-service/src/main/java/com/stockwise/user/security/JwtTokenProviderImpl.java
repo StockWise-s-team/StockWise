@@ -1,4 +1,4 @@
-package com.stockwise.gateway.security;
+package com.stockwise.user.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -12,26 +12,56 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Component
 public class JwtTokenProviderImpl implements JwtTokenProvider {
 
     private final SecretKey secretKey;
+    private final long accessTokenExpirationMs;
+    private final long refreshTokenExpirationMs;
 
-    public JwtTokenProviderImpl(@Value("${jwt.secret}") String secret) {
+    public JwtTokenProviderImpl(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.access-token-expiration}") long accessTokenExpirationMs,
+            @Value("${jwt.refresh-token-expiration}") long refreshTokenExpirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationMs = accessTokenExpirationMs;
+        this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     }
 
     @Override
     public String generateAccessToken(String userId, String email, String role) {
-        // Gateway chỉ validate, không generate token
-        throw new UnsupportedOperationException("Gateway does not generate tokens");
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + accessTokenExpirationMs);
+
+        return Jwts.builder()
+                .subject(userId)
+                .claim("email", email)
+                .claim("role", role)
+                .claim("type", "access")
+                .id(UUID.randomUUID().toString())
+                .issuedAt(now)
+                .expiration(exp)
+                .signWith(secretKey)
+                .compact();
     }
 
     @Override
     public String generateRefreshToken(String userId) {
-        throw new UnsupportedOperationException("Gateway does not generate tokens");
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + refreshTokenExpirationMs);
+
+        return Jwts.builder()
+                .subject(userId)
+                .claim("type", "refresh")
+                .claim("jti", UUID.randomUUID().toString())
+                .issuedAt(now)
+                .expiration(exp)
+                .signWith(secretKey)
+                .compact();
     }
 
     @Override
