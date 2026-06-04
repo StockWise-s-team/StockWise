@@ -6,6 +6,7 @@ import {
   Briefcase,
   FlaskConical,
   Bot,
+  Settings,
   LogOut,
 } from "lucide-react";
 
@@ -15,6 +16,8 @@ const navItems = [
   { href: "/dashboard/sandbox", label: "Sandbox", icon: FlaskConical },
   { href: "/dashboard/advisor", label: "AI Advisor", icon: Bot },
 ];
+
+const adminItem = { href: "/dashboard/admin", label: "Admin", icon: Settings };
 
 export default function DashboardLayout({
   children,
@@ -36,6 +39,15 @@ export default function DashboardLayout({
               {item.label}
             </Link>
           ))}
+          <div className="my-2 border-t border-terminal-border" />
+          <Link
+            key={adminItem.href}
+            href={adminItem.href}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <adminItem.icon className="h-4 w-4" />
+            {adminItem.label}
+          </Link>
         </nav>
         <button className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
           <LogOut className="h-4 w-4" />
