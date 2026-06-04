@@ -23,20 +23,37 @@ export default function ProfilePage() {
   const [passwordMessage, setPasswordMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    // Run once on mount: refresh user data from server and seed local state.
+    // We do NOT include `user` in deps to avoid re-running (and overwriting
+    // local edits) every time the AuthProvider context user object changes.
     const fetchProfile = async () => {
       try {
-        await refreshUser();
-        setProfile(user);
-        setFullName(user?.fullName || "");
+        // refreshUser() returns the fresh User so we don't read the stale closure.
+        const freshUser = await refreshUser();
+        setProfile(freshUser);
+        setFullName(freshUser.fullName || "");
       } catch {
-        setProfile(user);
-        setFullName(user?.fullName || "");
+        // Network error or token expired — fall back to whatever is in context
+        if (user) {
+          setProfile(user);
+          setFullName(user.fullName || "");
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
-  }, [refreshUser, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only: intentionally omit `user` to avoid resetting after save
+
+  // Seed local form state if mount effect falls back (no refreshUser response)
+  // and context user loads later.
+  useEffect(() => {
+    if (user && !profile) {
+      setProfile(user);
+      setFullName(user.fullName || "");
+    }
+  }, [user, profile]);
 
   const handleSave = async () => {
     if (!fullName.trim()) return;

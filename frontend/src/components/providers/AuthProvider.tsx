@@ -28,7 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (fullName: string) => Promise<User>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User>;
   error: string | null;
   setError: (error: string | null) => void;
 }
@@ -176,11 +176,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<User> => {
     const response = await api.get<User>("/auth/me");
     const userData = response.data;
     saveStoredUser(userData);
     setUser(userData);
+    return userData;
   };
 
   const updateProfile = async (fullName: string): Promise<User> => {
