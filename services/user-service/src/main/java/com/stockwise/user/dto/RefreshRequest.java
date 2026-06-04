@@ -1,3 +1,8 @@
 package com.stockwise.user.dto;
 
-public record RefreshRequest(String refreshToken) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record RefreshRequest(
+        @NotBlank(message = "Refresh token must not be blank")
+        String refreshToken
+) {}
