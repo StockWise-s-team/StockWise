@@ -215,8 +215,7 @@ stockwise/
 │       │   ├── crawlers/
 │       │   │   ├── base_crawler.py    # Abstract BaseCrawler (OCP — add new sources here)
 │       │   │   ├── cafef_crawler.py
-│       │   │   ├── vietstock_crawler.py
-│       │   │   └── reuters_vn_crawler.py
+│       │   │   └── vietstock_crawler.py
 │       │   ├── transformers/
 │       │   │   ├── base_transformer.py
 │       │   │   └── news_transformer.py  # Clean HTML, extract text, chunk by ~500 tokens
@@ -417,15 +416,14 @@ CREATE TABLE news_sources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL,
   base_url VARCHAR(500) NOT NULL,
-  crawler_type VARCHAR(50) NOT NULL,  -- 'cafef' | 'vietstock' | 'reuters_vn'
+  crawler_type VARCHAR(50) NOT NULL,  -- 'cafef' | 'vietstock'
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
 INSERT INTO news_sources (name, base_url, crawler_type) VALUES
   ('CafeF', 'https://cafef.vn', 'cafef'),
-  ('Vietstock', 'https://vietstock.vn', 'vietstock'),
-  ('Reuters VN', 'https://www.reuters.com/world/asia-pacific', 'reuters_vn');
+  ('Vietstock', 'https://vietstock.vn', 'vietstock');
 
 -- Company wiki (living state — Karpathy pattern)
 CREATE TABLE company_wiki (

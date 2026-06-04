@@ -54,10 +54,24 @@ const config: Config = {
         "trading-down": "#f6465d",
         // Info
         info: "#3b82f6",
+        // Terminal Theme
+        terminal: {
+          bg: "#0c0c0c",
+          surface: "#141414",
+          border: "#2a2a2a",
+          muted: "#5c5c5c",
+          text: "#d4d4d4",
+          accent: "#f0b429",
+          green: "#4ade80",
+          red: "#f87171",
+          amber: "#fbbf24",
+        },
       },
       fontFamily: {
         nova: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
         plex: ["JetBrains Mono", "IBM Plex Sans", "monospace"],
+        mono: ["JetBrains Mono", "Fira Code", "Consolas", "monospace"],
+        display: ["Syne", "sans-serif"],
       },
       borderRadius: {
         xs: "2px",
