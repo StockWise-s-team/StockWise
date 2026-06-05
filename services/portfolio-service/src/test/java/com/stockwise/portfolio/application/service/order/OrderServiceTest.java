@@ -1,10 +1,11 @@
-package com.stockwise.order;
+package com.stockwise.portfolio.application.service.order;
 
-import com.stockwise.order.reservation.BuyOrderReservationStrategy;
-import com.stockwise.order.reservation.OrderReservationStrategyRegistry;
-import com.stockwise.order.reservation.SellOrderReservationStrategy;
-import com.stockwise.order.validation.DefaultOrderValidator;
+import com.stockwise.portfolio.application.service.order.reservation.BuyOrderReservationStrategy;
+import com.stockwise.portfolio.application.service.order.reservation.OrderReservationStrategyRegistry;
+import com.stockwise.portfolio.application.service.order.reservation.SellOrderReservationStrategy;
+import com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator;
 import com.stockwise.portfolio.application.exception.ConflictException;
+import com.stockwise.portfolio.application.port.out.OrderEventPublisher;
 import com.stockwise.portfolio.application.service.PortfolioAccountService;
 import com.stockwise.portfolio.domain.entity.Holding;
 import com.stockwise.portfolio.domain.entity.Order;
@@ -41,21 +42,43 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    private OrderService orderService;
+    private com.stockwise.portfolio.application.service.order.validation.SymbolPriceCache symbolPriceCache;
+
+    @Mock
+    private OrderEventPublisher orderEventPublisher;
+
+    private PlaceOrderService placeOrderService;
+    private CancelOrderService cancelOrderService;
 
     @BeforeEach
     void setUp() {
+        symbolPriceCache = new com.stockwise.portfolio.application.service.order.validation.InMemorySymbolPriceCache();
         PortfolioAccountService portfolioAccountService = new PortfolioAccountService(portfolioRepository);
         OrderReservationStrategyRegistry reservationStrategies = new OrderReservationStrategyRegistry(List.of(
                 new BuyOrderReservationStrategy(portfolioRepository),
                 new SellOrderReservationStrategy(holdingRepository)
         ));
-        orderService = new OrderService(
+        
+        com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator validator =
+                new com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator(List.of(
+                        new com.stockwise.portfolio.application.service.order.validation.BasicFormatValidationRule(),
+                        new com.stockwise.portfolio.application.service.order.validation.TradingHoursValidationRule(false, java.time.Clock.systemDefaultZone()),
+                        new com.stockwise.portfolio.application.service.order.validation.PriceBandValidationRule(symbolPriceCache, false)
+                ), symbolPriceCache);
+                
+        placeOrderService = new PlaceOrderService(
                 portfolioAccountService,
                 orderRepository,
-                new DefaultOrderValidator(),
+                validator,
                 reservationStrategies,
-                new OrderFactory()
+                new OrderFactory(),
+                orderEventPublisher
+        );
+
+        cancelOrderService = new CancelOrderService(
+                orderRepository,
+                reservationStrategies,
+                orderEventPublisher
         );
     }
 
@@ -66,7 +89,7 @@ class OrderServiceTest {
         when(portfolioRepository.findByUserId(userId)).thenReturn(Optional.of(portfolio));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order order = orderService.placeOrder(userId, " fpt ", "buy", 2, new BigDecimal("100.00"));
+        Order order = placeOrderService.placeOrder(userId, " fpt ", "buy", 2, new BigDecimal("100.00"));
 
         assertThat(portfolio.getVirtualCash()).isEqualByComparingTo("800.00");
         assertThat(order.getSymbol()).isEqualTo("FPT");
@@ -74,6 +97,7 @@ class OrderServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderConstants.PENDING);
         assertThat(order.getPrice()).isEqualByComparingTo("100.00");
         verify(portfolioRepository).save(portfolio);
+        verify(orderEventPublisher).publishOrderCreated(any(Order.class));
     }
 
     @Test
@@ -85,12 +109,13 @@ class OrderServiceTest {
         when(holdingRepository.findByPortfolioIdAndSymbol(portfolio.getId(), "FPT")).thenReturn(Optional.of(holding));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order order = orderService.placeOrder(userId, "FPT", "SELL", 4, new BigDecimal("100.00"));
+        Order order = placeOrderService.placeOrder(userId, "FPT", "SELL", 4, new BigDecimal("100.00"));
 
         assertThat(holding.getQuantity()).isEqualTo(6);
         assertThat(order.getType()).isEqualTo(OrderConstants.SELL);
         assertThat(order.getStatus()).isEqualTo(OrderConstants.PENDING);
         verify(holdingRepository).save(holding);
+        verify(orderEventPublisher).publishOrderCreated(any(Order.class));
     }
 
     @Test
@@ -103,11 +128,12 @@ class OrderServiceTest {
         when(portfolioRepository.findById(portfolio.getId())).thenReturn(Optional.of(portfolio));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order cancelled = orderService.cancelOrder(orderId, Optional.of(userId));
+        Order cancelled = cancelOrderService.cancelOrder(orderId, Optional.of(userId));
 
         assertThat(portfolio.getVirtualCash()).isEqualByComparingTo("1000.00");
         assertThat(cancelled.getStatus()).isEqualTo(OrderConstants.CANCELLED);
         assertThat(cancelled.getCancelledAt()).isNotNull();
+        verify(orderEventPublisher).publishOrderCancelled(any(Order.class));
     }
 
     @Test
@@ -118,7 +144,7 @@ class OrderServiceTest {
         Order order = order(orderId, userId, portfolio.getId(), OrderConstants.BUY, 2, new BigDecimal("100.00"), "FILLED");
         when(orderRepository.findByIdAndUserId(orderId, userId)).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> orderService.cancelOrder(orderId, Optional.of(userId)))
+        assertThatThrownBy(() -> cancelOrderService.cancelOrder(orderId, Optional.of(userId)))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Only PENDING orders can be cancelled");
     }
@@ -129,11 +155,65 @@ class OrderServiceTest {
         Portfolio portfolio = portfolio(userId, new BigDecimal("1000.00"));
         when(portfolioRepository.findByUserId(userId)).thenReturn(Optional.of(portfolio));
 
-        assertThatThrownBy(() -> orderService.placeOrder(userId, "FPT", "SHORT", 1, new BigDecimal("100.00")))
+        assertThatThrownBy(() -> placeOrderService.placeOrder(userId, "FPT", "SHORT", 1, new BigDecimal("100.00")))
                 .isInstanceOf(com.stockwise.portfolio.application.exception.BadRequestException.class)
                 .hasMessage("Unsupported order type: SHORT");
 
         assertThat(portfolio.getVirtualCash()).isEqualByComparingTo("1000.00");
+    }
+
+    @Test
+    void placeBuyOrderRejectsPriceOutOfCeiling() {
+        UUID userId = UUID.randomUUID();
+        symbolPriceCache.put("FPT", new BigDecimal("100.00"));
+
+        assertThatThrownBy(() -> placeOrderService.placeOrder(userId, "FPT", "BUY", 1, new BigDecimal("108.00")))
+                .isInstanceOf(com.stockwise.portfolio.application.exception.BadRequestException.class)
+                .hasMessageContaining("out of the daily price band");
+    }
+
+    @Test
+    void placeBuyOrderRejectsPriceBelowFloor() {
+        UUID userId = UUID.randomUUID();
+        symbolPriceCache.put("FPT", new BigDecimal("100.00"));
+
+        assertThatThrownBy(() -> placeOrderService.placeOrder(userId, "FPT", "BUY", 1, new BigDecimal("92.00")))
+                .isInstanceOf(com.stockwise.portfolio.application.exception.BadRequestException.class)
+                .hasMessageContaining("out of the daily price band");
+    }
+
+    @Test
+    void placeBuyOrderFailsOutsideTradingHours() {
+        UUID userId = UUID.randomUUID();
+        PortfolioAccountService portfolioAccountService = new PortfolioAccountService(portfolioRepository);
+        OrderReservationStrategyRegistry reservationStrategies = new OrderReservationStrategyRegistry(List.of(
+                new BuyOrderReservationStrategy(portfolioRepository),
+                new SellOrderReservationStrategy(holdingRepository)
+        ));
+        
+        // Create custom Clock set to a Sunday: 2026-06-07 (Sunday)
+        java.time.Instant sundayInstant = java.time.Instant.parse("2026-06-07T10:00:00Z");
+        java.time.Clock sundayClock = java.time.Clock.fixed(sundayInstant, java.time.ZoneId.of("UTC"));
+        
+        com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator strictValidator =
+                new com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator(List.of(
+                        new com.stockwise.portfolio.application.service.order.validation.BasicFormatValidationRule(),
+                        new com.stockwise.portfolio.application.service.order.validation.TradingHoursValidationRule(true, sundayClock),
+                        new com.stockwise.portfolio.application.service.order.validation.PriceBandValidationRule(symbolPriceCache, true)
+                ), symbolPriceCache);
+
+        PlaceOrderService strictPlaceOrderService = new PlaceOrderService(
+                portfolioAccountService,
+                orderRepository,
+                strictValidator,
+                reservationStrategies,
+                new OrderFactory(),
+                orderEventPublisher
+        );
+
+        assertThatThrownBy(() -> strictPlaceOrderService.placeOrder(userId, "FPT", "BUY", 1, new BigDecimal("100.00")))
+                .isInstanceOf(com.stockwise.portfolio.application.exception.BadRequestException.class)
+                .hasMessageContaining("trading days");
     }
 
     private Portfolio portfolio(UUID userId, BigDecimal cash) {

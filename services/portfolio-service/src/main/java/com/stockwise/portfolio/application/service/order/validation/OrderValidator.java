@@ -1,6 +1,6 @@
-package com.stockwise.order.validation;
+package com.stockwise.portfolio.application.service.order.validation;
 
-import com.stockwise.order.ValidatedOrderRequest;
+import com.stockwise.portfolio.application.service.order.ValidatedOrderRequest;
 
 import java.math.BigDecimal;
 import java.util.UUID;

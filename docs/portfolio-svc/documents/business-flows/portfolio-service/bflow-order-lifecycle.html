@@ -18,7 +18,7 @@
         <div class="mb-3">
           <span class="badge text-bg-primary">Service: portfolio-service</span>
           <span class="badge text-bg-secondary">Business flow</span>
-          <span class="badge text-bg-warning">Status: Partial</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
           <span class="badge text-bg-secondary">Source: StockWise SRS (Nhóm 21)</span>
         </div>
 
@@ -30,15 +30,15 @@
     participant FE as Frontend
     participant GW as API Gateway
     participant PF as portfolio-service
-    participant MD as market-service
     participant DB as PostgreSQL
     participant MQ as RabbitMQ
+    MQ->>PF: price updated event (price.updated)
+    PF->>PF: update local price cache
     User->>FE: Submit order (symbol, side, qty, price)
     FE->>GW: POST /portfolio/order (with JWT)
     GW->>PF: forward request + user identity
     PF->>PF: validate input (BR-103)
-    PF->>MD: request daily price band
-    MD-->>PF: floor / ceiling (BR-100)
+    PF->>PF: validate price band locally using cache (BR-100)
     PF->>PF: check funds (BUY, BR-101) or holdings (SELL, BR-102)
     PF->>PF: freeze cash or lock shares
     PF->>DB: insert order, status = PENDING
@@ -64,7 +64,7 @@
             <tbody>
               <tr><td>1</td><td>User submits an order; the gateway authenticates the JWT and forwards the request with the user identity.</td><td><a href="../../business-rules/portfolio-service/br-order-validation.html#BR-001"><code>BR-001</code></a></td></tr>
               <tr><td>2</td><td>The service validates input types, values, and lot size.</td><td><a href="../../business-rules/portfolio-service/br-order-validation.html#BR-103"><code>BR-103</code></a></td></tr>
-              <tr><td>3</td><td>The price is checked against the daily band from Market Data.</td><td><a href="../../business-rules/portfolio-service/br-order-validation.html#BR-100"><code>BR-100</code></a></td></tr>
+              <tr><td>3</td><td>The price is checked against the daily band using the local price cache (updated by RabbitMQ).</td><td><a href="../../business-rules/portfolio-service/br-order-validation.html#BR-100"><code>BR-100</code></a></td></tr>
               <tr><td>4</td><td>BUY checks available cash; SELL checks available (unlocked) holdings.</td><td><a href="../../business-rules/portfolio-service/br-order-validation.html#BR-101"><code>BR-101</code></a>, <a href="../../business-rules/portfolio-service/br-order-validation.html#BR-102"><code>BR-102</code></a></td></tr>
               <tr><td>5</td><td>The corresponding cash or shares are frozen to prevent double spending.</td><td><a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a></td></tr>
               <tr><td>6</td><td>The order is persisted as <code>PENDING</code>, then <code>ORDER_CREATED</code> is published.</td><td><a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a></td></tr>
@@ -85,7 +85,7 @@
         <ul class="list-group">
           <li class="list-group-item">Use cases: <a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a>, <a href="../../use-cases/portfolio-service/uc-004-cancel-order.html#UC-004"><code>UC-004</code></a></li>
           <li class="list-group-item">APIs: <a href="../../api-contracts/portfolio-service/api-post-portfolio-order.html#API-002"><code>API-002</code></a>, <a href="../../api-contracts/portfolio-service/api-delete-portfolio-order.html#API-003"><code>API-003</code></a></li>
-          <li class="list-group-item">Events: <a href="../../messaging/portfolio-service/event-reply-status.html#MSG-002"><code>MSG-002</code></a>, and <code>ORDER_CREATED</code> / <code>ORDER_CANCEL_REQUESTED</code></li>
+          <li class="list-group-item">Events: <a href="../../messaging/portfolio-service/event-reply-status.html#MSG-002"><code>MSG-002</code></a>, <a href="../../messaging/portfolio-service/event-order-created.html#MSG-003"><code>MSG-003</code></a> (order.created), and <a href="../../messaging/portfolio-service/event-order-cancelled.html#MSG-004"><code>MSG-004</code></a> (order.cancelled)</li>
           <li class="list-group-item">Entities: <a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>, <a href="../../data-models/portfolio-service/entity-transaction.html#ENTITY-004"><code>ENTITY-004</code></a></li>
         </ul>
       </div>

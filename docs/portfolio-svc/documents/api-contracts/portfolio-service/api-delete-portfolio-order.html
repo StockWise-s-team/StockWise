@@ -16,7 +16,7 @@
       <div class="card-body">
         <div class="mb-3">
           <span class="badge text-bg-primary">Service: portfolio-service</span>
-          <span class="badge text-bg-danger">Status: Not implemented</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
         </div>
 
         <p>The order-cancellation contract required by <a href="../../use-cases/portfolio-service/uc-004-cancel-order.html#UC-004"><code>UC-004</code></a>.</p>
@@ -28,7 +28,7 @@
               <tr><th>Method</th><td><code>DELETE</code></td></tr>
               <tr><th>Path</th><td><code>/portfolio/order/{orderId}</code></td></tr>
               <tr><th>Path Parameter</th><td><code>orderId</code> — UUID of a PENDING order owned by the caller.</td></tr>
-              <tr><th>Auth</th><td>Bearer JWT; user id derived from the token.</td></tr>
+              <tr><th>Auth</th><td>Bearer [JWT]; user id derived from the token.</td></tr>
               <tr><th>Success Status</th><td><code>200 OK</code></td></tr>
             </tbody>
           </table>

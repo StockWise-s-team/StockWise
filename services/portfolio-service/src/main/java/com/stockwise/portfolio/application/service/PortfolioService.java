@@ -2,7 +2,7 @@ package com.stockwise.portfolio.application.service;
 
 import com.stockwise.portfolio.application.port.in.GetPnLUseCase;
 import com.stockwise.portfolio.application.port.in.GetPortfolioUseCase;
-import com.stockwise.order.OrderConstants;
+import com.stockwise.portfolio.application.service.order.OrderConstants;
 import com.stockwise.portfolio.domain.entity.Holding;
 import com.stockwise.portfolio.domain.entity.Portfolio;
 import com.stockwise.portfolio.domain.entity.Transaction;

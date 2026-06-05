@@ -1,4 +1,4 @@
-package com.stockwise.order;
+package com.stockwise.portfolio.application.service.order;
 
 import com.stockwise.portfolio.domain.entity.Order;
 import com.stockwise.portfolio.domain.entity.Portfolio;

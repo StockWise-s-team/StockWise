@@ -27,3 +27,11 @@ management:
     web:
       exposure:
         include: health,info
+
+market-service:
+  url: ${MARKET_SERVICE_URL:http://localhost:8082}
+
+trading:
+  hours:
+    enabled: ${TRADING_HOURS_ENABLED:true}
+

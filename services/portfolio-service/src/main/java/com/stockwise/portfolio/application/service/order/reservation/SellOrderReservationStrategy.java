@@ -1,7 +1,7 @@
-package com.stockwise.order.reservation;
+package com.stockwise.portfolio.application.service.order.reservation;
 
-import com.stockwise.order.OrderConstants;
-import com.stockwise.order.ValidatedOrderRequest;
+import com.stockwise.portfolio.application.service.order.OrderConstants;
+import com.stockwise.portfolio.application.service.order.ValidatedOrderRequest;
 import com.stockwise.portfolio.application.exception.ConflictException;
 import com.stockwise.portfolio.domain.entity.Holding;
 import com.stockwise.portfolio.domain.entity.Order;
@@ -10,6 +10,10 @@ import com.stockwise.portfolio.domain.repository.HoldingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Concrete reservation strategy for SELL orders.
+ * Handles locking and releasing of holding share quantities in the user's portfolio.
+ */
 @Component
 @RequiredArgsConstructor
 public class SellOrderReservationStrategy implements OrderReservationStrategy {
@@ -21,6 +25,10 @@ public class SellOrderReservationStrategy implements OrderReservationStrategy {
         return OrderConstants.SELL;
     }
 
+    /**
+     * Locks/deducts the requested share quantity from the user's available holding shares.
+     * Throws a ConflictException if the user doesn't own the stock or has insufficient shares.
+     */
     @Override
     public void reserve(Portfolio portfolio, ValidatedOrderRequest request) {
         Holding holding = holdingRepository.findByPortfolioIdAndSymbol(portfolio.getId(), request.symbol())
@@ -32,6 +40,9 @@ public class SellOrderReservationStrategy implements OrderReservationStrategy {
         holdingRepository.save(holding);
     }
 
+    /**
+     * Unlocks and returns the locked shares back to the active holding entity on cancellation.
+     */
     @Override
     public void release(Order order) {
         Holding holding = holdingRepository.findByPortfolioIdAndSymbol(order.getPortfolioId(), order.getSymbol())

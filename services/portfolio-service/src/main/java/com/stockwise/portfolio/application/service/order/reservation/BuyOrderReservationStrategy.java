@@ -1,7 +1,7 @@
-package com.stockwise.order.reservation;
+package com.stockwise.portfolio.application.service.order.reservation;
 
-import com.stockwise.order.OrderConstants;
-import com.stockwise.order.ValidatedOrderRequest;
+import com.stockwise.portfolio.application.service.order.OrderConstants;
+import com.stockwise.portfolio.application.service.order.ValidatedOrderRequest;
 import com.stockwise.portfolio.application.exception.ConflictException;
 import com.stockwise.portfolio.application.exception.NotFoundException;
 import com.stockwise.portfolio.domain.entity.Order;
@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
+/**
+ * Concrete reservation strategy for BUY orders.
+ * Handles freezing and unfreezing of virtual cash assets in the user's portfolio.
+ */
 @Component
 @RequiredArgsConstructor
 public class BuyOrderReservationStrategy implements OrderReservationStrategy {
@@ -23,6 +27,10 @@ public class BuyOrderReservationStrategy implements OrderReservationStrategy {
         return OrderConstants.BUY;
     }
 
+    /**
+     * Deducts/freezes the required purchase cash (price * quantity) from the virtual cash balance.
+     * Throws a ConflictException if the user has insufficient cash.
+     */
     @Override
     public void reserve(Portfolio portfolio, ValidatedOrderRequest request) {
         BigDecimal cost = request.price().multiply(BigDecimal.valueOf(request.quantity()));
@@ -33,6 +41,9 @@ public class BuyOrderReservationStrategy implements OrderReservationStrategy {
         portfolioRepository.save(portfolio);
     }
 
+    /**
+     * Refunds the full reserved cash amount back to the virtual cash balance on cancellation.
+     */
     @Override
     public void release(Order order) {
         Portfolio portfolio = portfolioRepository.findById(order.getPortfolioId())

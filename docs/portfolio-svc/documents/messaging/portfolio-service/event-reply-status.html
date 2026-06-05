@@ -16,7 +16,7 @@
       <div class="card-body">
         <div class="mb-3">
           <span class="badge text-bg-primary">RabbitMQ</span>
-          <span class="badge text-bg-danger">Status: Not implemented</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
         </div>
 
         <p>An outbound event published after each transaction so downstream consumers (e.g. ai-service) have fresh portfolio context, per <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-10"><code>FR-PORTFOLIO-10</code></a>.</p>
@@ -52,7 +52,7 @@
             <thead><tr><th>Event</th><th>Purpose</th></tr></thead>
             <tbody>
               <tr><td>Portfolio-updated event (FR-PORTFOLIO-10)</td><td>Inform ai-service of a portfolio change after a transaction.</td></tr>
-              <tr><td>Order lifecycle events (ORDER_CREATED / ORDER_CANCEL_REQUESTED)</td><td>Drive matching and cancellation; depend on the order entity (<a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>).</td></tr>
+              <tr><td>Order lifecycle events (<a href="event-order-created.html#MSG-003"><code>MSG-003</code></a> / <a href="event-order-cancelled.html#MSG-004"><code>MSG-004</code></a>)</td><td>Drive matching and cancellation; depend on the order entity (<a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>).</td></tr>
             </tbody>
           </table>
         </div>

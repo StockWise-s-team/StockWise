@@ -6,8 +6,8 @@
     projectSummary: "SRS-aligned documentation for the StockWise portfolio-service (Portfolio & Paper Trading module). Each requirement, use case, rule, and contract is documented from the project report and tagged with a simple implementation status.",
     authoringGuide: "",
     metrics: [
-      "12 group pages",
-      "22 child artifacts",
+      "13 group pages",
+      "23 child artifacts",
       "FR-PORTFOLIO-01..11",
       "Implementation status tags",
       "Source: StockWise SRS (Nhóm 21)"
@@ -251,6 +251,24 @@
             href: "messaging/portfolio-service/event-reply-status.html",
             anchor: "MSG-002",
             frameTitle: "MSG-002 Portfolio Transaction Event"
+          }
+        ]
+      },
+      {
+        id: "integrations",
+        title: "Integrations",
+        file: "groups/integrations.html",
+        eyebrow: "1 artifact",
+        range: "Service dependencies",
+        description: "Contracts portfolio-service needs from market-service, gateway/auth, matching/order processing, and ai-service.",
+        artifacts: [
+          {
+            eyebrow: "INT-PORTFOLIO-001",
+            title: "Service Dependencies For Completed Order Use Cases",
+            description: "Defines what BUY, SELL, and cancel already own in portfolio-service and what external services must provide to complete the SRS flow end to end.",
+            href: "integrations/portfolio-service/service-dependency-contracts.html",
+            anchor: "INT-PORTFOLIO-001",
+            frameTitle: "INT-PORTFOLIO-001 Service Dependencies"
           }
         ]
       },

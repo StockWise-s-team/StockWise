@@ -31,11 +31,12 @@
 
         <h2 class="h5 mt-4">Capability Status</h2>
         <ul class="list-group">
-          <li class="list-group-item"><span class="badge text-bg-warning">Partial</span> View portfolio — <code>GET /portfolio</code> returns portfolio, holdings, and transactions.</li>
-          <li class="list-group-item"><span class="badge text-bg-warning">Partial</span> Place order — <code>POST /portfolio/order</code> for BUY/SELL.</li>
-          <li class="list-group-item"><span class="badge text-bg-warning">Partial</span> Read PnL — <code>GET /portfolio/pnl</code>.</li>
+          <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> View portfolio — <code>GET /portfolio</code> returns portfolio, holdings, and transactions.</li>
+          <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> Place order — <code>POST /portfolio/order</code> for BUY/SELL.</li>
+          <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> Read PnL — <code>GET /portfolio/pnl</code>.</li>
           <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> Data model and runtime wiring for <code>Portfolio</code>, <code>Holding</code>, <code>Transaction</code> with PostgreSQL, RabbitMQ, and actuator.</li>
-          <li class="list-group-item"><span class="badge text-bg-danger">Not implemented</span> Order validation/matching, order cancellation, PnL calculation, and outbound transaction events.</li>
+          <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> Order validation, order cancellation, PnL calculation, and outbound transaction events.</li>
+          <li class="list-group-item"><span class="badge text-bg-secondary">Remaining Dependency</span> Market price-band validation, matching/fill engine, and AI advisor event consumer.</li>
         </ul>
 
         <h2 class="h5 mt-4">Actors</h2>

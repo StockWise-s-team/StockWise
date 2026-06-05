@@ -1,0 +1,16 @@
+{
+  "project": "portfolio-service",
+  "generated_at": "2026-06-05T07:00:00Z",
+  "active_extensions": [
+    "rest-openapi-writer",
+    "rabbitmq-amqp-writer"
+  ],
+  "extension_routing": {
+    "rest-openapi-writer": [
+      "api-contracts"
+    ],
+    "rabbitmq-amqp-writer": [
+      "messaging-contracts"
+    ]
+  }
+}
