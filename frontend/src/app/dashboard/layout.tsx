@@ -6,21 +6,32 @@ import {
   Briefcase,
   FlaskConical,
   Bot,
+  Settings,
   LogOut,
+  User,
 } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/dashboard/sandbox", label: "Sandbox", icon: FlaskConical },
   { href: "/dashboard/advisor", label: "AI Advisor", icon: Bot },
+  { href: "/dashboard/profile", label: "Profile", icon: User },
 ];
+
+const adminItem = { href: "/dashboard/admin", label: "Admin", icon: Settings };
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-64 flex-col border-r bg-card p-4">
@@ -36,8 +47,20 @@ export default function DashboardLayout({
               {item.label}
             </Link>
           ))}
+          <div className="my-2 border-t border-terminal-border" />
+          <Link
+            key={adminItem.href}
+            href={adminItem.href}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <adminItem.icon className="h-4 w-4" />
+            {adminItem.label}
+          </Link>
         </nav>
-        <button className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+        >
           <LogOut className="h-4 w-4" />
           Logout
         </button>

@@ -1,0 +1,45 @@
+---
+description: Test data flow before implementing
+alwaysApply: true
+---
+
+# Quy tắc kiểm tra luồng dữ liệu trước khi thực hiện
+
+## Nguyên tắc
+
+Khi gặp một đoạn code, module, hoặc luồng dữ liệu mà không hiểu rõ:
+- Input là gì (định dạng, cấu trúc, nguồn)
+- Nó xử lý như thế nào
+- Output trả ra cái gì
+
+## Bước thực hiện bắt buộc
+
+1. **Viết test hoặc script nhỏ** để gọi trực tiếp đoạn code đó
+2. ** Quan sát input thực tế** — không suy đoán từ type hints hay docstring
+3. **Chạy và xem output thực tế** — log, print, hoặc breakpoint
+4. **Chỉ sau khi hiểu rõ** luồng dữ liệu mới chuyển sang bước tiếp theo
+
+## Ví dụ
+
+```
+// ❌ BAD — Suy đoán input/output mà không kiểm chứng
+function processUserData(data: any) {
+  return data.profile.address.city; // Giả định cấu trúc mà không biết chắc
+}
+
+// ✅ GOOD — Viết test nhỏ trước
+// Tạo script test: feed sample data → xem output → hiểu cấu trúc thực tế
+// Rồi mới implement logic
+```
+
+## Áp dụng trong dự án StockWise
+
+- Khi đọc code API routes, trước tiên trace xem request body/response thực tế là gì
+- Khi đọc code synthesis/merger, trước tiên gọi trực tiếp hàm đó với dữ liệu mẫu
+- Khi sửa lỗi liên quan đến dữ liệu, luôn reproduce bằng test trước khi fix
+
+## Tại sao
+
+- Type hints, docstring, và interface không phản ánh đầy đủ dữ liệu thực tế
+- Cấu trúc dữ liệu thay đổi giữa môi trường dev/staging/prod
+- Việc suy đoán dẫn đến bug thêm thay vì fix
