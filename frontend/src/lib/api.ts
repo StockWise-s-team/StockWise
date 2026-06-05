@@ -8,6 +8,9 @@ import type {
   PipelineStatus,
   PipelineProgress,
   PipelineProgressState,
+  LatestPrice,
+  OhlcSeries,
+  FinancialRatioList,
 } from "./types";
 
 const api = axios.create({
@@ -18,7 +21,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Endpoints that should never trigger token refresh logic
 const AUTH_BYPASS_PATHS = ["/auth/refresh", "/auth/login", "/auth/register"];
 
 const isAuthBypass = (url: string | undefined): boolean => {
@@ -26,10 +28,7 @@ const isAuthBypass = (url: string | undefined): boolean => {
   return AUTH_BYPASS_PATHS.some((path) => url.includes(path));
 };
 
-// Shared refresh promise — prevents multiple simultaneous refresh calls
 let refreshPromise: Promise<string | null> | null = null;
-
-// Subscribers wait for the ongoing refresh to finish
 let refreshSubscribers: Array<(token: string | null) => void> = [];
 
 const subscribeTokenRefresh = (callback: (token: string | null) => void) => {
@@ -41,7 +40,6 @@ const onRefreshComplete = (token: string | null) => {
   refreshSubscribers = [];
 };
 
-// Request interceptor: attach access token from memory store
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token && config.headers) {
@@ -50,13 +48,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401 with refresh logic
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-    // Only handle 401 on non-auth-bypass endpoints, and only once
     if (
       error.response?.status === 401 &&
       originalRequest &&
@@ -93,10 +91,13 @@ api.interceptors.response.use(
   }
 );
 
-const performRefresh = async (originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }): Promise<string | null> => {
+const performRefresh = async (
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }
+): Promise<string | null> => {
   try {
-    // Refresh token is in HttpOnly cookie — no manual header needed
-    const refreshResponse = await api.post<{ accessToken?: string }>("/auth/refresh");
+    const refreshResponse = await api.post<{ accessToken?: string }>(
+      "/auth/refresh"
+    );
     const newToken = refreshResponse.data?.accessToken ?? null;
 
     if (newToken) {
@@ -117,7 +118,18 @@ const performRefresh = async (originalRequest: InternalAxiosRequestConfig & { _r
 export { subscribeTokenRefresh };
 export default api;
 
-// ─── News Sources ───────────────────────────────────────────────────────────────
+export const marketApi = {
+  getLatestPrice: (symbol: string) =>
+    api.get<LatestPrice>(`/market/price/${symbol}`).then((r) => r.data),
+
+  getOhlc: (symbol: string, params?: { startDate?: string; endDate?: string }) =>
+    api
+      .get<OhlcSeries>(`/market/ohlc/${symbol}`, { params })
+      .then((r) => r.data),
+
+  getRatios: (symbol: string) =>
+    api.get<FinancialRatioList>(`/market/ratio/${symbol}`).then((r) => r.data),
+};
 
 export const newsSourcesApi = {
   list: () =>
@@ -135,17 +147,13 @@ export const newsSourcesApi = {
     api.patch<NewsSource>(`/news-sources/${id}`, { is_active: isActive }),
 };
 
-// ─── Tracked Symbols ───────────────────────────────────────────────────────────
-
 export const trackedSymbolsApi = {
-  list: () =>
-    api.get<string[]>("/tracked-symbols").then((r) => r.data),
+  list: () => api.get<string[]>("/tracked-symbols").then((r) => r.data),
 
   add: (symbol: string) =>
     api.post<string>("/tracked-symbols", { symbol }).then((r) => r.data),
 
-  remove: (symbol: string) =>
-    api.delete(`/tracked-symbols/${symbol}`),
+  remove: (symbol: string) => api.delete(`/tracked-symbols/${symbol}`),
 
   triggerSeed: (symbols?: string[]) =>
     api.post("/scripts/seed", {
@@ -154,18 +162,17 @@ export const trackedSymbolsApi = {
       wiki_only: false,
     }),
 
-  triggerSeedForSymbols: (symbols: string[]) =>
-    api.post("/scripts/seed", { symbols }),
+  triggerSeedForSymbols: (symbols: string[]) => api.post("/scripts/seed", { symbols }),
 };
-
-// ─── Wiki ─────────────────────────────────────────────────────────────────────
 
 export const wikiApi = {
   get: (symbol: string) =>
     api.get<Record<string, unknown>>(`/company-wiki/${symbol}`).then((r) => {
       const w = r.data;
       const rawDate = String(w.updated_at ?? "");
-      const isoDate = /^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(rawDate) ? rawDate + "Z" : rawDate;
+      const isoDate = /^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(rawDate)
+        ? rawDate + "Z"
+        : rawDate;
       return {
         symbol: w.symbol,
         companyName: w.company_name,
@@ -182,33 +189,44 @@ export const wikiApi = {
     }),
 
   list: (params?: { limit?: number; offset?: number; search?: string }) =>
-    api.get<{ wikis: Record<string, unknown>[]; total: number; limit: number; offset: number }>("/company-wiki", { params }).then((r) => {
-      const mapped = r.data.wikis.map((w: Record<string, unknown>): WikiData => {
-        const rawDate = String(w.updated_at ?? "");
-        const isoDate = /^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(rawDate) ? rawDate + "Z" : rawDate;
+    api
+      .get<{
+        wikis: Record<string, unknown>[];
+        total: number;
+        limit: number;
+        offset: number;
+      }>("/company-wiki", { params })
+      .then((r) => {
+        const mapped = r.data.wikis.map((w: Record<string, unknown>): WikiData => {
+          const rawDate = String(w.updated_at ?? "");
+          const isoDate = /^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(rawDate)
+            ? rawDate + "Z"
+            : rawDate;
+          return {
+            symbol: String(w.symbol ?? ""),
+            companyName: String(w.company_name ?? ""),
+            sector: String(w.sector ?? ""),
+            businessSummary: String(w.business_summary ?? ""),
+            recentPerformance: (w.recent_performance ?? null) as WikiData["recentPerformance"],
+            keyRisks: Array.isArray(w.key_risks) ? (w.key_risks as string[]) : [],
+            sentiment: String(w.sentiment ?? ""),
+            lastNewsSummary: String(w.last_news_summary ?? ""),
+            financialsSnapshot: (w.financials_snapshot ?? null) as WikiData["financialsSnapshot"],
+            version: Number(w.version ?? 0),
+            updatedAt: isoDate,
+          };
+        });
         return {
-          symbol: String(w.symbol ?? ""),
-          companyName: String(w.company_name ?? ""),
-          sector: String(w.sector ?? ""),
-          businessSummary: String(w.business_summary ?? ""),
-          recentPerformance: (w.recent_performance ?? null) as WikiData["recentPerformance"],
-          keyRisks: Array.isArray(w.key_risks) ? (w.key_risks as string[]) : [],
-          sentiment: String(w.sentiment ?? ""),
-          lastNewsSummary: String(w.last_news_summary ?? ""),
-          financialsSnapshot: (w.financials_snapshot ?? null) as WikiData["financialsSnapshot"],
-          version: Number(w.version ?? 0),
-          updatedAt: isoDate,
+          wikis: mapped,
+          total: r.data.total,
+          limit: r.data.limit,
+          offset: r.data.offset,
         };
-      });
-      return { wikis: mapped, total: r.data.total, limit: r.data.limit, offset: r.data.offset };
-    }),
+      }),
 };
 
-// ─── Pipeline Progress ─────────────────────────────────────────────────────────
-
 export const pipelineApi = {
-  getStatus: () =>
-    api.get<PipelineStatus>("/pipeline/status").then((r) => r.data),
+  getStatus: () => api.get<PipelineStatus>("/pipeline/status").then((r) => r.data),
 
   triggerSynthesis: (symbols?: string[]) =>
     api.post("/synthesis/trigger", { symbols: symbols ?? [] }),
@@ -241,17 +259,33 @@ export function createProgressSSE(
   return es;
 }
 
-// ─── Pipeline Run History ─────────────────────────────────────────────────────────
-
 export const pipelineRunsApi = {
-  list: (params?: { run_type?: string; status?: string; limit?: number; offset?: number }) =>
-    api.get<{ runs: import("./types").PipelineRun[]; total: number; limit: number; offset: number }>("/pipeline/runs", { params }).then((r) => r.data),
+  list: (params?: {
+    run_type?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    api
+      .get<{
+        runs: import("./types").PipelineRun[];
+        total: number;
+        limit: number;
+        offset: number;
+      }>("/pipeline/runs", { params })
+      .then((r) => r.data),
 
   recent: (limit = 10) =>
-    api.get<import("./types").PipelineRun[]>("/pipeline/runs/recent", { params: { limit } }).then((r) => r.data),
+    api
+      .get<import("./types").PipelineRun[]>("/pipeline/runs/recent", {
+        params: { limit },
+      })
+      .then((r) => r.data),
 
   detail: (runId: string) =>
-    api.get<import("./types").PipelineRunDetail>(`/pipeline/runs/${runId}`).then((r) => r.data),
+    api
+      .get<import("./types").PipelineRunDetail>(`/pipeline/runs/${runId}`)
+      .then((r) => r.data),
 
   stats: () =>
     api.get<import("./types").PipelineStats>("/pipeline/runs/stats").then((r) => r.data),
