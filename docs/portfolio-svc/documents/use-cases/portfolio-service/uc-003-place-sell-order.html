@@ -54,6 +54,9 @@
               <tr><td>E1</td><td>Price outside the daily band.</td><td>422</td><td>"Order price [X] is outside the band. Ceiling: [Y], Floor: [Z]."</td></tr>
               <tr><td>E3</td><td>Insufficient shares (available [TICKER] &lt; quantity).</td><td>400</td><td>"Insufficient available [TICKER]. Needed: [X]. Available: [Y]."</td></tr>
               <tr><td>E6</td><td>Invalid/expired JWT.</td><td>401</td><td>"Session expired. Please log in again."</td></tr>
+              <tr><td>E7</td><td>Market Data timeout (&gt;3s).</td><td>503</td><td>"Market data service is temporarily unavailable. Please retry."</td></tr>
+              <tr><td>E8</td><td>Portfolio service timeout (&gt;3s).</td><td>503</td><td>"Portfolio service is temporarily unavailable. The order was not placed."</td></tr>
+              <tr><td>E9</td><td>Event publish failed after the DB write (partial failure).</td><td>500</td><td>"The order was accepted but is pending processing. The system will retry automatically."</td></tr>
               <tr><td>E10</td><td>Market closed.</td><td>400</td><td>"The market is closed. Please place orders during trading hours."</td></tr>
             </tbody>
           </table>

@@ -53,6 +53,8 @@
               <tr><td>E4</td><td>Order not found (<code>order_id</code> absent).</td><td>404</td><td>"No order found with id [order_id]."</td></tr>
               <tr><td>E5</td><td>Order status is not PENDING.</td><td>409</td><td>"Cannot cancel a matched or already-cancelled order. Current status: [STATUS]."</td></tr>
               <tr><td>E6</td><td>Invalid/expired JWT.</td><td>401</td><td>"Session expired. Please log in again."</td></tr>
+              <tr><td>E8</td><td>Portfolio service timeout (&gt;3s).</td><td>503</td><td>"Portfolio service is temporarily unavailable. Please retry."</td></tr>
+              <tr><td>E9</td><td>Cancel event publish failed after the status update (partial failure).</td><td>500</td><td>"The cancellation was accepted but is pending processing. The system will retry automatically."</td></tr>
             </tbody>
           </table>
         </div>

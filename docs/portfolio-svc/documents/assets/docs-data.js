@@ -6,8 +6,8 @@
     projectSummary: "SRS-aligned documentation for the StockWise portfolio-service (Portfolio & Paper Trading module). Each requirement, use case, rule, and contract is documented from the project report and tagged with a simple implementation status.",
     authoringGuide: "",
     metrics: [
-      "11 group pages",
-      "21 child artifacts",
+      "12 group pages",
+      "22 child artifacts",
       "FR-PORTFOLIO-01..11",
       "Implementation status tags",
       "Source: StockWise SRS (Nhóm 21)"
@@ -105,6 +105,24 @@
             href: "use-cases/portfolio-service/uc-004-cancel-order.html",
             anchor: "UC-004",
             frameTitle: "UC-004 Cancel Order"
+          }
+        ]
+      },
+      {
+        id: "business-flows",
+        title: "Business Flows",
+        file: "groups/business-flows.html",
+        eyebrow: "1 artifact",
+        range: "BFLOW-001",
+        description: "End-to-end order lifecycle across place, match, fill, and cancel.",
+        artifacts: [
+          {
+            eyebrow: "BFLOW-001",
+            title: "Order Lifecycle",
+            description: "Place to PENDING to FILLED or CANCELLED flow with validation, asset freeze/release, and events across portfolio-service, market-service, and RabbitMQ.",
+            href: "business-flows/portfolio-service/bflow-order-lifecycle.html",
+            anchor: "BFLOW-001",
+            frameTitle: "BFLOW-001 Order Lifecycle"
           }
         ]
       },

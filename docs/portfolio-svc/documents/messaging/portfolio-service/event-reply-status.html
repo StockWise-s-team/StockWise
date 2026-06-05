@@ -21,7 +21,20 @@
 
         <p>An outbound event published after each transaction so downstream consumers (e.g. ai-service) have fresh portfolio context, per <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-10"><code>FR-PORTFOLIO-10</code></a>.</p>
 
-        <h2 class="h5">Specified Outbound Event</h2>
+        <h2 class="h5">Contract Summary</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <tbody>
+              <tr><th>Exchange</th><td><code>portfolio.exchange</code></td></tr>
+              <tr><th>Routing Key</th><td><code>updated</code></td></tr>
+              <tr><th>Producer</th><td>portfolio-service (this service)</td></tr>
+              <tr><th>Consumer Queue</th><td><code>ai_service_portfolio_q</code> (ai-service)</td></tr>
+              <tr><th>Direction</th><td>Published by portfolio-service so the AI advisor has fresh portfolio context.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Specified Outbound Event</h2>
         <div class="table-responsive">
           <table class="table table-sm table-bordered table-striped align-middle">
             <tbody>

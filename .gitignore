@@ -6,10 +6,6 @@ node_modules/
 # Next.js
 .next/
 frontend/out/
-<<<<<<< HEAD
-
-=======
->>>>>>> a60c7022b3b580e5c12549ebdc81227174f7715f
 .*
 # Java
 target/
