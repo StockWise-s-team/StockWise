@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     CHECK (quantity > 0)
 );
 
+CREATE OR REPLACE RULE no_update_transactions AS ON UPDATE TO transactions DO INSTEAD NOTHING;
+CREATE OR REPLACE RULE no_delete_transactions AS ON DELETE TO transactions DO INSTEAD NOTHING;
+
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_portfolio_id ON orders(portfolio_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
