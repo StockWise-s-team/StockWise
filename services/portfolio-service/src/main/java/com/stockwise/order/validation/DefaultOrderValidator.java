@@ -1,5 +1,7 @@
-package com.stockwise.portfolio.application.service.order;
+package com.stockwise.order.validation;
 
+import com.stockwise.order.OrderConstants;
+import com.stockwise.order.ValidatedOrderRequest;
 import com.stockwise.portfolio.application.exception.BadRequestException;
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package com.stockwise.portfolio.application.service.order;
+package com.stockwise.order.reservation;
 
 import com.stockwise.portfolio.application.exception.BadRequestException;
 import org.springframework.stereotype.Component;

@@ -1,5 +1,6 @@
-package com.stockwise.portfolio.application.service.order;
+package com.stockwise.order.reservation;
 
+import com.stockwise.order.ValidatedOrderRequest;
 import com.stockwise.portfolio.domain.entity.Order;
 import com.stockwise.portfolio.domain.entity.Portfolio;
 

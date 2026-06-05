@@ -1,4 +1,4 @@
-package com.stockwise.portfolio.application.service.order;
+package com.stockwise.order;
 
 import java.math.BigDecimal;
 import java.util.UUID;

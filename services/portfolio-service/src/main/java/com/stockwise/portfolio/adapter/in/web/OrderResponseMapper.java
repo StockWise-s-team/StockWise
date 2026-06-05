@@ -1,7 +1,7 @@
 package com.stockwise.portfolio.adapter.in.web;
 
 import com.stockwise.portfolio.adapter.in.web.dto.OrderResponse;
-import com.stockwise.portfolio.application.service.order.OrderConstants;
+import com.stockwise.order.OrderConstants;
 import com.stockwise.portfolio.domain.entity.Order;
 import org.springframework.stereotype.Component;
 
