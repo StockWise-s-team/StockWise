@@ -70,6 +70,70 @@ export interface SSEEvent {
   content: string;
 }
 
+// ─── Portfolio & Paper Trading ───────────────────────────────────────────────
+// Contract: portfolio-service (GET/POST/DELETE /portfolio*, GET /portfolio/pnl).
+
+export type OrderSide = "BUY" | "SELL";
+export type OrderStatus = "PENDING" | "FILLED" | "CANCELLED";
+
+export interface PortfolioAccount {
+  id: string;
+  userId: string;
+  virtualCash: number;
+}
+
+export interface PortfolioTransaction {
+  id: string;
+  symbol: string;
+  type: OrderSide;
+  price: number;
+  quantity: number;
+  executedAt: string;
+}
+
+// GET /portfolio?userId= response shape.
+export interface PortfolioSnapshot {
+  portfolio: PortfolioAccount;
+  holdings: Holding[];
+  transactions: PortfolioTransaction[];
+}
+
+// POST /portfolio/order request body.
+export interface PlaceOrderRequest {
+  userId: string;
+  symbol: string;
+  type: OrderSide;
+  quantity: number;
+  price?: number;
+}
+
+// POST /portfolio/order & DELETE /portfolio/order/{id} response (snake_case order_id).
+export interface OrderResult {
+  order_id: string;
+  status: OrderStatus;
+  message: string;
+}
+
+// Per-holding view-model derived on the client from holdings + live prices.
+export interface HoldingView extends Holding {
+  currentPrice: number | null;
+  costBasis: number;
+  marketValue: number | null;
+  unrealizedPnl: number | null;
+}
+
+// Aggregated portfolio view-model consumed by the dashboard & portfolio pages.
+export interface PortfolioView {
+  account: PortfolioAccount;
+  holdings: HoldingView[];
+  transactions: PortfolioTransaction[];
+  holdingsValue: number; // valued at current price, falling back to avg cost
+  totalValue: number; // cash + holdingsValue
+  unrealizedPnl: number; // sum over holdings with a known current price
+  realizedPnl: number; // GET /portfolio/pnl (net cash flow of filled trades)
+  hasMissingPrices: boolean;
+}
+
 // ─── Admin / Pipeline ───────────────────────────────────────────────────────────
 
 export interface NewsSource {
