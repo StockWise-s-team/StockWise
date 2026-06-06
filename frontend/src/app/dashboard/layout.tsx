@@ -33,10 +33,10 @@ export default function DashboardLayout({
     await logout();
   };
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-64 flex-col border-r bg-card p-4">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="flex h-screen w-64 shrink-0 flex-col border-r bg-card p-4">
         <div className="mb-8 text-xl font-bold">StockWise</div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -65,7 +65,7 @@ export default function DashboardLayout({
           Logout
         </button>
       </aside>
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }
