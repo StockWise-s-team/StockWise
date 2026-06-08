@@ -3,7 +3,7 @@ import type {
   OrderResult,
   PlaceOrderRequest,
   PortfolioSnapshot,
-  StockPrice,
+  LatestPrice,
 } from "@/lib/types";
 import type { MarketPriceProvider, PortfolioGateway } from "./ports";
 
@@ -28,7 +28,7 @@ export class HttpPortfolioGateway implements PortfolioGateway {
 export class HttpMarketPriceProvider implements MarketPriceProvider {
   async getLatestPrice(symbol: string): Promise<number | null> {
     try {
-      const { data } = await api.get<StockPrice>(`/market/price/${symbol}`);
+      const { data } = await api.get<LatestPrice>(`/market/price/${symbol}`);
       return data.close ?? null;
     } catch {
       return null;
