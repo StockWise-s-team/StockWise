@@ -41,8 +41,21 @@ export interface ApiError {
   message: string;
 }
 
-export interface StockPrice {
+export interface LatestPrice {
   symbol: string;
+  price: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  change: number;
+  changePercent: number;
+  tradeDate: string;
+  updatedAt: string;
+}
+
+export interface OhlcPoint {
   date: string;
   open: number;
   high: number;
@@ -51,7 +64,26 @@ export interface StockPrice {
   volume: number;
 }
 
-export interface OHLCV extends StockPrice {}
+export interface OhlcSeries {
+  symbol: string;
+  startDate: string;
+  endDate: string;
+  data: OhlcPoint[];
+}
+
+export interface FinancialRatioItem {
+  period: string;
+  peRatio: number | null;
+  pbRatio: number | null;
+  eps: number | null;
+  roe: number | null;
+  roa: number | null;
+}
+
+export interface FinancialRatioList {
+  symbol: string;
+  ratios: FinancialRatioItem[];
+}
 
 export interface Holding {
   symbol: string;
