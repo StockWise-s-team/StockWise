@@ -19,10 +19,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -43,9 +41,9 @@ public class PortfolioController {
     private final UserIdResolver userIdResolver;
 
     @GetMapping
-    public ResponseEntity<PortfolioResponse> getPortfolio(@RequestParam String userId) {
-        UUID uid = UUID.fromString(userId);
-        Portfolio portfolio = getPortfolioUseCase.getPortfolio(uid);
+    public ResponseEntity<PortfolioResponse> getPortfolio() {
+        UUID userId = userIdResolver.resolveCurrentUserId();
+        Portfolio portfolio = getPortfolioUseCase.getPortfolio(userId);
         List<Holding> holdings = getPortfolioUseCase.getHoldings(portfolio.getId());
         List<Transaction> transactions = getPortfolioUseCase.getTransactionHistory(portfolio.getId());
         return ResponseEntity.ok(new PortfolioResponse(portfolio, holdings, transactions));
@@ -53,8 +51,9 @@ public class PortfolioController {
 
     @PostMapping("/order")
     public ResponseEntity<OrderResponse> placeOrder(@RequestBody PlaceOrderRequest request) {
+        UUID userId = userIdResolver.resolveCurrentUserId();
         Order order = placeOrderUseCase.placeOrder(
-                request.userId(),
+                userId,
                 request.symbol(),
                 request.type(),
                 request.quantity(),
@@ -64,21 +63,16 @@ public class PortfolioController {
     }
 
     @DeleteMapping("/order/{orderId}")
-    public ResponseEntity<OrderResponse> cancelOrder(
-            @PathVariable String orderId,
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
-            @RequestParam(value = "userId", required = false) String userIdParam
-    ) {
-        UUID userId = userIdResolver.resolve(userIdHeader, userIdParam);
-
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderId) {
+        UUID userId = userIdResolver.resolveCurrentUserId();
         Order order = cancelOrderUseCase.cancelOrder(UUID.fromString(orderId), Optional.of(userId));
         return ResponseEntity.ok(orderResponseMapper.cancelled(order));
     }
 
     @GetMapping("/pnl")
-    public ResponseEntity<PnlResponse> getPnl(@RequestParam String userId) {
-        UUID uid = UUID.fromString(userId);
-        BigDecimal pnl = getPnLUseCase.getTotalPnl(uid);
+    public ResponseEntity<PnlResponse> getPnl() {
+        UUID userId = userIdResolver.resolveCurrentUserId();
+        BigDecimal pnl = getPnLUseCase.getTotalPnl(userId);
         return ResponseEntity.ok(new PnlResponse(pnl));
     }
 }

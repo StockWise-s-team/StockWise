@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -46,14 +50,48 @@ public class PortfolioService implements GetPortfolioUseCase, GetPnLUseCase {
     @Transactional(readOnly = true)
     public BigDecimal getTotalPnl(UUID userId) {
         Portfolio portfolio = portfolioAccountService.getRequired(userId);
+        Map<String, PositionCost> positions = new HashMap<>();
+        BigDecimal realizedPnl = BigDecimal.ZERO;
 
-        return transactionRepository.findByPortfolioIdOrderByExecutedAtDesc(portfolio.getId()).stream()
-                .map(tx -> transactionCashImpact(tx.getType(), tx.getPrice(), tx.getQuantity()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Transaction> transactions = transactionRepository.findByPortfolioIdOrderByExecutedAtDesc(portfolio.getId()).stream()
+                .sorted(Comparator.comparing(
+                        Transaction::getExecutedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        for (Transaction tx : transactions) {
+            String symbol = tx.getSymbol().toUpperCase();
+            PositionCost position = positions.computeIfAbsent(symbol, ignored -> new PositionCost());
+            if (OrderConstants.BUY.equals(tx.getType())) {
+                position.buy(tx.getPrice(), tx.getQuantity());
+            } else if (OrderConstants.SELL.equals(tx.getType())) {
+                realizedPnl = realizedPnl.add(position.sell(tx.getPrice(), tx.getQuantity()));
+            }
+        }
+
+        return realizedPnl;
     }
 
-    private BigDecimal transactionCashImpact(String type, BigDecimal price, Integer quantity) {
-        BigDecimal value = price.multiply(BigDecimal.valueOf(quantity));
-        return OrderConstants.SELL.equals(type) ? value : value.negate();
+    private static class PositionCost {
+        private int quantity;
+        private BigDecimal totalCost = BigDecimal.ZERO;
+
+        private void buy(BigDecimal price, int boughtQuantity) {
+            quantity += boughtQuantity;
+            totalCost = totalCost.add(price.multiply(BigDecimal.valueOf(boughtQuantity)));
+        }
+
+        private BigDecimal sell(BigDecimal price, int soldQuantity) {
+            if (quantity <= 0) {
+                return BigDecimal.ZERO;
+            }
+
+            int matchedQuantity = Math.min(quantity, soldQuantity);
+            BigDecimal averageCost = totalCost.divide(BigDecimal.valueOf(quantity), 10, RoundingMode.HALF_UP);
+            BigDecimal realized = price.subtract(averageCost).multiply(BigDecimal.valueOf(matchedQuantity));
+            quantity -= matchedQuantity;
+            totalCost = averageCost.multiply(BigDecimal.valueOf(quantity));
+            return realized;
+        }
     }
 }

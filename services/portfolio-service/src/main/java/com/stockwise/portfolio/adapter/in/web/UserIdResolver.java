@@ -1,18 +1,20 @@
 package com.stockwise.portfolio.adapter.in.web;
 
+import com.stockwise.portfolio.application.exception.BadRequestException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class UserIdResolver {
 
-    public UUID resolve(String userIdHeader, String userIdParam) {
-        return Optional.ofNullable(userIdHeader)
-                .or(() -> Optional.ofNullable(userIdParam))
-                .filter(value -> !value.isBlank())
-                .map(UUID::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("userId is required for order cancellation"));
+    public UUID resolveCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getName() == null) {
+            throw new BadRequestException("Authenticated user is required");
+        }
+        return UUID.fromString(authentication.getName());
     }
 }
