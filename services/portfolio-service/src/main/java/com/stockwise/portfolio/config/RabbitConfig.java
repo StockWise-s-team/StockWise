@@ -11,9 +11,22 @@ public class RabbitConfig {
     public static final String PORTFOLIO_PRICE_QUEUE = "portfolio_service_price_q";
     public static final String MARKET_PRICE_ROUTING_KEY = "price.updated";
 
+    public static final String PORTFOLIO_EXCHANGE = "portfolio.exchange";
+    public static final String ORDER_EXCHANGE = "order.exchange";
+
     @Bean
     public TopicExchange marketExchange() {
         return new TopicExchange(MARKET_EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange portfolioExchange() {
+        return new TopicExchange(PORTFOLIO_EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange orderExchange() {
+        return new TopicExchange(ORDER_EXCHANGE);
     }
 
     @Bean
@@ -24,5 +37,10 @@ public class RabbitConfig {
     @Bean
     public Binding portfolioPriceBinding(Queue portfolioPriceQueue, TopicExchange marketExchange) {
         return BindingBuilder.bind(portfolioPriceQueue).to(marketExchange).with(MARKET_PRICE_ROUTING_KEY);
+    }
+
+    @Bean
+    public org.springframework.amqp.support.converter.Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
+        return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter();
     }
 }

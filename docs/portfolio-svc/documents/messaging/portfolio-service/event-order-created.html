@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSG-003: Order Created Event</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="MSG-003" class="h3 mb-0">MSG-003: Order Created Event</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">RabbitMQ</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
+        </div>
+
+        <p>An outbound event published by the portfolio service immediately after a new pending order is created and saved, per <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-04"><code>FR-PORTFOLIO-04</code></a>.</p>
+
+        <h2 class="h5">Contract Summary</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <tbody>
+              <tr><th>Exchange</th><td><code>order.exchange</code></td></tr>
+              <tr><th>Exchange Type</th><td><code>topic</code></td></tr>
+              <tr><th>Routing Key</th><td><code>order.created</code></td></tr>
+              <tr><th>Producer</th><td>portfolio-service (this service)</td></tr>
+              <tr><th>Direction</th><td>Published to notify downstream systems (e.g. matching engine) of a new order.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Flow</h2>
+        <div class="mermaid diagram-block">sequenceDiagram
+    participant User as user
+    participant PF as portfolio-service
+    participant Rabbit as RabbitMQ (order.exchange)
+    participant ME as matching-engine
+    User->>PF: placeOrder() (BUY/SELL)
+    PF->>PF: Persist order PENDING
+    PF->>Rabbit: publish order.created
+    Rabbit-->>ME: deliver event to matching queue</div>
+
+        <h2 class="h5 mt-4">Payload Structure</h2>
+        <pre class="openapi-block"><code>{
+  "orderId": "81df616e-1c13-4df2-9756-f95384dc1849",
+  "userId": "65355021-1a05-4568-8198-83a7dbf2a11e",
+  "portfolioId": "11ebb695-4bba-4667-bb8a-ce3e011e7c64",
+  "symbol": "FPT",
+  "type": "BUY",
+  "price": 100.00,
+  "quantity": 2,
+  "status": "PENDING",
+  "timestamp": "2026-06-05T15:55:00.456Z"
+}</code></pre>
+
+        <h2 class="h5 mt-4">Related Specifications</h2>
+        <ul class="list-group">
+          <li class="list-group-item">Triggers matching or order book updates in the matching engine as part of <a href="../../business-flows/portfolio-service/bflow-order-lifecycle.html#BFLOW-001"><code>BFLOW-001</code></a>.</li>
+          <li class="list-group-item">Represents the creation phase of the order entity <a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>.</li>
+        </ul>
+      </div>
+    </article>
+  </main>
+  <script>
+    window.onload = function () {
+      if (window.mermaid) mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'default' });
+    };
+  </script>
+</body>
+</html>
