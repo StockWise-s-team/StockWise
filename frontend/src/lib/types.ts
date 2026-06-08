@@ -91,7 +91,7 @@ export interface PortfolioTransaction {
   executedAt: string;
 }
 
-// GET /portfolio?userId= response shape.
+// GET /portfolio response shape. The backend derives user ownership from JWT.
 export interface PortfolioSnapshot {
   portfolio: PortfolioAccount;
   holdings: Holding[];
@@ -100,7 +100,6 @@ export interface PortfolioSnapshot {
 
 // POST /portfolio/order request body.
 export interface PlaceOrderRequest {
-  userId: string;
   symbol: string;
   type: OrderSide;
   quantity: number;
@@ -130,7 +129,7 @@ export interface PortfolioView {
   holdingsValue: number; // valued at current price, falling back to avg cost
   totalValue: number; // cash + holdingsValue
   unrealizedPnl: number; // sum over holdings with a known current price
-  realizedPnl: number; // GET /portfolio/pnl (net cash flow of filled trades)
+  realizedPnl: number; // GET /portfolio/pnl
   hasMissingPrices: boolean;
 }
 

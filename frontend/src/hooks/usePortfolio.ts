@@ -35,7 +35,7 @@ export function usePortfolio(
     setLoading(true);
     setError(null);
     try {
-      setData(await loadPortfolioView(userId, source));
+      setData(await loadPortfolioView(source));
     } catch (e) {
       setError(extractErrorMessage(e, "Không tải được portfolio."));
     } finally {

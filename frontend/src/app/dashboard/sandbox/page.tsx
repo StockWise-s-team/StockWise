@@ -48,7 +48,6 @@ export default function SandboxPage() {
     setSubmitting(true);
     try {
       const res = await portfolioGateway.placeOrder({
-        userId: user.id,
         symbol: symbol.trim().toUpperCase(),
         type: side,
         quantity: Number(quantity),
