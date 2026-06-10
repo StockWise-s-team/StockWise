@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BR: Portfolio Business Rules</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 class="h3 mb-0">BR: Portfolio Business Rules</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">Service: portfolio-service</span>
+          <span class="badge text-bg-secondary">Source: StockWise SRS</span>
+        </div>
+
+        <p>Business rules the portfolio &amp; paper-trading module must enforce, each with a simple implementation status.</p>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped align-middle">
+            <thead><tr><th>ID</th><th>Rule</th><th>Status</th><th>Applies</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span id="BR-001"><code>BR-001</code></span></td>
+                <td>A <code>userId</code> supplied to a portfolio endpoint must be a valid UUID.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../api-contracts/portfolio-service/api-get-portfolio.html#API-001"><code>API-001</code></a>, <a href="../../api-contracts/portfolio-service/api-post-portfolio-order.html#API-002"><code>API-002</code></a>, <a href="../../api-contracts/portfolio-service/api-get-portfolio-pnl.html#API-004"><code>API-004</code></a></td>
+              </tr>
+              <tr>
+                <td><span id="BR-002"><code>BR-002</code></span></td>
+                <td>An order request carries <code>userId</code>, <code>symbol</code>, <code>type</code>, <code>quantity</code>, and an optional <code>price</code>.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../api-contracts/portfolio-service/api-post-portfolio-order.html#API-002"><code>API-002</code></a>, <a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a></td>
+              </tr>
+              <tr>
+                <td><span id="BR-009"><code>BR-009</code></span></td>
+                <td>Cash balance and holding quantity must never be negative (<a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-06"><code>FR-PORTFOLIO-06</code></a>).</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../data-models/portfolio-service/entity-portfolio.html#ENTITY-001"><code>ENTITY-001</code></a>, <a href="../../data-models/portfolio-service/entity-holding.html#ENTITY-002"><code>ENTITY-002</code></a></td>
+              </tr>
+              <tr>
+                <td><span id="BR-100"><code>BR-100</code></span></td>
+                <td>An order price must be within the daily band [floor, ceiling] obtained from Market Data.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a> (E1)</td>
+              </tr>
+              <tr>
+                <td><span id="BR-101"><code>BR-101</code></span></td>
+                <td>A BUY order is rejected when available cash &lt; price &times; quantity.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-05"><code>FR-PORTFOLIO-05</code></a> (E2)</td>
+              </tr>
+              <tr>
+                <td><span id="BR-102"><code>BR-102</code></span></td>
+                <td>A SELL order is rejected when available (unlocked) holding quantity &lt; order quantity.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-05"><code>FR-PORTFOLIO-05</code></a> (E3)</td>
+              </tr>
+              <tr>
+                <td><span id="BR-103"><code>BR-103</code></span></td>
+                <td>Order input must be valid: correct types, non-negative values, minimum lot size.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../srs/nfr/portfolio-service/nfr-portfolio.html#NFR-USA-03"><code>NFR-USA-03</code></a></td>
+              </tr>
+              <tr>
+                <td><span id="BR-104"><code>BR-104</code></span></td>
+                <td>Orders may only be placed during trading hours.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a> (E10)</td>
+              </tr>
+              <tr>
+                <td><span id="BR-105"><code>BR-105</code></span></td>
+                <td>Only a PENDING order owned by the caller may be cancelled; cancellation releases frozen assets.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+                <td><a href="../../use-cases/portfolio-service/uc-004-cancel-order.html#UC-004"><code>UC-004</code></a> (E4, E5)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Data Constraints</h2>
+        <ul class="list-group">
+          <li class="list-group-item">Portfolio cash and holding quantity are non-negative (<code>BR-009</code>).</li>
+          <li class="list-group-item">A holding is unique per <code>(portfolio, symbol)</code>.</li>
+          <li class="list-group-item">A transaction <code>type</code> is one of <code>BUY</code> / <code>SELL</code>, and quantity is greater than zero.</li>
+          <li class="list-group-item">Transactions are append-only (<a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-07"><code>FR-PORTFOLIO-07</code></a>).</li>
+        </ul>
+
+        <h2 class="h5 mt-4">Status Legend</h2>
+        <ul class="list-group">
+          <li class="list-group-item"><span class="badge text-bg-success">Implemented</span> Enforced. <span class="badge text-bg-warning">Partial</span> Partially enforced. <span class="badge text-bg-danger">Not implemented</span> Required by SRS, not yet enforced.</li>
+        </ul>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

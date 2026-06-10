@@ -1,0 +1,318 @@
+{
+  "project": "portfolio-service",
+  "generated_at": "2026-06-05T07:00:00Z",
+  "items": [
+    {
+      "id": "index",
+      "title": "Portfolio Service Documentation",
+      "path": "index.html",
+      "type": "index",
+      "group": "overview",
+      "status": "implemented"
+    },
+    {
+      "id": "API-003",
+      "title": "API-003: DELETE /portfolio/order/{orderId} (Specified)",
+      "path": "api-contracts/portfolio-service/api-delete-portfolio-order.html",
+      "type": "api",
+      "group": "api-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "API-004",
+      "title": "API-004: GET /portfolio/pnl",
+      "path": "api-contracts/portfolio-service/api-get-portfolio-pnl.html",
+      "type": "api",
+      "group": "api-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "API-001",
+      "title": "API-001: GET /portfolio",
+      "path": "api-contracts/portfolio-service/api-get-portfolio.html",
+      "type": "api",
+      "group": "api-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "API-002",
+      "title": "API-002: POST /portfolio/order",
+      "path": "api-contracts/portfolio-service/api-post-portfolio-order.html",
+      "type": "api",
+      "group": "api-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "BFLOW-001",
+      "title": "BFLOW-001: Order Lifecycle",
+      "path": "business-flows/portfolio-service/bflow-order-lifecycle.html",
+      "type": "business-flow",
+      "group": "business-flows",
+      "status": "implemented"
+    },
+    {
+      "id": "br-order-validation",
+      "title": "BR: Portfolio Business Rules",
+      "path": "business-rules/portfolio-service/br-order-validation.html",
+      "type": "business-rule",
+      "group": "business-rules",
+      "status": "partial"
+    },
+    {
+      "id": "ENTITY-002",
+      "title": "ENTITY-002: Holding",
+      "path": "data-models/portfolio-service/entity-holding.html",
+      "type": "entity",
+      "group": "data-models",
+      "status": "implemented"
+    },
+    {
+      "id": "ENTITY-003",
+      "title": "ENTITY-003: Order (Specified)",
+      "path": "data-models/portfolio-service/entity-order.html",
+      "type": "entity",
+      "group": "data-models",
+      "status": "implemented"
+    },
+    {
+      "id": "ENTITY-001",
+      "title": "ENTITY-001: Portfolio",
+      "path": "data-models/portfolio-service/entity-portfolio.html",
+      "type": "entity",
+      "group": "data-models",
+      "status": "implemented"
+    },
+    {
+      "id": "ENTITY-004",
+      "title": "ENTITY-004: Transaction",
+      "path": "data-models/portfolio-service/entity-transaction.html",
+      "type": "entity",
+      "group": "data-models",
+      "status": "implemented"
+    },
+    {
+      "id": "deployment-runtime",
+      "title": "Deployment: portfolio-service Runtime",
+      "path": "deployment/portfolio-service/deployment-runtime.html",
+      "type": "document",
+      "group": "deployment",
+      "status": "implemented"
+    },
+    {
+      "id": "glossary",
+      "title": "Glossary: Portfolio &amp; Paper Trading",
+      "path": "glossary/portfolio-service/glossary.html",
+      "type": "document",
+      "group": "glossary",
+      "status": "implemented"
+    },
+    {
+      "id": "group-api-contracts",
+      "title": "api contracts",
+      "path": "groups/api-contracts.html",
+      "type": "api",
+      "group": "api-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "group-business-flows",
+      "title": "business flows",
+      "path": "groups/business-flows.html",
+      "type": "business-flow",
+      "group": "business-flows",
+      "status": "implemented"
+    },
+    {
+      "id": "group-business-rules",
+      "title": "business rules",
+      "path": "groups/business-rules.html",
+      "type": "business-rule",
+      "group": "business-rules",
+      "status": "implemented"
+    },
+    {
+      "id": "group-data-models",
+      "title": "data models",
+      "path": "groups/data-models.html",
+      "type": "entity",
+      "group": "data-models",
+      "status": "implemented"
+    },
+    {
+      "id": "group-deployment",
+      "title": "deployment",
+      "path": "groups/deployment.html",
+      "type": "group",
+      "group": "deployment",
+      "status": "implemented"
+    },
+    {
+      "id": "group-functional-requirements",
+      "title": "functional requirements",
+      "path": "groups/functional-requirements.html",
+      "type": "group",
+      "group": "overview",
+      "status": "implemented"
+    },
+    {
+      "id": "group-glossary",
+      "title": "glossary",
+      "path": "groups/glossary.html",
+      "type": "group",
+      "group": "glossary",
+      "status": "implemented"
+    },
+    {
+      "id": "group-integrations",
+      "title": "integrations",
+      "path": "groups/integrations.html",
+      "type": "group",
+      "group": "integrations",
+      "status": "implemented"
+    },
+    {
+      "id": "group-messaging-contracts",
+      "title": "messaging contracts",
+      "path": "groups/messaging-contracts.html",
+      "type": "group",
+      "group": "messaging-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "group-non-functional-requirements",
+      "title": "non functional requirements",
+      "path": "groups/non-functional-requirements.html",
+      "type": "group",
+      "group": "overview",
+      "status": "implemented"
+    },
+    {
+      "id": "group-overview",
+      "title": "overview",
+      "path": "groups/overview.html",
+      "type": "group",
+      "group": "overview",
+      "status": "implemented"
+    },
+    {
+      "id": "group-traceability",
+      "title": "traceability",
+      "path": "groups/traceability.html",
+      "type": "traceability",
+      "group": "traceability",
+      "status": "implemented"
+    },
+    {
+      "id": "group-use-cases",
+      "title": "use cases",
+      "path": "groups/use-cases.html",
+      "type": "use-case",
+      "group": "use-cases",
+      "status": "implemented"
+    },
+    {
+      "id": "INT-PORTFOLIO-001",
+      "title": "INT-PORTFOLIO-001: Service Dependencies For Completed Order Use Cases",
+      "path": "integrations/portfolio-service/service-dependency-contracts.html",
+      "type": "document",
+      "group": "integrations",
+      "status": "documented"
+    },
+    {
+      "id": "MSG-004",
+      "title": "MSG-004: Order Cancelled Event",
+      "path": "messaging/portfolio-service/event-order-cancelled.html",
+      "type": "document",
+      "group": "messaging-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "MSG-003",
+      "title": "MSG-003: Order Created Event",
+      "path": "messaging/portfolio-service/event-order-created.html",
+      "type": "document",
+      "group": "messaging-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "MSG-001",
+      "title": "MSG-001: Market Price Updated",
+      "path": "messaging/portfolio-service/event-price-updated.html",
+      "type": "document",
+      "group": "messaging-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "MSG-002",
+      "title": "MSG-002: Portfolio Transaction Event",
+      "path": "messaging/portfolio-service/event-reply-status.html",
+      "type": "document",
+      "group": "messaging-contracts",
+      "status": "implemented"
+    },
+    {
+      "id": "project-overview",
+      "title": "Project Overview: portfolio-service",
+      "path": "overview/project-overview.html",
+      "type": "document",
+      "group": "overview",
+      "status": "partial"
+    },
+    {
+      "id": "fr-portfolio-paper-trading",
+      "title": "FR: Portfolio &amp; Paper Trading (FR-PORTFOLIO)",
+      "path": "srs/fr/portfolio-service/fr-portfolio-paper-trading.html",
+      "type": "requirement",
+      "group": "functional-requirements",
+      "status": "partial"
+    },
+    {
+      "id": "nfr-portfolio",
+      "title": "NFR: Portfolio Service Non-Functional Requirements",
+      "path": "srs/nfr/portfolio-service/nfr-portfolio.html",
+      "type": "requirement",
+      "group": "non-functional-requirements",
+      "status": "partial"
+    },
+    {
+      "id": "traceability-matrix",
+      "title": "Traceability Matrix: portfolio-service",
+      "path": "traceability/portfolio-service/traceability-matrix.html",
+      "type": "traceability",
+      "group": "traceability",
+      "status": "documented"
+    },
+    {
+      "id": "UC-001",
+      "title": "UC-001: View Portfolio Summary",
+      "path": "use-cases/portfolio-service/uc-001-view-portfolio-summary.html",
+      "type": "use-case",
+      "group": "use-cases",
+      "status": "implemented"
+    },
+    {
+      "id": "UC-002",
+      "title": "UC-002: Place Buy Order",
+      "path": "use-cases/portfolio-service/uc-002-place-buy-order.html",
+      "type": "use-case",
+      "group": "use-cases",
+      "status": "implemented"
+    },
+    {
+      "id": "UC-003",
+      "title": "UC-003: Place Sell Order",
+      "path": "use-cases/portfolio-service/uc-003-place-sell-order.html",
+      "type": "use-case",
+      "group": "use-cases",
+      "status": "implemented"
+    },
+    {
+      "id": "UC-004",
+      "title": "UC-004: Cancel Order",
+      "path": "use-cases/portfolio-service/uc-004-cancel-order.html",
+      "type": "use-case",
+      "group": "use-cases",
+      "status": "implemented"
+    }
+  ]
+}
