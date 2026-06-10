@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UC-004: Cancel Order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="UC-004" class="h3 mb-0">UC-004: Cancel Order</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">Service: portfolio-service</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
+        </div>
+
+        <h2 class="h5">Use Case Specification (SRS)</h2>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped align-middle">
+            <thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
+            <tbody>
+              <tr><td>Name</td><td>Cancel Order (Hủy lệnh)</td></tr>
+              <tr><td>Primary Actor</td><td>User (investor). Also Manager and Admin.</td></tr>
+              <tr><td>Trigger</td><td>User clicks "Cancel" next to a PENDING order in the order book.</td></tr>
+              <tr><td>Pre-conditions</td><td>1. Valid JWT.<br>2. Service healthy.<br>3. Broker connected.<br>4. Store writable.<br>5. The target order exists and belongs to the user.</td></tr>
+              <tr><td>Main Flow (specified)</td><td>
+                1. User clicks "Cancel" on a PENDING order.<br>
+                2. System validates the JWT and extracts the user id.<br>
+                3. System looks up the order by <code>order_id</code> and verifies ownership.<br>
+                4. System checks the order status is <code>PENDING</code> (only PENDING is cancellable).<br>
+                5. System requests cancellation from the matching engine via the broker (event <code>ORDER_CANCEL_REQUESTED</code>).<br>
+                6. System updates the order status to <code>CANCELLED</code> and sets <code>cancelled_at</code>.<br>
+                7. System unfreezes the locked cash or shares back to the available balance.<br>
+                8. System returns HTTP <code>200</code> with the cancelled order.
+              </td></tr>
+              <tr><td>Post-conditions (specified)</td><td>On success: order status is <code>CANCELLED</code>, frozen assets are released, a cancel event is sent. On failure: nothing changes.</td></tr>
+              <tr><td>Required to Implement</td><td>An <code>Order</code> entity with a status lifecycle (<a href="../../data-models/portfolio-service/entity-order.html#ENTITY-003"><code>ENTITY-003</code></a>), a <code>DELETE /portfolio/order/{orderId}</code> endpoint (<a href="../../api-contracts/portfolio-service/api-delete-portfolio-order.html#API-003"><code>API-003</code></a>), and asset freeze/unfreeze handling.</td></tr>
+              <tr><td>Linked FRs</td><td>Extends the order-management capability of <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-03"><code>FR-PORTFOLIO-03</code></a> / <a href="../../srs/fr/portfolio-service/fr-portfolio-paper-trading.html#FR-PORTFOLIO-04"><code>FR-PORTFOLIO-04</code></a>. No dedicated FR-PORTFOLIO line item covers cancellation in the current SRS table.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Exception Flows (specified)</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <thead><tr><th>Code</th><th>Condition</th><th>HTTP</th><th>Response</th></tr></thead>
+            <tbody>
+              <tr><td>E4</td><td>Order not found (<code>order_id</code> absent).</td><td>404</td><td>"No order found with id [order_id]."</td></tr>
+              <tr><td>E5</td><td>Order status is not PENDING.</td><td>409</td><td>"Cannot cancel a matched or already-cancelled order. Current status: [STATUS]."</td></tr>
+              <tr><td>E6</td><td>Invalid/expired JWT.</td><td>401</td><td>"Session expired. Please log in again."</td></tr>
+              <tr><td>E8</td><td>Portfolio service timeout (&gt;3s).</td><td>503</td><td>"Portfolio service is temporarily unavailable. Please retry."</td></tr>
+              <tr><td>E9</td><td>Cancel event publish failed after the status update (partial failure).</td><td>500</td><td>"The cancellation was accepted but is pending processing. The system will retry automatically."</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

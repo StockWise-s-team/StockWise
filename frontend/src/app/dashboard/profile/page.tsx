@@ -1,9 +1,164 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Fingerprint,
+  KeyRound,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  Pencil,
+  Save,
+  ShieldCheck,
+  TerminalSquare,
+  UserRound,
+  X,
+  XCircle,
+} from "lucide-react";
+import { FormEvent, useEffect, useId, useState } from "react";
+import { clsx } from "clsx";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { User as UserIcon, Mail, Shield, Calendar, Lock } from "lucide-react";
 import type { User } from "@/lib/types";
+
+type NoticeState = { type: "success" | "error"; text: string } | null;
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  subtitle,
+  action,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-start justify-between gap-4 border-b border-terminal-border pb-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-terminal-border bg-terminal-surface">
+          <Icon className="h-4 w-4 text-terminal-accent" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="font-mono text-sm font-semibold uppercase tracking-widest text-terminal-text">
+            {title}
+          </h2>
+          <p className="mt-0.5 font-mono text-[10px] text-terminal-muted">
+            {subtitle}
+          </p>
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function Notice({ notice }: { notice: NoticeState }) {
+  if (!notice) return null;
+
+  const Icon = notice.type === "success" ? CheckCircle2 : XCircle;
+
+  return (
+    <div
+      role={notice.type === "error" ? "alert" : "status"}
+      className={clsx(
+        "flex items-start gap-2 rounded border px-3 py-2.5 font-mono text-[11px] leading-relaxed",
+        notice.type === "success"
+          ? "border-terminal-green/30 bg-terminal-green/5 text-terminal-green"
+          : "border-terminal-red/30 bg-terminal-red/5 text-terminal-red"
+      )}
+    >
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      <span>{notice.text}</span>
+    </div>
+  );
+}
+
+function DataRow({
+  icon: Icon,
+  label,
+  value,
+  badge,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  badge?: boolean;
+}) {
+  return (
+    <div className="grid gap-2 rounded border border-terminal-border bg-terminal-surface px-3 py-2.5 transition-colors hover:border-terminal-accent/30 sm:grid-cols-[148px_minmax(0,1fr)] sm:items-center">
+      <div className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-wider text-terminal-muted">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <div className="min-w-0 font-mono text-xs text-terminal-text">
+        {badge ? (
+          <span className="inline-flex items-center gap-1.5 rounded border border-terminal-green/30 bg-terminal-green/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-terminal-green">
+            <span className="h-1.5 w-1.5 rounded-full bg-terminal-green" />
+            {value}
+          </span>
+        ) : (
+          <span className="block truncate">{value}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  autoComplete: string;
+}) {
+  const id = useId();
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-wider text-terminal-muted"
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          required
+          className="h-10 w-full rounded border border-terminal-border bg-terminal-bg px-3 pr-10 font-mono text-xs text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/50 hover:border-terminal-muted focus:border-terminal-accent/60"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-terminal-muted transition-colors hover:text-terminal-accent focus:outline-none focus:text-terminal-accent"
+        >
+          {visible ? (
+            <EyeOff className="h-3.5 w-3.5" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { user, refreshUser, updateProfile, changePassword } = useAuth();
@@ -12,7 +167,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<NoticeState>(null);
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -20,20 +175,15 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<NoticeState>(null);
 
   useEffect(() => {
-    // Run once on mount: refresh user data from server and seed local state.
-    // We do NOT include `user` in deps to avoid re-running (and overwriting
-    // local edits) every time the AuthProvider context user object changes.
     const fetchProfile = async () => {
       try {
-        // refreshUser() returns the fresh User so we don't read the stale closure.
         const freshUser = await refreshUser();
         setProfile(freshUser);
         setFullName(freshUser.fullName || "");
       } catch {
-        // Network error or token expired — fall back to whatever is in context
         if (user) {
           setProfile(user);
           setFullName(user.fullName || "");
@@ -42,12 +192,12 @@ export default function ProfilePage() {
         setLoading(false);
       }
     };
-    fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // mount-only: intentionally omit `user` to avoid resetting after save
 
-  // Seed local form state if mount effect falls back (no refreshUser response)
-  // and context user loads later.
+    fetchProfile();
+    // Mount-only: re-fetching after local edits would overwrite form state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (user && !profile) {
       setProfile(user);
@@ -55,17 +205,30 @@ export default function ProfilePage() {
     }
   }, [user, profile]);
 
-  const handleSave = async () => {
-    if (!fullName.trim()) return;
+  const handleSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedName = fullName.trim();
+    if (!normalizedName) {
+      setMessage({ type: "error", text: "Display name cannot be empty." });
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
     try {
-      const data = await updateProfile(fullName.trim());
+      const data = await updateProfile(normalizedName);
       setProfile(data);
-      setMessage({ type: "success", text: "Profile updated successfully!" });
+      setFullName(data.fullName || "");
+      setMessage({ type: "success", text: "Profile data updated successfully." });
       setEditing(false);
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.response?.data?.message || err.message || "Failed to update profile" });
+    } catch (error: any) {
+      setMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Unable to update profile.",
+      });
     } finally {
       setSaving(false);
     }
@@ -77,286 +240,429 @@ export default function ProfilePage() {
     setMessage(null);
   };
 
-  const handleChangePassword = async () => {
+  const resetPasswordForm = () => {
+    setShowPasswordForm(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError("");
+  };
+
+  const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!currentPassword) {
+      setPasswordError("Current password is required.");
+      return;
+    }
     if (newPassword.length < 6) {
-      setPasswordError("New password must be at least 6 characters");
+      setPasswordError("New password must contain at least 6 characters.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match");
+      setPasswordError("Password confirmation does not match.");
       return;
     }
+
     setPasswordError("");
     setPasswordLoading(true);
     setPasswordMessage(null);
     try {
       await changePassword(currentPassword, newPassword);
-      setPasswordMessage({ type: "success", text: "Password changed successfully!" });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowPasswordForm(false);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Failed to change password";
-      setPasswordMessage({ type: "error", text: msg });
+      resetPasswordForm();
+      setPasswordMessage({
+        type: "success",
+        text: "Password changed. Your account credentials are up to date.",
+      });
+    } catch (error: any) {
+      setPasswordMessage({
+        type: "error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to change password.",
+      });
     } finally {
       setPasswordLoading(false);
     }
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    if (!dateStr) return "Not available";
+
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return "Not available";
+
+    return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+      month: "short",
+      day: "2-digit",
+    }).format(date);
   };
+
+  const displayName = profile?.fullName || "Unnamed account";
+  const initials = (profile?.fullName || profile?.email || "U")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const role = profile?.role?.replace("ROLE_", "") || "USER";
+  const userId = profile?.id || "Not available";
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <svg className="h-8 w-8 animate-spin text-[#FCD535]" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+      <div
+        className="flex min-h-[320px] items-center justify-center font-mono"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-terminal-muted">
+          <LoaderCircle className="h-4 w-4 animate-spin text-terminal-accent" />
+          Loading account record
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="mb-6 text-3xl font-bold text-[#eaecef]">My Profile</h1>
-
-      {message && (
-        <div
-          className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${
-            message.type === "success"
-              ? "border border-[#0ecb81]/30 bg-[#0ecb81]/10 text-[#0ecb81]"
-              : "border border-[#f6465d]/30 bg-[#f6465d]/10 text-[#f6465d]"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {/* Profile Card */}
-      <div className="rounded-xl border border-[#2b3139] bg-[#1e2329] p-6 shadow-sm">
-        {/* Avatar */}
-        <div className="mb-6 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2b3139] text-2xl font-bold text-[#FCD535]">
-            {profile?.fullName
-              ? profile.fullName.charAt(0).toUpperCase()
-              : profile?.email?.charAt(0).toUpperCase() || "U"}
+    <div
+      className="min-h-full font-mono text-terminal-text"
+      style={{
+        fontFamily:
+          "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+      }}
+    >
+      <header className="mb-6 flex flex-col gap-4 border-b border-terminal-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-terminal-accent">
+            <TerminalSquare className="h-3.5 w-3.5" />
+            Account console
           </div>
-          <div>
-            <div className="text-xl font-semibold text-[#eaecef]">
-              {profile?.fullName || "Set your display name"}
-            </div>
-            <div className="text-sm text-[#707a8a]">{profile?.email}</div>
-          </div>
-        </div>
-
-        {/* Info Fields */}
-        <div className="space-y-4">
-          {/* Full Name */}
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#929aa5]">
-              <UserIcon className="h-4 w-4" />
-              Display Name
-            </label>
-            {editing ? (
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="h-10 rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 text-sm text-[#eaecef] transition-colors focus:border-[#FCD535] focus:outline-none focus:ring-2 focus:ring-[#FCD535]/20"
-                placeholder="Enter your display name"
-              />
-            ) : (
-              <div className="rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 py-2.5 text-sm text-[#eaecef]">
-                {profile?.fullName || "Not set"}
-              </div>
-            )}
-          </div>
-
-          {/* Email */}
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#929aa5]">
-              <Mail className="h-4 w-4" />
-              Email
-            </label>
-            <div className="rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 py-2.5 text-sm text-[#eaecef]">
-              {profile?.email || "—"}
-            </div>
-          </div>
-
-          {/* Role */}
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#929aa5]">
-              <Shield className="h-4 w-4" />
-              Role
-            </label>
-            <div className="rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 py-2.5 text-sm text-[#eaecef]">
-              {profile?.role?.replace("ROLE_", "") || "—"}
-            </div>
-          </div>
-
-          {/* Created At */}
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-[#929aa5]">
-              <Calendar className="h-4 w-4" />
-              Member Since
-            </label>
-            <div className="rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 py-2.5 text-sm text-[#eaecef]">
-              {formatDate(profile?.createdAt || null)}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-6 flex gap-3">
-          {editing ? (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex h-10 items-center justify-center rounded-md bg-[#FCD535] px-6 text-sm font-semibold text-[#181a20] shadow-lg shadow-[#FCD535]/20 transition-colors hover:bg-[#f0b90b] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Saving...
-                  </span>
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex h-10 items-center justify-center rounded-md border border-[#2b3139] bg-transparent px-6 text-sm font-medium text-[#929aa5] transition-colors hover:border-[#3b82f6] hover:text-[#3b82f6]"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="flex h-10 items-center justify-center rounded-md border border-[#FCD535] bg-transparent px-6 text-sm font-semibold text-[#FCD535] transition-colors hover:bg-[#FCD535]/10"
-            >
-              Edit Profile
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Change Password Card */}
-      <div className="mt-6 rounded-xl border border-[#2b3139] bg-[#1e2329] p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-[#FCD535]" />
-            <h2 className="text-lg font-semibold text-[#eaecef]">Change Password</h2>
-          </div>
-          {!showPasswordForm && (
-            <button
-              onClick={() => setShowPasswordForm(true)}
-              className="text-sm text-[#FCD535] transition-colors hover:text-[#f0b90b]"
-            >
-              Change password
-            </button>
-          )}
-        </div>
-
-        {passwordMessage && (
-          <div
-            className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${
-              passwordMessage.type === "success"
-                ? "border border-[#0ecb81]/30 bg-[#0ecb81]/10 text-[#0ecb81]"
-                : "border border-[#f6465d]/30 bg-[#f6465d]/10 text-[#f6465d]"
-            }`}
-          >
-            {passwordMessage.text}
-          </div>
-        )}
-
-        {showPasswordForm && (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#929aa5]">Current Password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="h-10 rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 text-sm text-[#eaecef] transition-colors focus:border-[#FCD535] focus:outline-none focus:ring-2 focus:ring-[#FCD535]/20"
-                placeholder="Enter current password"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#929aa5]">New Password</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="h-10 rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 text-sm text-[#eaecef] transition-colors focus:border-[#FCD535] focus:outline-none focus:ring-2 focus:ring-[#FCD535]/20"
-                placeholder="Enter new password (min 6 characters)"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#929aa5]">Confirm New Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-10 rounded-md border border-[#2b3139] bg-[#0b0e11] px-4 text-sm text-[#eaecef] transition-colors focus:border-[#FCD535] focus:outline-none focus:ring-2 focus:ring-[#FCD535]/20"
-                placeholder="Confirm new password"
-              />
-            </div>
-            {passwordError && (
-              <p className="text-sm text-[#f6465d]">{passwordError}</p>
-            )}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleChangePassword}
-                disabled={passwordLoading}
-                className="flex h-10 items-center justify-center rounded-md bg-[#FCD535] px-6 text-sm font-semibold text-[#181a20] shadow-lg shadow-[#FCD535]/20 transition-colors hover:bg-[#f0b90b] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {passwordLoading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Changing...
-                  </span>
-                ) : (
-                  "Change Password"
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setShowPasswordForm(false);
-                  setCurrentPassword("");
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  setPasswordError("");
-                  setPasswordMessage(null);
-                }}
-                className="flex h-10 items-center justify-center rounded-md border border-[#2b3139] bg-transparent px-6 text-sm font-medium text-[#929aa5] transition-colors hover:border-[#3b82f6] hover:text-[#3b82f6]"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {!showPasswordForm && (
-          <p className="text-sm text-[#707a8a]">
-            Keep your account secure by regularly updating your password.
+          <h1 className="font-display text-xl font-bold uppercase tracking-[0.18em] text-terminal-text">
+            Profile
+          </h1>
+          <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-terminal-muted">
+            Manage identity metadata and authentication credentials for this
+            StockWise account.
           </p>
-        )}
+        </div>
+        <div className="flex items-center gap-2 self-start rounded border border-terminal-green/20 bg-terminal-green/5 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-widest text-terminal-green sm:self-auto">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-terminal-green" />
+          Account active
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        <aside className="space-y-5 xl:col-span-4">
+          <section>
+            <SectionHeader
+              icon={UserRound}
+              title="Identity"
+              subtitle="Authenticated account snapshot"
+            />
+            <div className="relative overflow-hidden rounded border border-terminal-border bg-terminal-surface p-4">
+              <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 bg-[linear-gradient(135deg,transparent_48%,rgba(240,180,41,0.08)_49%,rgba(240,180,41,0.08)_51%,transparent_52%)]" />
+              <div className="relative flex items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded border border-terminal-accent/40 bg-terminal-accent/5 text-lg font-bold tracking-wider text-terminal-accent">
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-terminal-text">
+                    {displayName}
+                  </p>
+                  <p className="mt-1 truncate text-[10px] text-terminal-muted">
+                    {profile?.email || "Email unavailable"}
+                  </p>
+                  <span className="mt-2 inline-flex rounded border border-terminal-border bg-terminal-bg px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-terminal-accent">
+                    {role}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-terminal-border pt-3">
+                <div className="flex items-center justify-between gap-3 text-[9px] uppercase tracking-wider">
+                  <span className="text-terminal-muted">Account ID</span>
+                  <span className="max-w-[65%] truncate text-right text-terminal-text">
+                    {userId}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-[9px] uppercase tracking-wider">
+                  <span className="text-terminal-muted">Created</span>
+                  <span className="text-right text-terminal-text">
+                    {formatDate(profile?.createdAt || null)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <SectionHeader
+              icon={ShieldCheck}
+              title="Security status"
+              subtitle="Credential health overview"
+            />
+            <div className="space-y-1">
+              <div className="flex items-center justify-between rounded border border-terminal-border bg-terminal-surface px-3 py-2.5">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-terminal-muted">
+                  <Fingerprint className="h-3.5 w-3.5" />
+                  Session
+                </div>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-terminal-green">
+                  Verified
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded border border-terminal-border bg-terminal-surface px-3 py-2.5">
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-terminal-muted">
+                  <KeyRound className="h-3.5 w-3.5" />
+                  Password
+                </div>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-terminal-amber">
+                  Managed
+                </span>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <div className="space-y-5 xl:col-span-8">
+          <section>
+            <SectionHeader
+              icon={Fingerprint}
+              title="Profile data"
+              subtitle="Core identity fields linked to your account"
+              action={
+                !editing ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(true);
+                      setMessage(null);
+                    }}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded border border-terminal-accent/40 bg-terminal-accent/5 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-widest text-terminal-accent transition-colors hover:bg-terminal-accent/10 focus:outline-none focus:ring-1 focus:ring-terminal-accent/50"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                  </button>
+                ) : undefined
+              }
+            />
+
+            <div className="space-y-2">
+              <Notice notice={message} />
+
+              {editing ? (
+                <form
+                  onSubmit={handleSave}
+                  className="rounded border border-terminal-accent/30 bg-terminal-surface p-4"
+                >
+                  <label
+                    htmlFor="display-name"
+                    className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-terminal-muted"
+                  >
+                    Display name
+                  </label>
+                  <input
+                    id="display-name"
+                    type="text"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    autoComplete="name"
+                    maxLength={120}
+                    autoFocus
+                    className="h-10 w-full rounded border border-terminal-border bg-terminal-bg px-3 text-xs text-terminal-text outline-none transition-colors placeholder:text-terminal-muted/50 hover:border-terminal-muted focus:border-terminal-accent/60"
+                    placeholder="Enter display name"
+                  />
+                  <p className="mt-2 text-[9px] leading-relaxed text-terminal-muted">
+                    This name is displayed across your dashboard and account
+                    activity.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      disabled={saving || !fullName.trim()}
+                      className="inline-flex items-center gap-1.5 rounded border border-terminal-accent/50 bg-terminal-accent/10 px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-terminal-accent transition-colors hover:bg-terminal-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {saving ? (
+                        <LoaderCircle className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Save className="h-3 w-3" />
+                      )}
+                      {saving ? "Saving" : "Save changes"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={saving}
+                      className="inline-flex items-center gap-1.5 rounded border border-terminal-border px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-terminal-muted transition-colors hover:border-terminal-muted hover:text-terminal-text disabled:opacity-40"
+                    >
+                      <X className="h-3 w-3" />
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-1">
+                  <DataRow
+                    icon={UserRound}
+                    label="Display name"
+                    value={displayName}
+                  />
+                  <DataRow
+                    icon={Mail}
+                    label="Email address"
+                    value={profile?.email || "Not available"}
+                  />
+                  <DataRow
+                    icon={ShieldCheck}
+                    label="Access role"
+                    value={role}
+                    badge
+                  />
+                  <DataRow
+                    icon={CalendarDays}
+                    label="Member since"
+                    value={formatDate(profile?.createdAt || null)}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <SectionHeader
+              icon={LockKeyhole}
+              title="Authentication"
+              subtitle="Rotate your password without interrupting the active session"
+              action={
+                !showPasswordForm ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordForm(true);
+                      setPasswordMessage(null);
+                    }}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded border border-terminal-accent/40 bg-terminal-accent/5 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-widest text-terminal-accent transition-colors hover:bg-terminal-accent/10 focus:outline-none focus:ring-1 focus:ring-terminal-accent/50"
+                  >
+                    <KeyRound className="h-3 w-3" />
+                    Rotate
+                  </button>
+                ) : undefined
+              }
+            />
+
+            <div className="space-y-2">
+              <Notice notice={passwordMessage} />
+
+              {showPasswordForm ? (
+                <form
+                  onSubmit={handleChangePassword}
+                  className="rounded border border-terminal-accent/30 bg-terminal-surface p-4"
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <PasswordField
+                        label="Current password"
+                        value={currentPassword}
+                        onChange={setCurrentPassword}
+                        autoComplete="current-password"
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <PasswordField
+                      label="New password"
+                      value={newPassword}
+                      onChange={setNewPassword}
+                      autoComplete="new-password"
+                      placeholder="Minimum 6 characters"
+                    />
+                    <PasswordField
+                      label="Confirm password"
+                      value={confirmPassword}
+                      onChange={setConfirmPassword}
+                      autoComplete="new-password"
+                      placeholder="Repeat new password"
+                    />
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-4 border-t border-terminal-border pt-3">
+                    <p className="text-[9px] leading-relaxed text-terminal-muted">
+                      Use at least 6 characters and avoid reusing an old
+                      password.
+                    </p>
+                    <span
+                      className={clsx(
+                        "shrink-0 text-[9px] uppercase tracking-wider",
+                        newPassword.length >= 6
+                          ? "text-terminal-green"
+                          : "text-terminal-muted"
+                      )}
+                    >
+                      {Math.min(newPassword.length, 99)} chars
+                    </span>
+                  </div>
+
+                  {passwordError && (
+                    <p
+                      role="alert"
+                      className="mt-3 flex items-center gap-2 text-[10px] text-terminal-red"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      {passwordError}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      disabled={passwordLoading}
+                      className="inline-flex items-center gap-1.5 rounded border border-terminal-accent/50 bg-terminal-accent/10 px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-terminal-accent transition-colors hover:bg-terminal-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {passwordLoading ? (
+                        <LoaderCircle className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <KeyRound className="h-3 w-3" />
+                      )}
+                      {passwordLoading ? "Updating" : "Update password"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetPasswordForm();
+                        setPasswordMessage(null);
+                      }}
+                      disabled={passwordLoading}
+                      className="inline-flex items-center gap-1.5 rounded border border-terminal-border px-3 py-2 text-[9px] font-semibold uppercase tracking-widest text-terminal-muted transition-colors hover:border-terminal-muted hover:text-terminal-text disabled:opacity-40"
+                    >
+                      <X className="h-3 w-3" />
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex flex-col gap-3 rounded border border-terminal-border bg-terminal-surface px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-terminal-border bg-terminal-bg">
+                      <LockKeyhole className="h-4 w-4 text-terminal-muted" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-terminal-text">
+                        Password protection enabled
+                      </p>
+                      <p className="mt-1 text-[10px] leading-relaxed text-terminal-muted">
+                        Rotate credentials periodically to keep account access
+                        secure.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="self-start rounded border border-terminal-green/30 bg-terminal-green/5 px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-terminal-green sm:self-auto">
+                    Protected
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

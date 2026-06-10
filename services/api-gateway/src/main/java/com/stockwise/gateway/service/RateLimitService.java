@@ -1,7 +1,7 @@
 package com.stockwise.gateway.service;
 
-import io.bucket4j.Bandwidth;
-import io.bucket4j.Bucket;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

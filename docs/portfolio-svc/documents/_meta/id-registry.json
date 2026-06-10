@@ -1,0 +1,158 @@
+{
+  "project": "portfolio-service",
+  "generated_at": "2026-06-05T07:00:00Z",
+  "ids": {
+    "API-003": {
+      "title": "API-003: DELETE /portfolio/order/{orderId} (Specified)",
+      "path": "api-contracts/portfolio-service/api-delete-portfolio-order.html"
+    },
+    "API-004": {
+      "title": "API-004: GET /portfolio/pnl",
+      "path": "api-contracts/portfolio-service/api-get-portfolio-pnl.html"
+    },
+    "API-001": {
+      "title": "API-001: GET /portfolio",
+      "path": "api-contracts/portfolio-service/api-get-portfolio.html"
+    },
+    "API-002": {
+      "title": "API-002: POST /portfolio/order",
+      "path": "api-contracts/portfolio-service/api-post-portfolio-order.html"
+    },
+    "BFLOW-001": {
+      "title": "BFLOW-001: Order Lifecycle",
+      "path": "business-flows/portfolio-service/bflow-order-lifecycle.html"
+    },
+    "br-order-validation": {
+      "title": "BR: Portfolio Business Rules",
+      "path": "business-rules/portfolio-service/br-order-validation.html"
+    },
+    "ENTITY-002": {
+      "title": "ENTITY-002: Holding",
+      "path": "data-models/portfolio-service/entity-holding.html"
+    },
+    "ENTITY-003": {
+      "title": "ENTITY-003: Order (Specified)",
+      "path": "data-models/portfolio-service/entity-order.html"
+    },
+    "ENTITY-001": {
+      "title": "ENTITY-001: Portfolio",
+      "path": "data-models/portfolio-service/entity-portfolio.html"
+    },
+    "ENTITY-004": {
+      "title": "ENTITY-004: Transaction",
+      "path": "data-models/portfolio-service/entity-transaction.html"
+    },
+    "deployment-runtime": {
+      "title": "Deployment: portfolio-service Runtime",
+      "path": "deployment/portfolio-service/deployment-runtime.html"
+    },
+    "glossary": {
+      "title": "Glossary: Portfolio &amp; Paper Trading",
+      "path": "glossary/portfolio-service/glossary.html"
+    },
+    "group-api-contracts": {
+      "title": "api contracts",
+      "path": "groups/api-contracts.html"
+    },
+    "group-business-flows": {
+      "title": "business flows",
+      "path": "groups/business-flows.html"
+    },
+    "group-business-rules": {
+      "title": "business rules",
+      "path": "groups/business-rules.html"
+    },
+    "group-data-models": {
+      "title": "data models",
+      "path": "groups/data-models.html"
+    },
+    "group-deployment": {
+      "title": "deployment",
+      "path": "groups/deployment.html"
+    },
+    "group-functional-requirements": {
+      "title": "functional requirements",
+      "path": "groups/functional-requirements.html"
+    },
+    "group-glossary": {
+      "title": "glossary",
+      "path": "groups/glossary.html"
+    },
+    "group-integrations": {
+      "title": "integrations",
+      "path": "groups/integrations.html"
+    },
+    "group-messaging-contracts": {
+      "title": "messaging contracts",
+      "path": "groups/messaging-contracts.html"
+    },
+    "group-non-functional-requirements": {
+      "title": "non functional requirements",
+      "path": "groups/non-functional-requirements.html"
+    },
+    "group-overview": {
+      "title": "overview",
+      "path": "groups/overview.html"
+    },
+    "group-traceability": {
+      "title": "traceability",
+      "path": "groups/traceability.html"
+    },
+    "group-use-cases": {
+      "title": "use cases",
+      "path": "groups/use-cases.html"
+    },
+    "INT-PORTFOLIO-001": {
+      "title": "INT-PORTFOLIO-001: Service Dependencies For Completed Order Use Cases",
+      "path": "integrations/portfolio-service/service-dependency-contracts.html"
+    },
+    "MSG-004": {
+      "title": "MSG-004: Order Cancelled Event",
+      "path": "messaging/portfolio-service/event-order-cancelled.html"
+    },
+    "MSG-003": {
+      "title": "MSG-003: Order Created Event",
+      "path": "messaging/portfolio-service/event-order-created.html"
+    },
+    "MSG-001": {
+      "title": "MSG-001: Market Price Updated",
+      "path": "messaging/portfolio-service/event-price-updated.html"
+    },
+    "MSG-002": {
+      "title": "MSG-002: Portfolio Transaction Event",
+      "path": "messaging/portfolio-service/event-reply-status.html"
+    },
+    "project-overview": {
+      "title": "Project Overview: portfolio-service",
+      "path": "overview/project-overview.html"
+    },
+    "fr-portfolio-paper-trading": {
+      "title": "FR: Portfolio &amp; Paper Trading (FR-PORTFOLIO)",
+      "path": "srs/fr/portfolio-service/fr-portfolio-paper-trading.html"
+    },
+    "nfr-portfolio": {
+      "title": "NFR: Portfolio Service Non-Functional Requirements",
+      "path": "srs/nfr/portfolio-service/nfr-portfolio.html"
+    },
+    "traceability-matrix": {
+      "title": "Traceability Matrix: portfolio-service",
+      "path": "traceability/portfolio-service/traceability-matrix.html"
+    },
+    "UC-001": {
+      "title": "UC-001: View Portfolio Summary",
+      "path": "use-cases/portfolio-service/uc-001-view-portfolio-summary.html"
+    },
+    "UC-002": {
+      "title": "UC-002: Place Buy Order",
+      "path": "use-cases/portfolio-service/uc-002-place-buy-order.html"
+    },
+    "UC-003": {
+      "title": "UC-003: Place Sell Order",
+      "path": "use-cases/portfolio-service/uc-003-place-sell-order.html"
+    },
+    "UC-004": {
+      "title": "UC-004: Cancel Order",
+      "path": "use-cases/portfolio-service/uc-004-cancel-order.html"
+    }
+  }
+}
