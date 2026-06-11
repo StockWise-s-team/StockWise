@@ -198,6 +198,44 @@ async def _fetch_and_save_prices(
             all_symbols.append(sym)
             logger.info("[StreamA] Fetched %d prices for %s", len(normalized), sym)
 
+            # Extract the latest bar for the WebSocket push payload.
+            # bars are ordered newest-first from VnStock.
+            latest_bar = bars[0]
+            prev_close_raw = bars[1] if len(bars) > 1 else None
+
+            try:
+                prev_close = float(prev_close_raw.get("close")) if prev_close_raw else None
+                latest_close = float(latest_bar.get("close"))
+                change = round(latest_close - prev_close, 2) if prev_close else None
+                change_percent = (
+                    round((latest_close - prev_close) / prev_close * 100, 2)
+                    if prev_close and prev_close != 0
+                    else None
+                )
+            except (TypeError, ValueError):
+                change = None
+                change_percent = None
+
+            await producer.publish(
+                exchange_name=_EXCHANGE_PRICE,
+                routing_key=f"price.{sym}",
+                data={
+                    "symbol": sym,
+                    "source": "vnstock",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "action": _ROUTING_PRICE,
+                    "tradeDate": latest_bar.get("date"),
+                    "open": latest_bar.get("open"),
+                    "high": latest_bar.get("high"),
+                    "low": latest_bar.get("low"),
+                    "close": latest_bar.get("close"),
+                    "volume": latest_bar.get("volume"),
+                    "change": change,
+                    "changePercent": change_percent,
+                },
+            )
+            logger.info("[StreamA] Published price update for %s: close=%s", sym, latest_bar.get("close"))
+
     for raw in raw_ratios:
         sym = raw.get("symbol", symbol)
         ratios = raw.get("ratios", {})
@@ -207,19 +245,6 @@ async def _fetch_and_save_prices(
             if sym not in all_symbols:
                 all_symbols.append(sym)
             logger.info("[StreamA] Fetched ratios for %s", sym)
-
-    if all_symbols:
-        await producer.publish(
-            exchange_name=_EXCHANGE_PRICE,
-            routing_key=_ROUTING_PRICE,
-            data={
-                "symbols": all_symbols,
-                "source": "vnstock",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "record_count": len(all_symbols),
-                "action": _ROUTING_PRICE,
-            },
-        )
 
 
 async def run_stream_b() -> None:
