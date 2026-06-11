@@ -10,10 +10,12 @@ import com.stockwise.market.security.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = MarketController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(com.stockwise.market.exception.GlobalExceptionHandler.class)
 class MarketControllerTest {
 
@@ -42,6 +45,7 @@ class MarketControllerTest {
 
     @Test
     @DisplayName("should return 404 with error response when symbol not found")
+    @WithMockUser
     void returns404WhenSymbolNotFound() throws Exception {
         when(getStockPriceUseCase.getLatestPrice("MISSING"))
                 .thenThrow(new SymbolNotFoundException("No market data found for symbol MISSING"));
@@ -55,6 +59,7 @@ class MarketControllerTest {
 
     @Test
     @DisplayName("should return 400 for invalid symbol")
+    @WithMockUser
     void returns400ForInvalidSymbol() throws Exception {
         when(getFinancialRatioUseCase.getRatios("***"))
                 .thenThrow(new InvalidSymbolException("symbol contains invalid characters"));
@@ -67,6 +72,7 @@ class MarketControllerTest {
 
     @Test
     @DisplayName("should return 400 for invalid date range")
+    @WithMockUser
     void returns400ForInvalidDateRange() throws Exception {
         when(getStockPriceUseCase.getOhlc("FPT", "2026-06-10", "2026-06-01"))
                 .thenThrow(new InvalidDateRangeException("startDate must be before or equal to endDate"));

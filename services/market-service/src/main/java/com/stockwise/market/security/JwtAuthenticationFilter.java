@@ -33,6 +33,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // For WebSocket handshake requests, token is already validated
+        // by JwtAuthHandshakeInterceptor and stored in session attributes.
+        // We only need to skip re-validation here to avoid double-work.
+        if (request.getRequestURI().startsWith("/ws/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // For REST endpoints: validate Authorization header
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

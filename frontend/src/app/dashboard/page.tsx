@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { OHLCChart } from "@/components/charts/OHLCChart";
 import { marketApi } from "@/lib/api";
+import { useLivePrice } from "@/hooks/useMarketWebSocket";
 import type { LatestPrice, OhlcSeries, FinancialRatioList } from "@/lib/types";
 
 const DEFAULT_SYMBOL = "FPT";
@@ -23,6 +24,21 @@ export default function DashboardPage() {
   const [ratios, setRatios] = useState<FinancialRatioList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Live price via WebSocket
+  const [livePrice, setLivePrice] = useState<LatestPrice | null>(null);
+
+  const handleLivePrice = (price: LatestPrice) => {
+    setLivePrice(price);
+  };
+
+  const { isConnected: wsConnected } = useLivePrice(
+    loading ? null : DEFAULT_SYMBOL,
+    handleLivePrice
+  );
+
+  // Derive the display price: live if available, fallback to initial REST price
+  const displayPrice = livePrice ?? latestPrice;
 
   useEffect(() => {
     let cancelled = false;
@@ -71,11 +87,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="mb-2 text-3xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Theo dõi nhanh dữ liệu thị trường cho mã {DEFAULT_SYMBOL}.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Theo dõi nhanh dữ liệu thị trường cho mã {DEFAULT_SYMBOL}.
+          </p>
+        </div>
+        {wsConnected && (
+          <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            Live
+          </div>
+        )}
       </div>
 
       {error ? (
@@ -88,15 +115,15 @@ export default function DashboardPage() {
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <h2 className="text-sm font-medium text-muted-foreground">Latest Price</h2>
           <p className="mt-2 text-2xl font-bold">
-            {loading ? "Loading..." : latestPrice ? currencyFormatter.format(latestPrice.price) : "—"}
+            {loading ? "Loading..." : displayPrice ? currencyFormatter.format(displayPrice.price) : "—"}
           </p>
           <p
             className={`mt-1 text-sm ${
-              latestPrice && latestPrice.change < 0 ? "text-red-600" : "text-green-600"
+              displayPrice && displayPrice.change < 0 ? "text-red-600" : "text-green-600"
             }`}
           >
-            {latestPrice
-              ? `${latestPrice.change >= 0 ? "+" : ""}${numberFormatter.format(latestPrice.change)} (${latestPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(latestPrice.changePercent)}%)`
+            {displayPrice
+              ? `${displayPrice.change >= 0 ? "+" : ""}${numberFormatter.format(displayPrice.change)} (${displayPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(displayPrice.changePercent)}%)`
               : "—"}
           </p>
         </div>

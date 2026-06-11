@@ -245,3 +245,20 @@ export interface PipelineStats {
   }>;
   summary: PipelineStatsSummary[];
 }
+
+// ─── WebSocket ─────────────────────────────────────────────────────────────────
+
+export interface WsMessage<T = unknown> {
+  type: "price_update" | "connected" | "error";
+  payload: T;
+}
+
+export interface WsConnectedPayload {
+  sessionId: string;
+  subscribedSymbols: string[];
+}
+
+export interface WsErrorPayload {
+  code: string;
+  message: string;
+}
