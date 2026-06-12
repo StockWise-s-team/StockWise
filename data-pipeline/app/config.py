@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "openai"
     EMBEDDING_DIM: int = 1536
 
+    STREAM_A_INTERVAL_SECONDS: int = 60
+    ENABLE_MOCK_FEED: bool = False
+
     class Config:
         env_file = _root_dir() / ".env"
         env_file_encoding = "utf-8"

@@ -2,14 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { OHLCChart } from "@/components/charts/OHLCChart";
+import dynamic from "next/dynamic";
+const TradingViewChart = dynamic(
+  () => import("@/components/charts/TradingViewChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[350px] items-center justify-center rounded-lg border border-hairline-on-dark bg-surface-card-dark text-muted">
+        Đang tải biểu đồ...
+      </div>
+    ),
+  }
+);
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { marketApi } from "@/lib/api";
+import { marketApi, trackedSymbolsApi } from "@/lib/api";
 import { useLivePrice } from "@/hooks/useMarketWebSocket";
 import { formatVnd, formatPnl, pnlColor } from "@/lib/format";
 import type { FinancialRatioList, LatestPrice, OhlcSeries } from "@/lib/types";
-
-const DEFAULT_SYMBOL = "FPT";
 
 const numberFormatter = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: 2,
@@ -18,6 +27,8 @@ const numberFormatter = new Intl.NumberFormat("vi-VN", {
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data, error: portfolioError } = usePortfolio(user?.id);
+  const [symbolsList, setSymbolsList] = useState<string[]>([]);
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("FPT");
   const [latestPrice, setLatestPrice] = useState<LatestPrice | null>(null);
   const [ohlcSeries, setOhlcSeries] = useState<OhlcSeries | null>(null);
   const [ratios, setRatios] = useState<FinancialRatioList | null>(null);
@@ -29,10 +40,65 @@ export default function DashboardPage() {
 
   const handleLivePrice = (price: LatestPrice) => {
     setLivePrice(price);
+
+    // Update the OHLC series data dynamically
+    setOhlcSeries((prevSeries) => {
+      if (!prevSeries || !prevSeries.data || prevSeries.data.length === 0) return prevSeries;
+
+      const updatedData = [...prevSeries.data];
+      const lastBar = updatedData[updatedData.length - 1];
+
+      // Match the date format YYYY-MM-DD
+      if (lastBar.date === price.tradeDate) {
+        updatedData[updatedData.length - 1] = {
+          ...lastBar,
+          close: price.price, // Using the updated price/close
+          high: Math.max(lastBar.high, price.high),
+          low: Math.min(lastBar.low, price.low),
+          volume: price.volume,
+        };
+      } else if (new Date(price.tradeDate) > new Date(lastBar.date)) {
+        updatedData.push({
+          date: price.tradeDate,
+          open: price.open,
+          high: price.high,
+          low: price.low,
+          close: price.price,
+          volume: price.volume,
+        });
+      }
+
+      return {
+        ...prevSeries,
+        data: updatedData,
+      };
+    });
   };
 
+  // Fetch tracked symbols list on mount
+  useEffect(() => {
+    trackedSymbolsApi.list()
+      .then((syms) => {
+        const defaultSymbols = ["FPT", "VNM", "HPG", "VIC", "MSN"];
+        const combined = Array.from(new Set([...(syms || []), ...defaultSymbols]));
+        setSymbolsList(combined);
+        if (syms && syms.length > 0 && !syms.includes("FPT")) {
+          setSelectedSymbol(syms[0]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load tracked symbols, using defaults:", err);
+        setSymbolsList(["FPT", "VNM", "HPG", "VIC", "MSN"]);
+      });
+  }, []);
+
+  // Reset live price when selected symbol changes
+  useEffect(() => {
+    setLivePrice(null);
+  }, [selectedSymbol]);
+
   const { isConnected: wsConnected } = useLivePrice(
-    user?.id ? DEFAULT_SYMBOL : null,
+    user?.id ? selectedSymbol : null,
     handleLivePrice
   );
 
@@ -43,6 +109,7 @@ export default function DashboardPage() {
     let cancelled = false;
 
     async function loadMarket() {
+      if (!selectedSymbol) return;
       try {
         setMarketLoading(true);
         setMarketError(null);
@@ -52,12 +119,12 @@ export default function DashboardPage() {
         startDate.setDate(endDate.getDate() - 30);
 
         const [latest, ohlc, ratioList] = await Promise.all([
-          marketApi.getLatestPrice(DEFAULT_SYMBOL),
-          marketApi.getOhlc(DEFAULT_SYMBOL, {
+          marketApi.getLatestPrice(selectedSymbol),
+          marketApi.getOhlc(selectedSymbol, {
             startDate: startDate.toISOString().slice(0, 10),
             endDate: endDate.toISOString().slice(0, 10),
           }),
-          marketApi.getRatios(DEFAULT_SYMBOL),
+          marketApi.getRatios(selectedSymbol),
         ]);
 
         if (cancelled) return;
@@ -76,9 +143,21 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedSymbol]);
 
-  const latestRatio = useMemo(() => ratios?.ratios?.[0] ?? null, [ratios]);
+  const latestRatio = useMemo(() => {
+    const baseRatio = ratios?.ratios?.[0] ?? null;
+    if (!baseRatio) return null;
+
+    // Recalculate P/E dynamically if we have a live price and valid EPS
+    if (displayPrice && baseRatio.eps && baseRatio.eps > 0) {
+      return {
+        ...baseRatio,
+        peRatio: displayPrice.price / baseRatio.eps,
+      };
+    }
+    return baseRatio;
+  }, [ratios, displayPrice]);
 
   return (
     <div className="space-y-6">
@@ -86,18 +165,36 @@ export default function DashboardPage() {
         <div>
           <h1 className="mb-2 text-3xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Theo dõi nhanh dữ liệu thị trường cho mã {DEFAULT_SYMBOL}.
+            Theo dõi nhanh dữ liệu thị trường cho mã {selectedSymbol}.
           </p>
         </div>
-        {wsConnected && (
-          <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            Live
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          {symbolsList.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-strong">Mã chứng khoán:</span>
+              <select
+                value={selectedSymbol}
+                onChange={(e) => setSelectedSymbol(e.target.value)}
+                className="rounded-md border border-hairline-on-dark bg-surface-card-dark px-3 py-1.5 text-sm font-semibold text-body focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                {symbolsList.map((sym) => (
+                  <option key={sym} value={sym}>
+                    {sym}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {wsConnected && (
+            <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+              </span>
+              Live
+            </div>
+          )}
+        </div>
       </div>
 
       {(portfolioError || marketError) && (
@@ -123,7 +220,7 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Stat
-          label={`${DEFAULT_SYMBOL} latest`}
+          label={`${selectedSymbol} latest`}
           value={marketLoading ? "Loading..." : formatVnd(displayPrice?.price)}
           valueClass={
             displayPrice && displayPrice.change < 0 ? "text-trading-down" : "text-trading-up"
@@ -162,7 +259,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <OHLCChart symbol={DEFAULT_SYMBOL} data={ohlcSeries?.data ?? []} />
+        <TradingViewChart symbol={selectedSymbol} data={ohlcSeries?.data ?? []} />
 
         <section className="rounded-lg border border-hairline-on-dark bg-surface-card-dark p-4">
           <h2 className="mb-4 text-lg font-semibold text-body">Market Snapshot</h2>

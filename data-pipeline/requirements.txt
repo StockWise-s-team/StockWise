@@ -17,3 +17,4 @@ openai>=1.0.0
 sentence-transformers>=2.0.0
 fastapi>=0.100
 uvicorn>=0.22
+yfinance>=0.2.40

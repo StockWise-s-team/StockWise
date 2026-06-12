@@ -177,3 +177,17 @@ CREATE TABLE IF NOT EXISTS pipeline_run_symbols (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_run_symbols_run ON pipeline_run_symbols(run_id);
+
+-- Tracked symbols
+CREATE TABLE IF NOT EXISTS tracked_symbols (
+    symbol VARCHAR(10) PRIMARY KEY
+);
+
+-- Seed initial tracked symbols
+INSERT INTO tracked_symbols (symbol) VALUES ('FPT'), ('VNM'), ('HPG'), ('VIC'), ('MSN') ON CONFLICT DO NOTHING;
+
+-- Seed initial default user: user@stockwise.com / password123
+INSERT INTO users (email, password_hash, role)
+VALUES ('user@stockwise.com', '$2b$12$NNq/sYo9M1vREkZ7Q/lWpunpufzAkh60WyS8xpQMk5pZBWvRokzRa', 'ROLE_USER')
+ON CONFLICT (email) DO NOTHING;
+

@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     sched = start_scheduler()
     _scheduler_instance = sched
     set_scheduler(sched)
-    logger.info("Scheduler started — Stream A, B, Synthesis queued every 4h")
+    logger.info("Scheduler started — Stream A, B, Synthesis queued every 4h; Mock Realtime Feed queued every 5s")
     yield
     logger.info("Shutting down scheduler on FastAPI shutdown...")
     sched.shutdown(wait=True)

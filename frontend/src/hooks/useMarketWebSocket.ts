@@ -8,7 +8,7 @@ import { getAccessToken } from "@/lib/tokenStore";
 const WS_BASE_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
   process.env.NEXT_PUBLIC_API_URL?.replace(/^http/, "ws") ||
-  "ws://localhost:8082";
+  "ws://localhost:18082";
 
 export type PriceUpdateCallback = (price: LatestPrice) => void;
 
@@ -62,7 +62,7 @@ export function useMarketWebSocket(
     }
 
     const client = new Client({
-      brokerURL: `${WS_BASE_URL}/ws/market`,
+      brokerURL: `${WS_BASE_URL}/ws/market/websocket?token=${token}`,
       connectHeaders: { token },
       onConnect: () => {
         setIsConnected(true);
@@ -194,7 +194,7 @@ export function useLivePrice(
     }
 
     const client = new Client({
-      brokerURL: `${WS_BASE_URL}/ws/market`,
+      brokerURL: `${WS_BASE_URL}/ws/market/websocket?token=${token}`,
       connectHeaders: { token },
       onConnect: () => {
         setIsConnected(true);

@@ -50,14 +50,110 @@ def _run_async(coro):
     loop.close()
 
 
+_mock_price_cache = {}
+
+
+async def run_mock_realtime_feed() -> None:
+    import random
+    logger.info("[MockRealtimeFeed] Starting simulation run...")
+    price_repo = PriceRepository()
+    producer = RabbitMQProducer()
+
+    try:
+        await producer.connect()
+        tracked = price_repo.get_tracked_symbols()
+        if not tracked:
+            logger.warning("[MockRealtimeFeed] No tracked symbols found, skipping feed")
+            return
+
+        for symbol in tracked:
+            # Check cache first
+            if symbol not in _mock_price_cache:
+                prices = price_repo.get_latest_prices(symbol, limit=2)
+                if not prices:
+                    # No price in DB, skip
+                    logger.debug("[MockRealtimeFeed] No DB price for %s, skipping", symbol)
+                    continue
+                latest = prices[0]
+                prev_close = float(prices[1]["close"]) if len(prices) > 1 else float(latest["close"])
+
+                # Store in cache
+                _mock_price_cache[symbol] = {
+                    "open": float(latest["open"]),
+                    "high": float(latest["high"]),
+                    "low": float(latest["low"]),
+                    "close": float(latest["close"]),
+                    "volume": int(latest["volume"]),
+                    "tradeDate": latest["trade_date"].isoformat() if hasattr(latest["trade_date"], "isoformat") else str(latest["trade_date"]),
+                    "prev_close": prev_close
+                }
+
+            cache = _mock_price_cache[symbol]
+
+            # Deviate the close price by a tiny amount (e.g. -0.5% to +0.5%)
+            change_percent = (random.random() - 0.5) * 1.0  # -0.5% to +0.5%
+            deviation = cache["close"] * (change_percent / 100.0)
+            new_close = round(cache["close"] + deviation, 2)
+
+            # Update high/low
+            new_high = round(max(cache["high"], new_close), 2)
+            new_low = round(min(cache["low"], new_close), 2)
+            new_volume = cache["volume"] + random.randint(100, 2000)
+
+            # Calculate change and changePercent relative to prev_close
+            prev_close = cache["prev_close"]
+            change = round(new_close - prev_close, 2)
+            change_percent = round((new_close - prev_close) / prev_close * 100, 2) if prev_close != 0 else 0.0
+
+            # Update cache
+            cache["close"] = new_close
+            cache["high"] = new_high
+            cache["low"] = new_low
+            cache["volume"] = new_volume
+
+            # Publish update
+            await producer.publish(
+                exchange_name=_EXCHANGE_PRICE,
+                routing_key=f"price.{symbol}",
+                data={
+                    "symbol": symbol,
+                    "source": "mock_feed",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "action": _ROUTING_PRICE,
+                    "tradeDate": cache["tradeDate"],
+                    "open": cache["open"],
+                    "high": new_high,
+                    "low": new_low,
+                    "close": new_close,
+                    "volume": new_volume,
+                    "change": change,
+                    "changePercent": change_percent,
+                },
+            )
+            logger.info("[MockRealtimeFeed] Published mock price for %s: close=%s, changePercent=%s%%", symbol, new_close, change_percent)
+
+    except Exception as e:
+        logger.error("[MockRealtimeFeed] Error in mock realtime feed: %s", e)
+    finally:
+        close_coro = producer.close()
+        if asyncio.iscoroutine(close_coro):
+            await close_coro
+        else:
+            close_coro.close()
+
+
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
     import threading
-    scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_a(),)).start(), "interval", hours=4, id="stream_a", next_run_time=datetime.now(timezone.utc))
+    from app.config import settings
+    scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_a(),)).start(), "interval", seconds=settings.STREAM_A_INTERVAL_SECONDS, id="stream_a", next_run_time=datetime.now(timezone.utc))
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_b(),)).start(), "interval", hours=4, id="stream_b", next_run_time=datetime.now(timezone.utc))
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_synthesis(),)).start(), "interval", hours=4, id="synthesis", next_run_time=datetime.now(timezone.utc))
+    if settings.ENABLE_MOCK_FEED:
+        scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_mock_realtime_feed(),)).start(), "interval", seconds=5, id="mock_feed", next_run_time=datetime.now(timezone.utc))
     scheduler.start()
     return scheduler
+
 
 
 async def _auto_seed_missing_metadata(tracked: list[str]) -> None:
@@ -181,11 +277,36 @@ async def _fetch_and_save_prices(
     producer: RabbitMQProducer,
 ) -> list[str]:
     errors: list[str] = []
-    fetcher = VnStockFetcher()
-    ratio_fetcher = YahooFinanceFetcher()
 
+    # Check if price history exists to decide days_back
+    try:
+        latest_prices = repo.get_latest_prices(symbol, limit=1)
+        days_back = 2 if latest_prices else 30
+    except Exception as e:
+        logger.warning("[StreamA] Failed to check price history for %s, defaulting to 30 days: %s", symbol, e)
+        days_back = 30
+
+    fetcher = VnStockFetcher(days_back=days_back)
     raw_prices = await fetcher.fetch([symbol])
-    raw_ratios = await ratio_fetcher.fetch([symbol])
+
+    # Check if ratios exist to avoid rate limiting Yahoo Finance on frequent updates
+    has_ratios = False
+    try:
+        conn = repo.get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM financial_ratios WHERE symbol = %s LIMIT 1", (symbol,))
+        has_ratios = cur.fetchone() is not None
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logger.warning("[StreamA] Failed to check ratios for %s: %s", symbol, e)
+
+    raw_ratios = []
+    if not has_ratios:
+        ratio_fetcher = YahooFinanceFetcher()
+        raw_ratios = await ratio_fetcher.fetch([symbol])
+    else:
+        logger.debug("[StreamA] Ratios already exist for %s, skipping Yahoo Finance fetch", symbol)
 
     all_symbols: list[str] = []
 
