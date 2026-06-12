@@ -32,11 +32,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-terminal-bg font-mono text-terminal-text">
+        <div className="text-center space-y-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-terminal-border border-t-terminal-accent mx-auto" />
+          <p className="text-[10px] uppercase tracking-[0.2em] text-terminal-muted">Initializing Console...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-terminal-bg font-mono text-terminal-text">

@@ -13,6 +13,7 @@ import java.time.Duration;
 public class TokenManagementService {
 
     private static final String REFRESH_TOKEN_PREFIX = "refresh:valid:";
+    private static final String REFRESH_TOKEN_GRACE_PREFIX = "refresh:grace:";
     private static final String ACCESS_TOKEN_BLACKLIST_PREFIX = "token:blacklist:";
 
     private final StringRedisTemplate redisTemplate;
@@ -24,11 +25,23 @@ public class TokenManagementService {
     }
 
     public boolean isRefreshTokenValid(String jti) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_TOKEN_PREFIX + jti));
+        return Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_TOKEN_PREFIX + jti)) ||
+               Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_TOKEN_GRACE_PREFIX + jti));
     }
 
     public void revokeRefreshToken(String jti) {
-        redisTemplate.delete(REFRESH_TOKEN_PREFIX + jti);
+        String key = REFRESH_TOKEN_PREFIX + jti;
+        String graceKey = REFRESH_TOKEN_GRACE_PREFIX + jti;
+        try {
+            String userId = redisTemplate.opsForValue().get(key);
+            if (userId != null) {
+                // Keep it valid in grace period for 10 seconds to handle client race conditions
+                redisTemplate.opsForValue().set(graceKey, userId, Duration.ofSeconds(10));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to set refresh token grace period for JTI: {}", jti, e);
+        }
+        redisTemplate.delete(key);
         log.debug("Revoked refresh token JTI: {}", jti);
     }
 

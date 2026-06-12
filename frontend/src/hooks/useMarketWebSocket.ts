@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Client, IMessage, IFrame } from "@stomp/stompjs";
 import type { LatestPrice } from "@/lib/types";
 import { getAccessToken } from "@/lib/tokenStore";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const WS_BASE_URL =
   process.env.NEXT_PUBLIC_WS_URL ||
@@ -165,6 +166,7 @@ export function useLivePrice(
   symbol: string | null,
   onPrice: PriceUpdateCallback
 ): { isConnected: boolean; reconnect: () => void } {
+  const { isAuthenticated, isLoading } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
   const subIdRef = useRef<string | null>(null);
@@ -256,14 +258,14 @@ export function useLivePrice(
   };
 
   useEffect(() => {
-    if (symbol) {
+    if (symbol && !isLoading && isAuthenticated) {
       connectClient(symbol);
     }
     return () => {
       disconnectAll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol]);
+  }, [symbol, isLoading, isAuthenticated]);
 
   return { isConnected, reconnect };
 }

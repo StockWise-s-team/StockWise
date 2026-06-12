@@ -107,12 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // On mount: restore token from refresh cookie if user profile exists in localStorage.
   // Access token in memory is already gone on reload, so we must rehydrate from /auth/refresh.
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-      tryRestoreToken();
+    async function initAuth() {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        setUser(storedUser);
+        await tryRestoreToken();
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
+    initAuth();
   }, []);
 
   useEffect(() => {

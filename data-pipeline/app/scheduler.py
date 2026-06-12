@@ -84,7 +84,7 @@ async def run_mock_realtime_feed() -> None:
                     "low": float(latest["low"]),
                     "close": float(latest["close"]),
                     "volume": int(latest["volume"]),
-                    "tradeDate": latest["trade_date"].isoformat() if hasattr(latest["trade_date"], "isoformat") else str(latest["trade_date"]),
+                    "tradeDate": (latest["trade_date"].isoformat() if hasattr(latest["trade_date"], "isoformat") else str(latest["trade_date"])).split(" ")[0].split("T")[0],
                     "prev_close": prev_close
                 }
 
@@ -345,7 +345,7 @@ async def _fetch_and_save_prices(
                     "source": "vnstock",
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "action": _ROUTING_PRICE,
-                    "tradeDate": latest_bar.get("date"),
+                    "tradeDate": str(latest_bar.get("date")).split(" ")[0].split("T")[0] if latest_bar.get("date") else None,
                     "open": latest_bar.get("open"),
                     "high": latest_bar.get("high"),
                     "low": latest_bar.get("low"),
