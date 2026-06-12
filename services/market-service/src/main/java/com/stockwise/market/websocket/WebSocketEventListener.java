@@ -1,23 +1,24 @@
 package com.stockwise.market.websocket;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.WebSocketDisconnectEvent;
-import org.springframework.web.socket.messaging.WebSocketEventListener;
-
-@Slf4j
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 @Component
-@RequiredArgsConstructor
-public class WebSocketEventListener implements WebSocketEventListener {
+public class WebSocketEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketEventListener.class);
 
     private final WebSocketSessionRegistry sessionRegistry;
 
-    @Override
+    public WebSocketEventListener(WebSocketSessionRegistry sessionRegistry) {
+        this.sessionRegistry = sessionRegistry;
+    }
+
     @EventListener
-    public void handleWebSocketDisconnectListener(WebSocketDisconnectEvent event) {
+    public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         String sessionId = event.getSessionId();
         sessionRegistry.onDisconnect(event, sessionId);
     }

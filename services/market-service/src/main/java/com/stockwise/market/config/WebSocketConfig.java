@@ -1,7 +1,6 @@
 package com.stockwise.market.config;
 
 import com.stockwise.market.security.JwtAuthHandshakeInterceptor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -10,10 +9,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtAuthHandshakeInterceptor jwtAuthHandshakeInterceptor;
+
+    public WebSocketConfig(JwtAuthHandshakeInterceptor jwtAuthHandshakeInterceptor) {
+        this.jwtAuthHandshakeInterceptor = jwtAuthHandshakeInterceptor;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {

@@ -1,7 +1,6 @@
 package com.stockwise.market.config;
 
 import org.springframework.amqp.core.*;
-import org.springframework.amqp.core.Queue.Builder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

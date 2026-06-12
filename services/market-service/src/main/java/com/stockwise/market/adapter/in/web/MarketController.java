@@ -6,7 +6,6 @@ import com.stockwise.market.adapter.in.web.dto.OhlcSeriesResponse;
 import com.stockwise.market.application.port.in.GetFinancialRatioUseCase;
 import com.stockwise.market.application.port.in.GetStockPriceUseCase;
 import com.stockwise.market.messaging.MarketDataConsumer;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,12 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/market")
-@RequiredArgsConstructor
 public class MarketController {
 
     private final GetStockPriceUseCase getStockPriceUseCase;
     private final GetFinancialRatioUseCase getFinancialRatioUseCase;
     private final MarketDataConsumer marketDataConsumer;
+
+    public MarketController(GetStockPriceUseCase getStockPriceUseCase,
+                           GetFinancialRatioUseCase getFinancialRatioUseCase,
+                           MarketDataConsumer marketDataConsumer) {
+        this.getStockPriceUseCase = getStockPriceUseCase;
+        this.getFinancialRatioUseCase = getFinancialRatioUseCase;
+        this.marketDataConsumer = marketDataConsumer;
+    }
 
     @GetMapping("/price/{symbol}")
     public ResponseEntity<LatestPriceResponse> getPrice(@PathVariable String symbol) {

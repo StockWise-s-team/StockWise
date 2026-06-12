@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import com.stockwise.market.websocket.WebSocketSessionRegistry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -16,21 +16,28 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class MarketDataConsumer {
+
+    private static final Logger log = LoggerFactory.getLogger(MarketDataConsumer.class);
 
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
 
-    // Store-and-forward: last known price per symbol
     private final Map<String, LatestPriceResponse> lastKnownPrice = new ConcurrentHashMap<>();
+
+    public MarketDataConsumer(ObjectMapper objectMapper,
+                             SimpMessagingTemplate messagingTemplate,
+                             WebSocketSessionRegistry sessionRegistry) {
+        this.objectMapper = objectMapper;
+        this.messagingTemplate = messagingTemplate;
+        this.sessionRegistry = sessionRegistry;
+    }
 
     @RabbitListener(
             queues = "market_service_price_q",
-            ackMode = org.springframework.amqp.rabbit.listener.AcknowledgeMode.AUTO,
+            ackMode = "AUTO",
             concurrency = "1"
     )
     public void consumePriceUpdate(String message) {
@@ -46,10 +53,8 @@ public class MarketDataConsumer {
 
             LatestPriceResponse priceData = buildResponse(payload, symbol);
 
-            // Always store the latest price (store-and-forward for late subscribers)
             lastKnownPrice.put(symbol, priceData);
 
-            // Always send to WebSocket if there are active sessions
             if (!sessionRegistry.getSessionsForSymbol(symbol).isEmpty()) {
                 String destination = "/topic/price/" + symbol;
                 messagingTemplate.convertAndSend(destination, priceData);
@@ -75,21 +80,17 @@ public class MarketDataConsumer {
         }
     }
 
-    /**
-     * Deliver the cached latest price to a newly registered session,
-     * so the client gets immediate data instead of waiting for the next pipeline run.
-     */
     public LatestPriceResponse getCachedPrice(String symbol) {
         return lastKnownPrice.get(symbol.trim().toUpperCase());
     }
 
     private LatestPriceResponse buildResponse(Map<String, Object> payload, String symbol) {
         BigDecimal close     = parseDecimal(payload.get("close"));
-        BigDecimal price     = close;  // message carries EOD data; price = close for daily bars
+        BigDecimal price     = close;
         BigDecimal open      = parseDecimal(payload.get("open"));
-        BigDecimal high      = parseDecimal(payload.get("high"));
-        BigDecimal low       = parseDecimal(payload.get("low"));
-        Long volume          = parseLong(payload.get("volume"));
+        BigDecimal high     = parseDecimal(payload.get("high"));
+        BigDecimal low      = parseDecimal(payload.get("low"));
+        Long volume         = parseLong(payload.get("volume"));
         BigDecimal change        = parseDecimal(payload.get("change"));
         BigDecimal changePercent = parseDecimal(payload.get("changePercent"));
 

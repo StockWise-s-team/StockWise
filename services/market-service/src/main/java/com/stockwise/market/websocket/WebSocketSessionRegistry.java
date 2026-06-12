@@ -1,9 +1,10 @@
 package com.stockwise.market.websocket;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.WebSocketDisconnectEvent;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-@Slf4j
 @Component
 public class WebSocketSessionRegistry {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketSessionRegistry.class);
 
     private final Map<String, Set<String>> symbolToSessions = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
@@ -63,7 +65,7 @@ public class WebSocketSessionRegistry {
         }
     }
 
-    public void onDisconnect(WebSocketDisconnectEvent event, String sessionId) {
+    public void onDisconnect(SessionDisconnectEvent event, String sessionId) {
         String userId = sessionToUser.remove(sessionId);
 
         symbolToSessions.values().forEach(sessions -> sessions.remove(sessionId));

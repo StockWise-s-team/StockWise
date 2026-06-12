@@ -14,7 +14,6 @@ import com.stockwise.market.domain.repository.StockPriceRepository;
 import com.stockwise.market.exception.InvalidDateRangeException;
 import com.stockwise.market.exception.InvalidSymbolException;
 import com.stockwise.market.exception.SymbolNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,11 +24,16 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class MarketService implements GetStockPriceUseCase, GetFinancialRatioUseCase {
 
     private final StockPriceRepository stockPriceRepository;
     private final FinancialRatioRepository financialRatioRepository;
+
+    public MarketService(StockPriceRepository stockPriceRepository,
+                         FinancialRatioRepository financialRatioRepository) {
+        this.stockPriceRepository = stockPriceRepository;
+        this.financialRatioRepository = financialRatioRepository;
+    }
 
     @Override
     public LatestPriceResponse getLatestPrice(String symbol) {

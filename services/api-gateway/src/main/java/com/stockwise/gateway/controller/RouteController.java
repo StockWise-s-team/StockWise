@@ -175,7 +175,9 @@ public class RouteController {
     private HttpHeaders copyResponseHeaders(HttpHeaders upstreamHeaders) {
         HttpHeaders responseHeaders = new HttpHeaders();
         upstreamHeaders.forEach((key, values) -> {
-            if (!key.equalsIgnoreCase("Content-Length") && !key.equalsIgnoreCase("Transfer-Encoding")) {
+            if (!key.equalsIgnoreCase("Content-Length") && 
+                !key.equalsIgnoreCase("Transfer-Encoding") &&
+                !key.toLowerCase().startsWith("access-control-")) {
                 responseHeaders.addAll(key, values);
             }
         });
