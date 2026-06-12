@@ -1,0 +1,4736 @@
+{
+  "root": "D:\\dev\\StockWise",
+  "generated_at": "2026-06-05T07:55:46.869311+00:00",
+  "max_files": 5000,
+  "ignored_dirs": [
+    ".git",
+    ".hg",
+    ".idea",
+    ".mypy_cache",
+    ".next",
+    ".nuxt",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".svelte-kit",
+    ".svn",
+    ".terraform",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pycache__",
+    "bin",
+    "bower_components",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "obj",
+    "out",
+    "target",
+    "vendor",
+    "venv"
+  ],
+  "summary": {
+    "sampled_files": 438,
+    "total_size_bytes": 30604610,
+    "extensions": {
+      "[no extension]": 277,
+      ".json": 117,
+      ".java": 75,
+      ".py": 64,
+      ".html": 38,
+      ".png": 21,
+      ".log": 20,
+      ".tsx": 14,
+      ".js": 8,
+      ".db": 7,
+      ".ts": 6,
+      ".yml": 5,
+      ".db-journal": 4,
+      ".xml": 4,
+      ".md": 3,
+      ".example": 2,
+      ".dat": 2,
+      ".db-wal": 2,
+      ".baj": 2,
+      ".baf": 2,
+      ".txt": 2,
+      ".css": 2,
+      ".pdf": 1,
+      ".pma": 1,
+      ".db-shm": 1,
+      ".pb": 1,
+      ".old": 1,
+      ".bin": 1,
+      ".0-0": 1,
+      ".toml": 1,
+      ".mjs": 1,
+      ".sql": 1
+    },
+    "tags": {
+      "source": 168,
+      "secret-like-name": 35,
+      "messaging": 9,
+      "manifest": 9,
+      "container": 8,
+      "identity": 6,
+      "documentation": 4,
+      "serverless": 4,
+      "env-config": 3,
+      "mobile": 2,
+      "observability": 1,
+      "helm": 1
+    },
+    "detected_documentation_extensions": [
+      "deployment-env-safety",
+      "messaging",
+      "mobile-api-writer",
+      "oauth-oidc-sso-writer",
+      "observability-writer",
+      "serverless-writer"
+    ],
+    "structured_counts": {
+      "packages": 1,
+      "api_contracts": 0,
+      "graphql": 0,
+      "grpc": 0,
+      "http_routes": 0,
+      "ci_cd": 0,
+      "terraform": 0,
+      "kubernetes_objects": 0,
+      "helm_charts": 0,
+      "env_files": 3,
+      "potential_secret_names": 122
+    }
+  },
+  "samples_by_tag": {
+    "container": [
+      "ai-service/Dockerfile",
+      "data-pipeline/Dockerfile",
+      "docker-compose.yml",
+      "frontend/Dockerfile",
+      "services/api-gateway/Dockerfile",
+      "services/market-service/Dockerfile",
+      "services/portfolio-service/Dockerfile",
+      "services/user-service/Dockerfile"
+    ],
+    "documentation": [
+      ".antigravitycli/edge-cdp-profile2/Default/README",
+      "CLAUDE.md",
+      "README.md",
+      "scaffold_project.md"
+    ],
+    "env-config": [
+      ".env",
+      ".env.example",
+      "ai-service/.env.example"
+    ],
+    "helm": [
+      "frontend/src/components/charts/OHLCChart.tsx"
+    ],
+    "identity": [
+      "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+      "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+      "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+      "services/user-service/src/main/java/com/stockwise/user/adapter/in/web/AuthController.java",
+      "services/user-service/src/main/java/com/stockwise/user/application/port/in/AuthenticateUserUseCase.java",
+      "services/user-service/src/main/java/com/stockwise/user/dto/AuthResponse.java"
+    ],
+    "manifest": [
+      "ai-service/pyproject.toml",
+      "ai-service/requirements.txt",
+      "data-pipeline/requirements.txt",
+      "frontend/package-lock.json",
+      "frontend/package.json",
+      "services/api-gateway/pom.xml",
+      "services/market-service/pom.xml",
+      "services/portfolio-service/pom.xml",
+      "services/user-service/pom.xml"
+    ],
+    "messaging": [
+      ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsSiteData",
+      ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsSiteData-journal",
+      ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsState",
+      ".antigravitycli/edge-cdp-profile2/Default/DualEngine/SiteList-Consumer.json",
+      "data-pipeline/app/rabbitmq/producer.py",
+      "services/market-service/src/main/java/com/stockwise/market/config/RabbitConfig.java",
+      "services/market-service/src/main/java/com/stockwise/market/messaging/MarketDataConsumer.java",
+      "services/portfolio-service/src/main/java/com/stockwise/portfolio/config/RabbitConfig.java",
+      "services/portfolio-service/src/main/java/com/stockwise/portfolio/messaging/RabbitPortfolioEventPublisher.java"
+    ],
+    "mobile": [
+      "services/portfolio-service/src/main/java/com/stockwise/portfolio/PortfolioServiceApplication.java",
+      "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/service/PortfolioService.java"
+    ],
+    "observability": [
+      ".antigravitycli/edge-cdp-profile2/CrashpadMetrics-active.pma"
+    ],
+    "secret-like-name": [
+      ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/domains_config.json",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/offscreendocument_main.js",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/service_worker_bin_prod.js",
+      ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+      ".env",
+      ".env.example",
+      "ai-service/.env.example",
+      "ai-service/app/config.py",
+      "ai-service/app/models/llm_factory.py",
+      "data-pipeline/app/config.py",
+      "data-pipeline/app/rabbitmq/producer.py",
+      "data-pipeline/app/sources/source_repository.py",
+      "data-pipeline/app/synthesis/merger.py",
+      "data-pipeline/app/synthesis/wiki_repository.py",
+      "docker-compose.yml",
+      "frontend/package-lock.json",
+      "frontend/src/app/(auth)/login/page.tsx",
+      "frontend/src/app/(auth)/register/page.tsx",
+      "frontend/src/lib/api.ts",
+      "frontend/src/lib/types.ts",
+      "infra/postgres/init.sql",
+      "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+      "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+      "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+      "services/api-gateway/src/main/resources/application.yml"
+    ],
+    "serverless": [
+      ".antigravitycli/edge-cdp-profile2/Functional SAN Data",
+      ".antigravitycli/edge-cdp-profile2/Functional SAN Data-wal",
+      "docs/portfolio-svc/documents/groups/functional-requirements.html",
+      "docs/portfolio-svc/documents/groups/non-functional-requirements.html"
+    ],
+    "source": [
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/offscreendocument_main.js",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/page_embed_script.js",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/service_worker_bin_prod.js",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/jmjflgjpcpepeafmmgdpfkogkghcpiha/1.2.1_0/content.js",
+      ".antigravitycli/edge-cdp-profile2/Default/Extensions/jmjflgjpcpepeafmmgdpfkogkghcpiha/1.2.1_0/content_new.js",
+      "ai-service/app/__init__.py",
+      "ai-service/app/agents/__init__.py",
+      "ai-service/app/agents/analyst_agent.py",
+      "ai-service/app/agents/base_agent.py",
+      "ai-service/app/agents/master_router.py",
+      "ai-service/app/agents/risk_manager_agent.py",
+      "ai-service/app/agents/synthesis_agent.py",
+      "ai-service/app/api/__init__.py",
+      "ai-service/app/api/v1/__init__.py",
+      "ai-service/app/api/v1/endpoints/__init__.py",
+      "ai-service/app/api/v1/endpoints/advisor.py",
+      "ai-service/app/api/v1/endpoints/health.py",
+      "ai-service/app/api/v1/router.py",
+      "ai-service/app/config.py",
+      "ai-service/app/db/__init__.py",
+      "ai-service/app/db/database.py",
+      "ai-service/app/db/repositories/__init__.py",
+      "ai-service/app/db/repositories/market_repo.py",
+      "ai-service/app/graph/__init__.py",
+      "ai-service/app/main.py"
+    ]
+  },
+  "structured": {
+    "packages": [
+      {
+        "path": "frontend/package.json",
+        "name": "stockwise-frontend",
+        "version": "0.1.0",
+        "scripts": [
+          "build",
+          "dev",
+          "lint",
+          "start"
+        ],
+        "dependencies": [
+          "axios",
+          "class-variance-authority",
+          "clsx",
+          "lucide-react",
+          "next",
+          "react",
+          "react-dom",
+          "recharts",
+          "tailwind-merge"
+        ],
+        "dev_dependencies": [
+          "@types/node",
+          "@types/react",
+          "@types/react-dom",
+          "autoprefixer",
+          "postcss",
+          "tailwindcss",
+          "typescript"
+        ]
+      }
+    ],
+    "api_contracts": [],
+    "graphql": [],
+    "grpc": [],
+    "http_routes": [],
+    "ci_cd": [],
+    "terraform": [],
+    "kubernetes_objects": [],
+    "helm_charts": [],
+    "env_files": [
+      {
+        "path": ".env",
+        "variables": [
+          {
+            "name": "POSTGRES_HOST",
+            "line": 2,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_PORT",
+            "line": 3,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_DB",
+            "line": 4,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_USER",
+            "line": 5,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_PASSWORD",
+            "line": 6,
+            "secret_like": true
+          },
+          {
+            "name": "DB_HOST",
+            "line": 9,
+            "secret_like": false
+          },
+          {
+            "name": "DB_PORT",
+            "line": 10,
+            "secret_like": false
+          },
+          {
+            "name": "DB_NAME",
+            "line": 11,
+            "secret_like": false
+          },
+          {
+            "name": "DB_USERNAME",
+            "line": 12,
+            "secret_like": false
+          },
+          {
+            "name": "DB_PASSWORD",
+            "line": 13,
+            "secret_like": true
+          },
+          {
+            "name": "RABBITMQ_HOST",
+            "line": 16,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_PORT",
+            "line": 17,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_USER",
+            "line": 18,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_PASS",
+            "line": 19,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_MANAGEMENT_PORT",
+            "line": 20,
+            "secret_like": false
+          },
+          {
+            "name": "REDIS_HOST",
+            "line": 23,
+            "secret_like": false
+          },
+          {
+            "name": "REDIS_PORT",
+            "line": 24,
+            "secret_like": false
+          },
+          {
+            "name": "JWT_SECRET",
+            "line": 27,
+            "secret_like": true
+          },
+          {
+            "name": "JWT_ACCESS_TOKEN_EXPIRY_MS",
+            "line": 28,
+            "secret_like": true
+          },
+          {
+            "name": "JWT_REFRESH_TOKEN_EXPIRY_MS",
+            "line": 29,
+            "secret_like": true
+          },
+          {
+            "name": "GEMINI_API_KEY",
+            "line": 32,
+            "secret_like": true
+          },
+          {
+            "name": "OPENAI_API_KEY",
+            "line": 33,
+            "secret_like": true
+          },
+          {
+            "name": "USER_SERVICE_URL",
+            "line": 36,
+            "secret_like": false
+          },
+          {
+            "name": "MARKET_SERVICE_URL",
+            "line": 37,
+            "secret_like": false
+          },
+          {
+            "name": "PORTFOLIO_SERVICE_URL",
+            "line": 38,
+            "secret_like": false
+          },
+          {
+            "name": "AI_SERVICE_URL",
+            "line": 39,
+            "secret_like": false
+          },
+          {
+            "name": "NEXT_PUBLIC_API_URL",
+            "line": 42,
+            "secret_like": false
+          },
+          {
+            "name": "NEXT_PUBLIC_AI_SERVICE_URL",
+            "line": 43,
+            "secret_like": false
+          },
+          {
+            "name": "QDRANT_HOST",
+            "line": 46,
+            "secret_like": false
+          },
+          {
+            "name": "QDRANT_PORT",
+            "line": 47,
+            "secret_like": false
+          },
+          {
+            "name": "EMBEDDING_DIMENSION",
+            "line": 50,
+            "secret_like": false
+          }
+        ]
+      },
+      {
+        "path": ".env.example",
+        "variables": [
+          {
+            "name": "POSTGRES_HOST",
+            "line": 2,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_PORT",
+            "line": 3,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_DB",
+            "line": 4,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_USER",
+            "line": 5,
+            "secret_like": false
+          },
+          {
+            "name": "POSTGRES_PASSWORD",
+            "line": 6,
+            "secret_like": true
+          },
+          {
+            "name": "RABBITMQ_HOST",
+            "line": 9,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_PORT",
+            "line": 10,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_USER",
+            "line": 11,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_PASS",
+            "line": 12,
+            "secret_like": false
+          },
+          {
+            "name": "RABBITMQ_MANAGEMENT_PORT",
+            "line": 13,
+            "secret_like": false
+          },
+          {
+            "name": "REDIS_HOST",
+            "line": 16,
+            "secret_like": false
+          },
+          {
+            "name": "REDIS_PORT",
+            "line": 17,
+            "secret_like": false
+          },
+          {
+            "name": "JWT_SECRET",
+            "line": 20,
+            "secret_like": true
+          },
+          {
+            "name": "JWT_ACCESS_TOKEN_EXPIRY_MS",
+            "line": 21,
+            "secret_like": true
+          },
+          {
+            "name": "JWT_REFRESH_TOKEN_EXPIRY_MS",
+            "line": 22,
+            "secret_like": true
+          },
+          {
+            "name": "GEMINI_API_KEY",
+            "line": 25,
+            "secret_like": true
+          },
+          {
+            "name": "OPENAI_API_KEY",
+            "line": 26,
+            "secret_like": true
+          },
+          {
+            "name": "USER_SERVICE_URL",
+            "line": 29,
+            "secret_like": false
+          },
+          {
+            "name": "MARKET_SERVICE_URL",
+            "line": 30,
+            "secret_like": false
+          },
+          {
+            "name": "PORTFOLIO_SERVICE_URL",
+            "line": 31,
+            "secret_like": false
+          },
+          {
+            "name": "AI_SERVICE_URL",
+            "line": 32,
+            "secret_like": false
+          },
+          {
+            "name": "NEXT_PUBLIC_API_URL",
+            "line": 35,
+            "secret_like": false
+          },
+          {
+            "name": "NEXT_PUBLIC_AI_SERVICE_URL",
+            "line": 36,
+            "secret_like": false
+          },
+          {
+            "name": "QDRANT_HOST",
+            "line": 39,
+            "secret_like": false
+          },
+          {
+            "name": "QDRANT_PORT",
+            "line": 40,
+            "secret_like": false
+          },
+          {
+            "name": "EMBEDDING_DIMENSION",
+            "line": 43,
+            "secret_like": false
+          }
+        ]
+      },
+      {
+        "path": "ai-service/.env.example",
+        "variables": [
+          {
+            "name": "DATABASE_URL",
+            "line": 6,
+            "secret_like": false
+          },
+          {
+            "name": "REDIS_URL",
+            "line": 9,
+            "secret_like": false
+          },
+          {
+            "name": "GEMINI_API_KEY",
+            "line": 12,
+            "secret_like": true
+          },
+          {
+            "name": "OPENAI_API_KEY",
+            "line": 15,
+            "secret_like": true
+          },
+          {
+            "name": "DATA_PIPELINE_URL",
+            "line": 18,
+            "secret_like": false
+          }
+        ]
+      }
+    ],
+    "potential_secret_names": [
+      {
+        "path": ".env",
+        "line": "6",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "13",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "27",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "28",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "29",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "32",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env",
+        "line": "33",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "6",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "20",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "21",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "22",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "25",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".env.example",
+        "line": "26",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "docker-compose.yml",
+        "line": "12",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+        "line": "3",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+        "line": "16",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+        "line": "58",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+        "line": "174",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+        "line": "185",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/domains_config.json",
+        "line": "1",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/offscreendocument_main.js",
+        "line": "157",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/service_worker_bin_prod.js",
+        "line": "152",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/.env.example",
+        "line": "12",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/.env.example",
+        "line": "15",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/config.py",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/config.py",
+        "line": "14",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/config.py",
+        "line": "23",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/config.py",
+        "line": "24",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/models/llm_factory.py",
+        "line": "16",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "ai-service/app/models/llm_factory.py",
+        "line": "22",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/config.py",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/config.py",
+        "line": "18",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/config.py",
+        "line": "21",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/rabbitmq/producer.py",
+        "line": "16",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/sources/source_repository.py",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/synthesis/merger.py",
+        "line": "7",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "data-pipeline/app/synthesis/wiki_repository.py",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/package-lock.json",
+        "line": "1278",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/package-lock.json",
+        "line": "1280",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/package-lock.json",
+        "line": "1316",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "7",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "33",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "34",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "37",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "38",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "39",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/login/page.tsx",
+        "line": "40",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "7",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "34",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "35",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "38",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "39",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "40",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "41",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "49",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/app/(auth)/register/page.tsx",
+        "line": "52",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/api.ts",
+        "line": "12",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/api.ts",
+        "line": "13",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/api.ts",
+        "line": "14",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/api.ts",
+        "line": "25",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/api.ts",
+        "line": "26",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/types.ts",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "frontend/src/lib/types.ts",
+        "line": "9",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "infra/postgres/init.sql",
+        "line": "7",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "3",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "9",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "22",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "31",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "32",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "33",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "34",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+        "line": "35",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+        "line": "3",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+        "line": "4",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+        "line": "5",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+        "line": "6",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+        "line": "7",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "16",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "18",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "19",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "21",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "22",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "24",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "25",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "28",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+        "line": "30",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/resources/application.yml",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/resources/application.yml",
+        "line": "26",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/resources/application.yml",
+        "line": "27",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/api-gateway/src/main/resources/application.yml",
+        "line": "28",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/market-service/src/main/resources/application.yml",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/market-service/src/main/resources/application.yml",
+        "line": "23",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/portfolio-service/src/main/resources/application.yml",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/portfolio-service/src/main/resources/application.yml",
+        "line": "23",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/adapter/in/web/AuthController.java",
+        "line": "38",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/adapter/in/web/AuthController.java",
+        "line": "39",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/adapter/in/web/AuthController.java",
+        "line": "40",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "12",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "25",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "36",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "42",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "43",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "46",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "54",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "59",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "60",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+        "line": "63",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/config/SecurityConfig.java",
+        "line": "9",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/config/SecurityConfig.java",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/config/SecurityConfig.java",
+        "line": "30",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/config/SecurityConfig.java",
+        "line": "31",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/domain/entity/User.java",
+        "line": "28",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/dto/AuthResponse.java",
+        "line": "4",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/dto/AuthResponse.java",
+        "line": "5",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/dto/LoginRequest.java",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/java/com/stockwise/user/dto/RegisterRequest.java",
+        "line": "8",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/resources/application.yml",
+        "line": "10",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/resources/application.yml",
+        "line": "26",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/resources/application.yml",
+        "line": "27",
+        "kind": "secret-like-name"
+      },
+      {
+        "path": "services/user-service/src/main/resources/application.yml",
+        "line": "28",
+        "kind": "secret-like-name"
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": ".env",
+      "size": 1059,
+      "extension": "[no extension]",
+      "tags": [
+        "env-config",
+        "secret-like-name"
+      ],
+      "modified": "2026-05-28T07:05:33.825543+00:00"
+    },
+    {
+      "path": ".env.example",
+      "size": 970,
+      "extension": ".example",
+      "tags": [
+        "env-config",
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.225297+00:00"
+    },
+    {
+      "path": ".gitignore",
+      "size": 445,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-06-05T05:46:53.876634+00:00"
+    },
+    {
+      "path": "CLAUDE.md",
+      "size": 6003,
+      "extension": ".md",
+      "tags": [
+        "documentation"
+      ],
+      "modified": "2026-06-05T06:03:15.283182+00:00"
+    },
+    {
+      "path": "README.md",
+      "size": 7949,
+      "extension": ".md",
+      "tags": [
+        "documentation"
+      ],
+      "modified": "2026-05-13T08:42:10.225297+00:00"
+    },
+    {
+      "path": "docker-compose.yml",
+      "size": 4288,
+      "extension": ".yml",
+      "tags": [
+        "container",
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.246269+00:00"
+    },
+    {
+      "path": "scaffold_project.md",
+      "size": 25026,
+      "extension": ".md",
+      "tags": [
+        "documentation"
+      ],
+      "modified": "2026-05-13T08:42:10.257783+00:00"
+    },
+    {
+      "path": ".antigravitycli/frontend-13001.log",
+      "size": 2433,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T12:13:43.280252+00:00"
+    },
+    {
+      "path": ".antigravitycli/ke-hoach.pdf",
+      "size": 6931371,
+      "extension": ".pdf",
+      "tags": [],
+      "modified": "2026-05-30T11:06:16.531981+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Breadcrumbs",
+      "size": 424,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:33.405149+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/CrashpadMetrics-active.pma",
+      "size": 16384,
+      "extension": ".pma",
+      "tags": [
+        "observability"
+      ],
+      "modified": "2026-05-30T11:32:08.608181+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/FirstLaunchAfterInstallation",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.617662+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Functional SAN Data",
+      "size": 4096,
+      "extension": "[no extension]",
+      "tags": [
+        "serverless"
+      ],
+      "modified": "2026-05-30T11:32:10.831853+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Functional SAN Data-wal",
+      "size": 45352,
+      "extension": "[no extension]",
+      "tags": [
+        "serverless"
+      ],
+      "modified": "2026-05-30T11:32:10.836400+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Last Browser",
+      "size": 120,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.912255+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Last Version",
+      "size": 13,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.550104+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Local State",
+      "size": 70790,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:15.674139+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Variations",
+      "size": 86,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.495334+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/first_party_sets.db",
+      "size": 49152,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.586197+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/first_party_sets.db-journal",
+      "size": 0,
+      "extension": ".db-journal",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.586785+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/AutoLaunchProtocolsComponent/1.0.0.10/manifest.json",
+      "size": 135,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2025-08-23T00:03:10+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/AutoLaunchProtocolsComponent/1.0.0.10/protocols.json",
+      "size": 3320,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2025-08-23T00:03:10+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/component_crx_cache/000ac7dc9366969db9d1e41810a3a27c747a7623535d856eecc2de86cfed80c7",
+      "size": 1890,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2025-09-19T02:34:50+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/component_crx_cache/95fd9d48e4fc245a3f3a99a3a16ecd1355050ba3f4afc555f19a97c7f9b49677",
+      "size": 1355,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2024-11-07T20:24:12+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/component_crx_cache/metadata.json",
+      "size": 124,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:33:24.206564+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Crashpad/metadata",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.451071+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Crashpad/settings.dat",
+      "size": 288,
+      "extension": ".dat",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.474060+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Crashpad/throttle_store.dat",
+      "size": 20,
+      "extension": ".dat",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.439726+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BookmarkMergedSurfaceOrdering",
+      "size": 6,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.240877+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Bookmarks",
+      "size": 3076,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:13.308398+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsSiteData",
+      "size": 28672,
+      "extension": "[no extension]",
+      "tags": [
+        "messaging"
+      ],
+      "modified": "2026-05-30T11:32:09.390669+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsSiteData-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [
+        "messaging"
+      ],
+      "modified": "2026-05-30T11:32:09.390669+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BrowsingTopicsState",
+      "size": 414,
+      "extension": "[no extension]",
+      "tags": [
+        "messaging"
+      ],
+      "modified": "2026-05-30T11:32:11.057665+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DIPS",
+      "size": 4096,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.856457+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DIPS-wal",
+      "size": 45352,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.474664+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ExtensionActivityComp",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.642501+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ExtensionActivityEdge",
+      "size": 32768,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.640315+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ExtensionActivityEdge-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.640315+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Favicons",
+      "size": 20480,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:18.795406+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Favicons-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:18.795406+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/History",
+      "size": 262144,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:18.789955+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/History-journal",
+      "size": 8720,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:05.667132+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/HubApps",
+      "size": 109027,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.870483+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/HubApps Icons",
+      "size": 28672,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.668998+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/HubApps Icons-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.671531+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.641156+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.638557+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Login Data",
+      "size": 65536,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:10.847803+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Login Data For Account",
+      "size": 51200,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.617662+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Login Data For Account-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.624237+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Login Data-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:10.861170+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Network Action Predictor",
+      "size": 53248,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.909744+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Network Action Predictor-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.910228+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Preferences",
+      "size": 23055,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:15.614470+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/PreferredApps",
+      "size": 33,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.383431+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/README",
+      "size": 182,
+      "extension": "[no extension]",
+      "tags": [
+        "documentation"
+      ],
+      "modified": "2026-05-30T11:32:05.553290+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Secure Preferences",
+      "size": 39212,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:30.921815+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ServerCertificate",
+      "size": 20480,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.609377+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ServerCertificate-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.611912+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/SharedStorage",
+      "size": 4096,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.817510+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/SharedStorage-wal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.820492+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Shortcuts",
+      "size": 20480,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.809161+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Shortcuts-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.809866+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Top Sites",
+      "size": 20480,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.809753+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Top Sites-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.811763+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Vpn Tokens",
+      "size": 28672,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.627269+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Vpn Tokens-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.631298+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Web Data",
+      "size": 305152,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:17.115248+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Web Data-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:17.115789+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/arbitration_service_config.json",
+      "size": 20837,
+      "extension": ".json",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-30T11:32:08.755330+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/favorites_diagnostic.log",
+      "size": 1799,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:11.533587+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/heavy_ad_intervention_opt_out.db",
+      "size": 16384,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.825411+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/heavy_ad_intervention_opt_out.db-journal",
+      "size": 0,
+      "extension": ".db-journal",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.826141+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/load_statistics.db",
+      "size": 4096,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.693483+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/load_statistics.db-shm",
+      "size": 32768,
+      "extension": ".db-shm",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.695492+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/load_statistics.db-wal",
+      "size": 86552,
+      "extension": ".db-wal",
+      "tags": [],
+      "modified": "2026-05-30T11:33:22.123662+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/trusted_vault.pb",
+      "size": 84,
+      "extension": ".pb",
+      "tags": [],
+      "modified": "2026-05-30T11:32:06.500635+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Asset Store/assets.db/000003.log",
+      "size": 1036571,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.914521+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Asset Store/assets.db/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.538301+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Asset Store/assets.db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.523273+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Asset Store/assets.db/LOG",
+      "size": 287,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.545012+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Asset Store/assets.db/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.533076+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/AutofillAiModelCache/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.383431+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/AutofillAiModelCache/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.383431+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/AutofillStrikeDatabase/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.449743+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/AutofillStrikeDatabase/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.449743+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BudgetDatabase/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.453638+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/BudgetDatabase/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.453638+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/data_0",
+      "size": 45056,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:22.151031+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/data_1",
+      "size": 270336,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:33:22.151031+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/data_2",
+      "size": 1056768,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.755330+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/data_3",
+      "size": 4202496,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.925500+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/f_000001",
+      "size": 22849,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.778528+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/f_000002",
+      "size": 192707,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.847426+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/Cache_Data/index",
+      "size": 524656,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.845563+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/No_Vary_Search/journal.baj",
+      "size": 4,
+      "extension": ".baj",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.909632+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Cache/No_Vary_Search/snapshot.baf",
+      "size": 20,
+      "extension": ".baf",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.907456+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ClientCertificates/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.597227+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/ClientCertificates/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.597227+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/2a8a6f695a3ff316_0",
+      "size": 303,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.918209+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/2cca9bc741a6516d_0",
+      "size": 306,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/5cce1706364839f1_0",
+      "size": 307,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/5fbb54f36261c413_0",
+      "size": 308,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.927199+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/7de0dc67a2b3a69c_0",
+      "size": 307,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.925689+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/8020acacb3d13763_0",
+      "size": 321,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/8bb1867be67136eb_0",
+      "size": 305,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/945cb8fb56d09a8e_0",
+      "size": 321,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.927727+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/b21fb45197b9c728_0",
+      "size": 303,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.929779+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/ba678a2fbd8c358c_0",
+      "size": 298,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.885607+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/baded5730168391f_0",
+      "size": 313,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/e94999eac39dfd99_0",
+      "size": 317,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/e9a142a21b9ad9ef_0",
+      "size": 297,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.928253+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/ebce9e52a869b921_0",
+      "size": 303,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.906255+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/index",
+      "size": 24,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.606781+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/js/index-dir/the-real-index",
+      "size": 384,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:25.935060+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/wasm/index",
+      "size": 24,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.601964+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Code Cache/wasm/index-dir/the-real-index",
+      "size": 48,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.607357+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Collections/collectionsSQLite",
+      "size": 73728,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.928743+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Collections/collectionsSQLite-journal",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.928743+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/commerce_subscription_db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.616514+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/commerce_subscription_db/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.614273+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnGraphiteCache/data_0",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.700432+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnGraphiteCache/data_1",
+      "size": 270336,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.703447+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnGraphiteCache/data_2",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.703447+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnGraphiteCache/data_3",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.703447+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnGraphiteCache/index",
+      "size": 262512,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.700432+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnWebGPUCache/data_0",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.695492+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnWebGPUCache/data_1",
+      "size": 270336,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.699321+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnWebGPUCache/data_2",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.695492+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnWebGPUCache/data_3",
+      "size": 8192,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.698714+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DawnWebGPUCache/index",
+      "size": 262512,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.695492+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/discounts_db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.624237+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/discounts_db/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.623313+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/discount_infos_db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.616514+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/discount_infos_db/LOG",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.614273+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DualEngine/SiteList-Consumer.json",
+      "size": 2,
+      "extension": ".json",
+      "tags": [
+        "messaging"
+      ],
+      "modified": "2026-05-30T11:32:08.914521+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/DualEngine/SiteList-Enterprise.json",
+      "size": 2,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.914521+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeCoupons/coupons_data.db/000003.log",
+      "size": 64,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.245149+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeCoupons/coupons_data.db/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.662824+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeCoupons/coupons_data.db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.658721+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeCoupons/coupons_data.db/LOG",
+      "size": 299,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.666797+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeCoupons/coupons_data.db/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.658721+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeEDrop/EdgeEDropSQLite.db",
+      "size": 32768,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.622990+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeEDrop/EdgeEDropSQLite.db-journal",
+      "size": 0,
+      "extension": ".db-journal",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.623980+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeHubAppUsage/EdgeHubAppUsageSQLite.db",
+      "size": 40960,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:11.555193+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeHubAppUsage/EdgeHubAppUsageSQLite.db-journal",
+      "size": 0,
+      "extension": ".db-journal",
+      "tags": [],
+      "modified": "2026-05-30T11:32:11.556991+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeJourneys/EdgeJourneys.db",
+      "size": 16384,
+      "extension": ".db",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.575244+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgeJourneys/EdgeJourneys.db-wal",
+      "size": 98480,
+      "extension": ".db-wal",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.656070+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/000003.log",
+      "size": 1656,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:16.796862+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.682463+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.645024+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/LOG",
+      "size": 319,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.686004+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/LOG.old",
+      "size": 0,
+      "extension": ".old",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.676607+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EdgePushStorageWithConnectTokenAndKey/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:15.679777+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/domains_config.json",
+      "size": 131562,
+      "extension": ".json",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-30T11:32:08.793274+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/EntityExtractionAssetStore.db/000003.log",
+      "size": 152025,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.841302+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/EntityExtractionAssetStore.db/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.575244+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/EntityExtractionAssetStore.db/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.555985+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/EntityExtractionAssetStore.db/LOG",
+      "size": 303,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.585128+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/EntityExtraction/EntityExtractionAssetStore.db/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:08.561918+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Rules/000003.log",
+      "size": 209,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:10.092938+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Rules/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.633307+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Rules/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.624237+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Rules/LOG",
+      "size": 275,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.641634+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Rules/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.626759+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Scripts/000003.log",
+      "size": 209,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:10.092938+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Scripts/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.653612+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Scripts/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.646970+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Scripts/LOG",
+      "size": 279,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.659891+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension Scripts/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.646970+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension State/000003.log",
+      "size": 627,
+      "extension": ".log",
+      "tags": [],
+      "modified": "2026-05-30T11:32:10.092938+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension State/CURRENT",
+      "size": 16,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.890233+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension State/LOCK",
+      "size": 0,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.884065+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension State/LOG",
+      "size": 275,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.895893+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extension State/MANIFEST-000001",
+      "size": 41,
+      "extension": "[no extension]",
+      "tags": [],
+      "modified": "2026-05-30T11:32:05.886036+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/128.png",
+      "size": 5064,
+      "extension": ".png",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.812394+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/dasherSettingSchema.json",
+      "size": 854,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/manifest.json",
+      "size": 2526,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.806103+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/offscreendocument.html",
+      "size": 97,
+      "extension": ".html",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/offscreendocument_main.js",
+      "size": 119270,
+      "extension": ".js",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/page_embed_script.js",
+      "size": 339,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/service_worker_bin_prod.js",
+      "size": 124802,
+      "extension": ".js",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/af/messages.json",
+      "size": 908,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.815456+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/am/messages.json",
+      "size": 1285,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.816121+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ar/messages.json",
+      "size": 1244,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.816121+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/as/messages.json",
+      "size": 2847,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/az/messages.json",
+      "size": 977,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.821649+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/be/messages.json",
+      "size": 3107,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/bg/messages.json",
+      "size": 1389,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.822888+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/bn/messages.json",
+      "size": 1763,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.824935+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ca/messages.json",
+      "size": 930,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.824935+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/cs/messages.json",
+      "size": 913,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.826627+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/cy/messages.json",
+      "size": 806,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/da/messages.json",
+      "size": 883,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.828684+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/de/messages.json",
+      "size": 1031,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.828684+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/el/messages.json",
+      "size": 1613,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.832721+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/en/messages.json",
+      "size": 851,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.833342+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/en_CA/messages.json",
+      "size": 851,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.833342+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/en_GB/messages.json",
+      "size": 848,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.837024+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/en_US/messages.json",
+      "size": 1425,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.838063+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/es/messages.json",
+      "size": 961,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.841057+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/es_419/messages.json",
+      "size": 959,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.842060+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/et/messages.json",
+      "size": 968,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.843769+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/eu/messages.json",
+      "size": 838,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/fa/messages.json",
+      "size": 1305,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.845301+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/fi/messages.json",
+      "size": 911,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.846916+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/fil/messages.json",
+      "size": 939,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.847596+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/fr/messages.json",
+      "size": 977,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.848627+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/fr_CA/messages.json",
+      "size": 972,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.849627+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/gl/messages.json",
+      "size": 990,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.850613+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/gu/messages.json",
+      "size": 1658,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.852630+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/hi/messages.json",
+      "size": 1672,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.853942+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/hr/messages.json",
+      "size": 935,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.856025+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/hu/messages.json",
+      "size": 1065,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.857509+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/hy/messages.json",
+      "size": 2771,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/id/messages.json",
+      "size": 858,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.859277+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/is/messages.json",
+      "size": 954,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/it/messages.json",
+      "size": 899,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.860276+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/iw/messages.json",
+      "size": 2230,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ja/messages.json",
+      "size": 1160,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.861826+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ka/messages.json",
+      "size": 3264,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/kk/messages.json",
+      "size": 3235,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/km/messages.json",
+      "size": 3122,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/kn/messages.json",
+      "size": 1895,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.862884+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ko/messages.json",
+      "size": 1042,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.864522+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/lo/messages.json",
+      "size": 2535,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/lt/messages.json",
+      "size": 1028,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.866541+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/lv/messages.json",
+      "size": 994,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.868508+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/mk/messages.json",
+      "size": 2875,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ml/messages.json",
+      "size": 2091,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.868508+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/mn/messages.json",
+      "size": 2778,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/mr/messages.json",
+      "size": 1719,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.870551+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ms/messages.json",
+      "size": 936,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.888359+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/my/messages.json",
+      "size": 3830,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ne/messages.json",
+      "size": 1884,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.889663+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/nl/messages.json",
+      "size": 914,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.889663+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/no/messages.json",
+      "size": 878,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.896031+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/or/messages.json",
+      "size": 2902,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/pa/messages.json",
+      "size": 2766,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/pl/messages.json",
+      "size": 978,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.898664+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/pt_BR/messages.json",
+      "size": 889,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.899057+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/pt_PT/messages.json",
+      "size": 914,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.901735+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ro/messages.json",
+      "size": 937,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.903800+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/ru/messages.json",
+      "size": 1341,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.905196+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/si/messages.json",
+      "size": 2846,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-05T07:18:52+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/sk/messages.json",
+      "size": 934,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.906680+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/sl/messages.json",
+      "size": 963,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.906680+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/sq/messages.json",
+      "size": 950,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.910619+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/sr/messages.json",
+      "size": 1320,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.911685+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/ghbmnnjooekpmoecnnnilnnbdlolhkhi/1.106.1_0/_locales/sv/messages.json",
+      "size": 884,
+      "extension": ".json",
+      "tags": [],
+      "modified": "2026-05-30T11:32:09.911685+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/jmjflgjpcpepeafmmgdpfkogkghcpiha/1.2.1_0/content.js",
+      "size": 9815,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2024-01-22T17:14:58+00:00"
+    },
+    {
+      "path": ".antigravitycli/edge-cdp-profile2/Default/Extensions/jmjflgjpcpepeafmmgdpfkogkghcpiha/1.2.1_0/content_new.js",
+      "size": 10388,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2024-01-22T17:09:02+00:00"
+    },
+    {
+      "path": "ai-service/.env.example",
+      "size": 611,
+      "extension": ".example",
+      "tags": [
+        "env-config",
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.226303+00:00"
+    },
+    {
+      "path": "ai-service/Dockerfile",
+      "size": 209,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.227302+00:00"
+    },
+    {
+      "path": "ai-service/pyproject.toml",
+      "size": 89,
+      "extension": ".toml",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.236686+00:00"
+    },
+    {
+      "path": "ai-service/requirements.txt",
+      "size": 279,
+      "extension": ".txt",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.236686+00:00"
+    },
+    {
+      "path": "ai-service/app/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.227302+00:00"
+    },
+    {
+      "path": "ai-service/app/config.py",
+      "size": 858,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.231299+00:00"
+    },
+    {
+      "path": "ai-service/app/main.py",
+      "size": 685,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.233681+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.227302+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/analyst_agent.py",
+      "size": 566,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.228302+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/base_agent.py",
+      "size": 274,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.228302+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/master_router.py",
+      "size": 432,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.229266+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/risk_manager_agent.py",
+      "size": 469,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.229266+00:00"
+    },
+    {
+      "path": "ai-service/app/agents/synthesis_agent.py",
+      "size": 436,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.229266+00:00"
+    },
+    {
+      "path": "ai-service/app/api/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.230298+00:00"
+    },
+    {
+      "path": "ai-service/app/api/v1/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.230298+00:00"
+    },
+    {
+      "path": "ai-service/app/api/v1/router.py",
+      "size": 229,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.231299+00:00"
+    },
+    {
+      "path": "ai-service/app/api/v1/endpoints/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.230298+00:00"
+    },
+    {
+      "path": "ai-service/app/api/v1/endpoints/advisor.py",
+      "size": 5061,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.231299+00:00"
+    },
+    {
+      "path": "ai-service/app/api/v1/endpoints/health.py",
+      "size": 139,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.231299+00:00"
+    },
+    {
+      "path": "ai-service/app/db/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.231299+00:00"
+    },
+    {
+      "path": "ai-service/app/db/database.py",
+      "size": 631,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.232297+00:00"
+    },
+    {
+      "path": "ai-service/app/db/repositories/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.232297+00:00"
+    },
+    {
+      "path": "ai-service/app/db/repositories/market_repo.py",
+      "size": 601,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.232297+00:00"
+    },
+    {
+      "path": "ai-service/app/graph/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.232297+00:00"
+    },
+    {
+      "path": "ai-service/app/graph/advisor_graph.py",
+      "size": 2197,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.232297+00:00"
+    },
+    {
+      "path": "ai-service/app/models/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.233681+00:00"
+    },
+    {
+      "path": "ai-service/app/models/llm_factory.py",
+      "size": 702,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.233681+00:00"
+    },
+    {
+      "path": "ai-service/app/models/schemas.py",
+      "size": 404,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.234680+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.234680+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/base_tool.py",
+      "size": 335,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.234680+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/calculator_tool.py",
+      "size": 670,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.234680+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/charting_tool.py",
+      "size": 847,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.235682+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/text_to_sql_tool.py",
+      "size": 599,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.235682+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/web_search_tool.py",
+      "size": 764,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.235682+00:00"
+    },
+    {
+      "path": "ai-service/app/tools/wiki_reader_tool.py",
+      "size": 769,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.235682+00:00"
+    },
+    {
+      "path": "data-pipeline/Dockerfile",
+      "size": 158,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.236686+00:00"
+    },
+    {
+      "path": "data-pipeline/requirements.txt",
+      "size": 240,
+      "extension": ".txt",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.245270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.236686+00:00"
+    },
+    {
+      "path": "data-pipeline/app/config.py",
+      "size": 677,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.237682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/main.py",
+      "size": 572,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.237682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/scheduler.py",
+      "size": 1103,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.238682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/rabbitmq/__init__.py",
+      "size": 30,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.237682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/rabbitmq/constants.py",
+      "size": 342,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.237682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/rabbitmq/producer.py",
+      "size": 1272,
+      "extension": ".py",
+      "tags": [
+        "messaging",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.238682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/sources/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.238682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/sources/models.py",
+      "size": 229,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.238682+00:00"
+    },
+    {
+      "path": "data-pipeline/app/sources/source_repository.py",
+      "size": 413,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.239681+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.239681+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/fetchers/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.239681+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/fetchers/base_fetcher.py",
+      "size": 251,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/fetchers/ck_api_fetcher.py",
+      "size": 321,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/fetchers/vnstock_fetcher.py",
+      "size": 324,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/transformers/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/transformers/base_transformer.py",
+      "size": 165,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_a/transformers/price_transformer.py",
+      "size": 213,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.240684+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/embedder.py",
+      "size": 729,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.243239+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/crawlers/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.242228+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/crawlers/base_crawler.py",
+      "size": 237,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.242228+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/crawlers/cafef_crawler.py",
+      "size": 262,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.242228+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/crawlers/reuters_vn_crawler.py",
+      "size": 271,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.243239+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/crawlers/vietstock_crawler.py",
+      "size": 270,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.243239+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/transformers/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.243239+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/transformers/base_transformer.py",
+      "size": 165,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.244270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/stream_b/transformers/news_transformer.py",
+      "size": 212,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.244270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/synthesis/__init__.py",
+      "size": 0,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.244270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/synthesis/merger.py",
+      "size": 956,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.245270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/synthesis/prompts.py",
+      "size": 266,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.245270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/synthesis/synthesis_agent.py",
+      "size": 598,
+      "extension": ".py",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.245270+00:00"
+    },
+    {
+      "path": "data-pipeline/app/synthesis/wiki_repository.py",
+      "size": 1049,
+      "extension": ".py",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.245270+00:00"
+    },
+    {
+      "path": "docs/portfolio-svc/documents/assets/docs-data.js",
+      "size": 13427,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:26:53.906626+00:00"
+    },
+    {
+      "path": "docs/portfolio-svc/documents/assets/docs-render.js",
+      "size": 8119,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:24:57.261331+00:00"
+    },
+    {
+      "path": "docs/portfolio-svc/documents/groups/functional-requirements.html",
+      "size": 850,
+      "extension": ".html",
+      "tags": [
+        "serverless"
+      ],
+      "modified": "2026-06-02T14:24:57.274707+00:00"
+    },
+    {
+      "path": "docs/portfolio-svc/documents/groups/non-functional-requirements.html",
+      "size": 853,
+      "extension": ".html",
+      "tags": [
+        "serverless"
+      ],
+      "modified": "2026-06-02T14:24:57.278151+00:00"
+    },
+    {
+      "path": "frontend/Dockerfile",
+      "size": 168,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.246269+00:00"
+    },
+    {
+      "path": "frontend/next-env.d.ts",
+      "size": 233,
+      "extension": ".ts",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-30T11:24:54.126299+00:00"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "size": 81879,
+      "extension": ".json",
+      "tags": [
+        "manifest",
+        "secret-like-name"
+      ],
+      "modified": "2026-05-30T11:24:41.545727+00:00"
+    },
+    {
+      "path": "frontend/package.json",
+      "size": 744,
+      "extension": ".json",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.248237+00:00"
+    },
+    {
+      "path": "frontend/postcss.config.js",
+      "size": 168,
+      "extension": ".js",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.248237+00:00"
+    },
+    {
+      "path": "frontend/tailwind.config.ts",
+      "size": 309,
+      "extension": ".ts",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.256772+00:00"
+    },
+    {
+      "path": "frontend/src/app/layout.tsx",
+      "size": 494,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.252279+00:00"
+    },
+    {
+      "path": "frontend/src/app/page.tsx",
+      "size": 418,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.252279+00:00"
+    },
+    {
+      "path": "frontend/src/app/(auth)/login/page.tsx",
+      "size": 2060,
+      "extension": ".tsx",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.249334+00:00"
+    },
+    {
+      "path": "frontend/src/app/(auth)/register/page.tsx",
+      "size": 2700,
+      "extension": ".tsx",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.250239+00:00"
+    },
+    {
+      "path": "frontend/src/app/dashboard/layout.tsx",
+      "size": 1604,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.251280+00:00"
+    },
+    {
+      "path": "frontend/src/app/dashboard/page.tsx",
+      "size": 1019,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.251280+00:00"
+    },
+    {
+      "path": "frontend/src/app/dashboard/advisor/page.tsx",
+      "size": 1838,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.250239+00:00"
+    },
+    {
+      "path": "frontend/src/app/dashboard/portfolio/page.tsx",
+      "size": 1618,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-01T05:40:17.889184+00:00"
+    },
+    {
+      "path": "frontend/src/app/dashboard/sandbox/page.tsx",
+      "size": 1926,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-01T05:40:17.890213+00:00"
+    },
+    {
+      "path": "frontend/src/components/advisor/AgentThoughtStream.tsx",
+      "size": 886,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.253719+00:00"
+    },
+    {
+      "path": "frontend/src/components/charts/OHLCChart.tsx",
+      "size": 779,
+      "extension": ".tsx",
+      "tags": [
+        "helm",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.253719+00:00"
+    },
+    {
+      "path": "frontend/src/components/ui/Button.tsx",
+      "size": 1141,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.254809+00:00"
+    },
+    {
+      "path": "frontend/src/components/ui/Card.tsx",
+      "size": 1013,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.254809+00:00"
+    },
+    {
+      "path": "frontend/src/components/ui/Input.tsx",
+      "size": 833,
+      "extension": ".tsx",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.254809+00:00"
+    },
+    {
+      "path": "frontend/src/components/ui/index.ts",
+      "size": 138,
+      "extension": ".ts",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.254809+00:00"
+    },
+    {
+      "path": "frontend/src/hooks/useSSE.ts",
+      "size": 2346,
+      "extension": ".ts",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.255761+00:00"
+    },
+    {
+      "path": "frontend/src/lib/api.ts",
+      "size": 794,
+      "extension": ".ts",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-06-01T05:40:17.890213+00:00"
+    },
+    {
+      "path": "frontend/src/lib/types.ts",
+      "size": 663,
+      "extension": ".ts",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-06-01T05:40:17.890213+00:00"
+    },
+    {
+      "path": "infra/postgres/init.sql",
+      "size": 4660,
+      "extension": ".sql",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-06-02T14:56:24.958140+00:00"
+    },
+    {
+      "path": "services/api-gateway/Dockerfile",
+      "size": 337,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.258762+00:00"
+    },
+    {
+      "path": "services/api-gateway/pom.xml",
+      "size": 2614,
+      "extension": ".xml",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.258762+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/ApiGatewayApplication.java",
+      "size": 343,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.259760+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/config/CorsConfig.java",
+      "size": 979,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.260758+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/config/SecurityConfig.java",
+      "size": 1165,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.260758+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/controller/HealthController.java",
+      "size": 453,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.260758+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/filter/JwtAuthenticationFilter.java",
+      "size": 1903,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.262278+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProvider.java",
+      "size": 295,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.262278+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/java/com/stockwise/gateway/security/JwtTokenProviderImpl.java",
+      "size": 3411,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.262278+00:00"
+    },
+    {
+      "path": "services/api-gateway/src/main/resources/application.yml",
+      "size": 772,
+      "extension": ".yml",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.263289+00:00"
+    },
+    {
+      "path": "services/market-service/Dockerfile",
+      "size": 337,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.263289+00:00"
+    },
+    {
+      "path": "services/market-service/pom.xml",
+      "size": 2788,
+      "extension": ".xml",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.264290+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/MarketServiceApplication.java",
+      "size": 348,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.265356+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/adapter/in/web/MarketController.java",
+      "size": 1776,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.266299+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/application/port/in/GetFinancialRatioUseCase.java",
+      "size": 240,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.266299+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/application/port/in/GetStockPriceUseCase.java",
+      "size": 307,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.267291+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/application/service/MarketService.java",
+      "size": 1710,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.267291+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/config/RabbitConfig.java",
+      "size": 915,
+      "extension": ".java",
+      "tags": [
+        "messaging",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.267291+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/domain/entity/FinancialRatio.java",
+      "size": 689,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.268306+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/domain/entity/StockPrice.java",
+      "size": 709,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.268306+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/domain/repository/FinancialRatioRepository.java",
+      "size": 348,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.269350+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/domain/repository/StockPriceRepository.java",
+      "size": 412,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.269350+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/java/com/stockwise/market/messaging/MarketDataConsumer.java",
+      "size": 445,
+      "extension": ".java",
+      "tags": [
+        "messaging",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.270332+00:00"
+    },
+    {
+      "path": "services/market-service/src/main/resources/application.yml",
+      "size": 733,
+      "extension": ".yml",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.270332+00:00"
+    },
+    {
+      "path": "services/portfolio-service/Dockerfile",
+      "size": 337,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.270332+00:00"
+    },
+    {
+      "path": "services/portfolio-service/pom.xml",
+      "size": 3650,
+      "extension": ".xml",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-06-02T14:58:28.537363+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/OrderConstants.java",
+      "size": 498,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:16.173089+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/OrderFactory.java",
+      "size": 770,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:20.549436+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/OrderService.java",
+      "size": 3730,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:00.687484+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/ValidatedOrderRequest.java",
+      "size": 238,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:17.546935+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/reservation/BuyOrderReservationStrategy.java",
+      "size": 1987,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:14.173677+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/reservation/OrderReservationStrategy.java",
+      "size": 374,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:42.180933+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/reservation/OrderReservationStrategyRegistry.java",
+      "size": 961,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:44.500390+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/reservation/SellOrderReservationStrategy.java",
+      "size": 2457,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:22.754329+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/validation/DefaultOrderValidator.java",
+      "size": 2470,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:56:07.784085+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/order/validation/OrderValidator.java",
+      "size": 294,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:30:31.665403+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/PortfolioServiceApplication.java",
+      "size": 393,
+      "extension": ".java",
+      "tags": [
+        "mobile",
+        "source"
+      ],
+      "modified": "2026-06-05T06:31:31.015903+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/OrderResponseMapper.java",
+      "size": 833,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:31:34.666651+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/PortfolioController.java",
+      "size": 3958,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:58:46.625626+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/RestExceptionHandler.java",
+      "size": 1948,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:59:17.516223+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/UserIdResolver.java",
+      "size": 1513,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:59.572745+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/dto/ErrorResponse.java",
+      "size": 115,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T15:16:56.774570+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/dto/OrderResponse.java",
+      "size": 261,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T15:16:56.772669+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/dto/PlaceOrderRequest.java",
+      "size": 261,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T15:16:56.771548+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/dto/PnlResponse.java",
+      "size": 134,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T15:16:56.773563+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/adapter/in/web/dto/PortfolioResponse.java",
+      "size": 385,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T15:16:56.773563+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/exception/BadRequestException.java",
+      "size": 197,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:54:35.717707+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/exception/ConflictException.java",
+      "size": 193,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:54:35.718126+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/exception/NotFoundException.java",
+      "size": 193,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:54:35.719144+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/port/in/CancelOrderUseCase.java",
+      "size": 258,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:54:35.714132+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/port/in/GetPnLUseCase.java",
+      "size": 191,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.273934+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/port/in/GetPortfolioUseCase.java",
+      "size": 501,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.273934+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/port/in/PlaceOrderUseCase.java",
+      "size": 380,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:55:37.547655+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/service/PortfolioAccountService.java",
+      "size": 1447,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:31:33.390818+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/service/PortfolioService.java",
+      "size": 1897,
+      "extension": ".java",
+      "tags": [
+        "mobile",
+        "source"
+      ],
+      "modified": "2026-06-05T06:56:58.603742+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/application/service/PortfolioValuationService.java",
+      "size": 3190,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:35.172837+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/config/RabbitConfig.java",
+      "size": 1869,
+      "extension": ".java",
+      "tags": [
+        "messaging",
+        "source"
+      ],
+      "modified": "2026-06-05T06:57:53.461508+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/config/SecurityConfig.java",
+      "size": 1742,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-30T11:30:02.900310+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/entity/Holding.java",
+      "size": 530,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.275940+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/entity/Order.java",
+      "size": 932,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:54:35.713425+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/entity/Portfolio.java",
+      "size": 499,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.276939+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/entity/Transaction.java",
+      "size": 637,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.276939+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/repository/HoldingRepository.java",
+      "size": 461,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-02T14:55:37.548971+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/repository/OrderRepository.java",
+      "size": 452,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:55:58.771938+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/repository/PortfolioRepository.java",
+      "size": 364,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.277934+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/domain/repository/TransactionRepository.java",
+      "size": 395,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.277934+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/messaging/InMemoryMarketPriceAdapter.java",
+      "size": 972,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:58:04.606440+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/messaging/PortfolioOrderEvent.java",
+      "size": 939,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:57:30.976289+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/messaging/PriceUpdateListener.java",
+      "size": 2503,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:52.176233+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/java/com/stockwise/portfolio/messaging/RabbitPortfolioEventPublisher.java",
+      "size": 1952,
+      "extension": ".java",
+      "tags": [
+        "messaging",
+        "source"
+      ],
+      "modified": "2026-06-05T07:17:43.953501+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/main/resources/application.yml",
+      "size": 736,
+      "extension": ".yml",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.278936+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/test/java/com/stockwise/order/OrderServiceTest.java",
+      "size": 7772,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T07:01:09.513429+00:00"
+    },
+    {
+      "path": "services/portfolio-service/src/test/java/com/stockwise/portfolio/application/service/PortfolioValuationServiceTest.java",
+      "size": 3007,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-06-05T06:59:54.319358+00:00"
+    },
+    {
+      "path": "services/user-service/Dockerfile",
+      "size": 337,
+      "extension": "[no extension]",
+      "tags": [
+        "container"
+      ],
+      "modified": "2026-05-13T08:42:10.278936+00:00"
+    },
+    {
+      "path": "services/user-service/pom.xml",
+      "size": 2617,
+      "extension": ".xml",
+      "tags": [
+        "manifest"
+      ],
+      "modified": "2026-05-13T08:42:10.279942+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/UserServiceApplication.java",
+      "size": 342,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.280969+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/adapter/in/web/AuthController.java",
+      "size": 1713,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.280969+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/application/port/in/AuthenticateUserUseCase.java",
+      "size": 244,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.282490+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/application/port/in/RegisterUserUseCase.java",
+      "size": 242,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.282490+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/application/service/UserService.java",
+      "size": 2625,
+      "extension": ".java",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.283680+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/config/SecurityConfig.java",
+      "size": 1427,
+      "extension": ".java",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.284686+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/domain/entity/User.java",
+      "size": 697,
+      "extension": ".java",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.284686+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/domain/repository/UserRepository.java",
+      "size": 334,
+      "extension": ".java",
+      "tags": [
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.285696+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/dto/AuthResponse.java",
+      "size": 128,
+      "extension": ".java",
+      "tags": [
+        "identity",
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.285696+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/dto/LoginRequest.java",
+      "size": 242,
+      "extension": ".java",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.285696+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/java/com/stockwise/user/dto/RegisterRequest.java",
+      "size": 245,
+      "extension": ".java",
+      "tags": [
+        "secret-like-name",
+        "source"
+      ],
+      "modified": "2026-05-13T08:42:10.286694+00:00"
+    },
+    {
+      "path": "services/user-service/src/main/resources/application.yml",
+      "size": 773,
+      "extension": ".yml",
+      "tags": [
+        "secret-like-name"
+      ],
+      "modified": "2026-05-13T08:42:10.286694+00:00"
+    }
+  ]
+}

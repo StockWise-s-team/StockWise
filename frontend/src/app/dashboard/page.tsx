@@ -1,29 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { OHLCChart } from "@/components/charts/OHLCChart";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { marketApi } from "@/lib/api";
 import { useLivePrice } from "@/hooks/useMarketWebSocket";
-import type { LatestPrice, OhlcSeries, FinancialRatioList } from "@/lib/types";
+import { formatVnd, formatPnl, pnlColor } from "@/lib/format";
+import type { FinancialRatioList, LatestPrice, OhlcSeries } from "@/lib/types";
 
 const DEFAULT_SYMBOL = "FPT";
-
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
-  style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
-});
 
 const numberFormatter = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: 2,
 });
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const { data, error: portfolioError } = usePortfolio(user?.id);
   const [latestPrice, setLatestPrice] = useState<LatestPrice | null>(null);
   const [ohlcSeries, setOhlcSeries] = useState<OhlcSeries | null>(null);
   const [ratios, setRatios] = useState<FinancialRatioList | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [marketLoading, setMarketLoading] = useState(true);
+  const [marketError, setMarketError] = useState<string | null>(null);
 
   // Live price via WebSocket
   const [livePrice, setLivePrice] = useState<LatestPrice | null>(null);
@@ -33,7 +32,7 @@ export default function DashboardPage() {
   };
 
   const { isConnected: wsConnected } = useLivePrice(
-    loading ? null : DEFAULT_SYMBOL,
+    user?.id ? DEFAULT_SYMBOL : null,
     handleLivePrice
   );
 
@@ -43,10 +42,10 @@ export default function DashboardPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadDashboard() {
+    async function loadMarket() {
       try {
-        setLoading(true);
-        setError(null);
+        setMarketLoading(true);
+        setMarketError(null);
 
         const endDate = new Date();
         const startDate = new Date();
@@ -62,21 +61,17 @@ export default function DashboardPage() {
         ]);
 
         if (cancelled) return;
-
         setLatestPrice(latest);
         setOhlcSeries(ohlc);
         setRatios(ratioList);
-      } catch (err) {
-        if (cancelled) return;
-        setError("Không thể tải dữ liệu thị trường lúc này.");
+      } catch {
+        if (!cancelled) setMarketError("Khong the tai du lieu thi truong luc nay.");
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setMarketLoading(false);
       }
     }
 
-    void loadDashboard();
+    void loadMarket();
 
     return () => {
       cancelled = true;
@@ -105,96 +100,122 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+      {(portfolioError || marketError) && (
+        <div className="rounded-lg border border-trading-down/30 bg-trading-down/10 px-4 py-3 text-sm text-trading-down">
+          {portfolioError || marketError}
         </div>
-      ) : null}
+      )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-medium text-muted-foreground">Latest Price</h2>
-          <p className="mt-2 text-2xl font-bold">
-            {loading ? "Loading..." : displayPrice ? currencyFormatter.format(displayPrice.price) : "—"}
-          </p>
-          <p
-            className={`mt-1 text-sm ${
-              displayPrice && displayPrice.change < 0 ? "text-red-600" : "text-green-600"
-            }`}
-          >
-            {displayPrice
-              ? `${displayPrice.change >= 0 ? "+" : ""}${numberFormatter.format(displayPrice.change)} (${displayPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(displayPrice.changePercent)}%)`
-              : "—"}
-          </p>
-        </div>
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Tong gia tri danh muc" value={formatVnd(data?.totalValue)} />
+        <Stat label="Tien ao" value={formatVnd(data?.account.virtualCash)} />
+        <Stat
+          label="Lai/lo chua thuc hien"
+          value={formatPnl(data?.unrealizedPnl)}
+          valueClass={pnlColor(data?.unrealizedPnl)}
+        />
+        <Stat
+          label="Lai/lo da thuc hien"
+          value={formatPnl(data?.realizedPnl)}
+          valueClass={pnlColor(data?.realizedPnl)}
+        />
+      </section>
 
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-medium text-muted-foreground">Trading Date</h2>
-          <p className="mt-2 text-2xl font-bold">
-            {loading ? "Loading..." : latestPrice?.tradeDate ?? "—"}
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-medium text-muted-foreground">P/E Ratio</h2>
-          <p className="mt-2 text-2xl font-bold">
-            {loading ? "Loading..." : latestRatio?.peRatio != null ? numberFormatter.format(latestRatio.peRatio) : "—"}
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-medium text-muted-foreground">ROE</h2>
-          <p className="mt-2 text-2xl font-bold">
-            {loading ? "Loading..." : latestRatio?.roe != null ? `${numberFormatter.format(latestRatio.roe * 100)}%` : "—"}
-          </p>
-        </div>
-      </div>
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Stat
+          label={`${DEFAULT_SYMBOL} latest`}
+          value={marketLoading ? "Loading..." : formatVnd(displayPrice?.price)}
+          valueClass={
+            displayPrice && displayPrice.change < 0 ? "text-trading-down" : "text-trading-up"
+          }
+          helper={
+            displayPrice
+              ? `${displayPrice.change >= 0 ? "+" : ""}${numberFormatter.format(
+                  displayPrice.change
+                )} (${displayPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(
+                  displayPrice.changePercent
+                )}%)`
+              : undefined
+          }
+        />
+        <Stat label="Trading date" value={marketLoading ? "Loading..." : displayPrice?.tradeDate ?? "-"} />
+        <Stat
+          label="P/E"
+          value={
+            marketLoading || latestRatio?.peRatio == null
+              ? marketLoading
+                ? "Loading..."
+                : "-"
+              : numberFormatter.format(latestRatio.peRatio)
+          }
+        />
+        <Stat
+          label="ROE"
+          value={
+            marketLoading || latestRatio?.roe == null
+              ? marketLoading
+                ? "Loading..."
+                : "-"
+              : `${numberFormatter.format(latestRatio.roe * 100)}%`
+          }
+        />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <OHLCChart symbol={DEFAULT_SYMBOL} data={ohlcSeries?.data ?? []} />
 
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold">Market Snapshot</h3>
+        <section className="rounded-lg border border-hairline-on-dark bg-surface-card-dark p-4">
+          <h2 className="mb-4 text-lg font-semibold text-body">Market Snapshot</h2>
           <div className="space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Open</span>
-              <span className="font-medium">
-                {latestPrice ? currencyFormatter.format(latestPrice.open) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">High</span>
-              <span className="font-medium">
-                {latestPrice ? currencyFormatter.format(latestPrice.high) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Low</span>
-              <span className="font-medium">
-                {latestPrice ? currencyFormatter.format(latestPrice.low) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Volume</span>
-              <span className="font-medium">
-                {latestPrice ? new Intl.NumberFormat("vi-VN").format(latestPrice.volume) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">P/B</span>
-              <span className="font-medium">
-                {latestRatio?.pbRatio != null ? numberFormatter.format(latestRatio.pbRatio) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">EPS</span>
-              <span className="font-medium">
-                {latestRatio?.eps != null ? numberFormatter.format(latestRatio.eps) : "—"}
-              </span>
-            </div>
+            <SnapshotRow label="Open" value={formatVnd(latestPrice?.open)} />
+            <SnapshotRow label="High" value={formatVnd(latestPrice?.high)} />
+            <SnapshotRow label="Low" value={formatVnd(latestPrice?.low)} />
+            <SnapshotRow
+              label="Volume"
+              value={
+                latestPrice ? new Intl.NumberFormat("vi-VN").format(latestPrice.volume) : "-"
+              }
+            />
+            <SnapshotRow
+              label="P/B"
+              value={latestRatio?.pbRatio == null ? "-" : numberFormatter.format(latestRatio.pbRatio)}
+            />
+            <SnapshotRow
+              label="EPS"
+              value={latestRatio?.eps == null ? "-" : numberFormatter.format(latestRatio.eps)}
+            />
           </div>
-        </div>
+        </section>
       </div>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  helper,
+  valueClass = "text-body",
+}: {
+  label: string;
+  value: string;
+  helper?: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-hairline-on-dark bg-surface-card-dark p-4">
+      <h2 className="text-sm font-medium text-muted-strong">{label}</h2>
+      <p className={`mt-2 text-2xl font-bold ${valueClass}`}>{value}</p>
+      {helper && <p className="mt-1 text-sm text-muted">{helper}</p>}
+    </div>
+  );
+}
+
+function SnapshotRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-muted-strong">{label}</span>
+      <span className="text-right font-medium text-body">{value}</span>
     </div>
   );
 }

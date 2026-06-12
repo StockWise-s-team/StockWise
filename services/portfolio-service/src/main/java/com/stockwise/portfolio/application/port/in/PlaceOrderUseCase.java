@@ -1,11 +1,12 @@
 package com.stockwise.portfolio.application.port.in;
 
-import com.stockwise.portfolio.domain.entity.Transaction;
+import com.stockwise.portfolio.domain.entity.Order;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface PlaceOrderUseCase {
-    Transaction placeOrder(UUID userId, String symbol, String type, Integer quantity);
+    Order placeOrder(UUID userId, String symbol, String type, Integer quantity);
 
-    Transaction placeOrder(UUID userId, String symbol, String type, Integer quantity, java.math.BigDecimal price);
+    Order placeOrder(UUID userId, String symbol, String type, Integer quantity, BigDecimal price);
 }

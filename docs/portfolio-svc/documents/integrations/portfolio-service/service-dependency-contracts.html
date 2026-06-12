@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INT-PORTFOLIO-001: Service Dependencies For Completed Order Use Cases</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+</head>
+<body class="bg-body-tertiary">
+  <main class="container py-4">
+    <article class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h1 id="INT-PORTFOLIO-001" class="h3 mb-0">INT-PORTFOLIO-001: Service Dependencies For Completed Order Use Cases</h1>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="badge text-bg-primary">Service: portfolio-service</span>
+          <span class="badge text-bg-secondary">Group: Integrations</span>
+          <span class="badge text-bg-success">Status: Implemented</span>
+        </div>
+
+        <p>This page defines what portfolio-service already owns internally for <a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a>, and <a href="../../use-cases/portfolio-service/uc-004-cancel-order.html#UC-004"><code>UC-004</code></a>, and what must be supplied by other services/components before the SRS flow is end-to-end complete.</p>
+
+        <h2 class="h5">Current Portfolio-Service Boundary</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <thead><tr><th>Capability</th><th>Owned By portfolio-service</th><th>Remaining External Dependency</th></tr></thead>
+            <tbody>
+              <tr><td>BUY order placement</td><td>Input validation, cash sufficiency check, cash freeze, <code>PENDING</code> order persistence, order-created event publication.</td><td>Market price-band validation, trading-session validation, matching/fill, transaction creation after fill.</td></tr>
+              <tr><td>SELL order placement</td><td>Input validation, holding sufficiency check, share lock, <code>PENDING</code> order persistence, order-created event publication.</td><td>Market price-band validation, trading-session validation, matching/fill, transaction creation after fill.</td></tr>
+              <tr><td>Cancel order</td><td>User-scoped order lookup, <code>PENDING</code> status enforcement, cash/share release, <code>CANCELLED</code> status persistence, cancel event publication.</td><td>JWT-derived identity from gateway/auth and a cancel request/ack contract if a matching engine owns final cancellation.</td></tr>
+              <tr><td>PnL / valuation</td><td>Account-value calculation includes available cash, available holdings, pending BUY reserved cash, and pending SELL locked shares.</td><td>Reliable latest prices from market-service or durable price cache.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Required Inter-Service Flow</h2>
+        <div class="mermaid diagram-block">sequenceDiagram
+    actor User
+    participant GW as api-gateway / auth
+    participant PF as portfolio-service
+    participant MD as market-service
+    participant ME as matching engine
+    participant MQ as RabbitMQ
+    participant AI as ai-service
+
+    MD->>MQ: Publish price update event (price.updated)
+    MQ->>PF: Consume price update & update local cache
+    User->>GW: Submit BUY / SELL / cancel request with JWT
+    GW->>PF: Forward request with verified user identity
+    Note over PF: Validate price band and hours locally using cache (BR-100, BR-104)
+    PF->>PF: Validate assets and freeze cash or shares
+    PF->>MQ: Publish ORDER_CREATED or ORDER_CANCEL_REQUESTED after commit
+    MQ->>ME: Deliver order lifecycle event
+    ME-->>PF: Fill or cancellation acknowledgement
+    PF->>PF: Update order, append transaction when filled
+    PF->>MQ: Publish portfolio.exchange / updated after commit
+    MQ->>AI: Deliver fresh portfolio context signal</div>
+
+        <h2 class="h5 mt-4">Dependency Contracts Needed</h2>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered table-striped align-middle">
+            <thead><tr><th>ID</th><th>Provider</th><th>Required Contract</th><th>Used For</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span id="INT-PORTFOLIO-001-MARKET"><code>INT-PORTFOLIO-001-MARKET</code></span></td>
+                <td>market-service</td>
+                <td>RabbitMQ message published on <code>market.exchange</code> with routing key <code>price.updated</code> containing the latest price updates.</td>
+                <td><code>BR-100</code>, <code>BR-104</code>, local price caching, order matching, and valuation.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+              </tr>
+              <tr>
+                <td><span id="INT-PORTFOLIO-001-IDENTITY"><code>INT-PORTFOLIO-001-IDENTITY</code></span></td>
+                <td>api-gateway / user-service</td>
+                <td>Verified user identity forwarded to portfolio-service, preferably as a trusted internal header such as <code>X-User-Id</code> after JWT validation.</td>
+                <td>Order ownership, cancel authorization, and removal of client-supplied <code>userId</code> from write APIs.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+              </tr>
+              <tr>
+                <td><span id="INT-PORTFOLIO-001-MATCHING"><code>INT-PORTFOLIO-001-MATCHING</code></span></td>
+                <td>matching engine / order processor</td>
+                <td>Consumes <code>ORDER_CREATED</code> and cancel requests; emits fill/cancel acknowledgement with <code>orderId</code>, <code>filledQuantity</code>, <code>fillPrice</code>, <code>status</code>, and event timestamp.</td>
+                <td>Transition <code>PENDING -> FILLED</code>, append transactions, finalize frozen assets, and support cancel race handling.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+              </tr>
+              <tr>
+                <td><span id="INT-PORTFOLIO-001-AI"><code>INT-PORTFOLIO-001-AI</code></span></td>
+                <td>ai-service</td>
+                <td>Consumer contract for <code>portfolio.exchange</code> / <code>updated</code> events, including payload versioning and backward compatibility expectations.</td>
+                <td>Fresh portfolio context for advisor responses after portfolio changes.</td>
+                <td><span class="badge text-bg-success">Implemented</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="h5 mt-4">Minimum Market-Service Price Event Shape</h2>
+        <p>Integration is fully event-driven via RabbitMQ. <code>portfolio-service</code> listens to price update messages from <code>market-service</code> to dynamically update its local price cache used for order validation and matching.</p>
+        <pre class="openapi-block"><code>Exchange: market.exchange
+Routing Key: price.updated
+
+Payload:
+{
+  "symbol": "FPT",
+  "price": 100.00,
+  "close": 100.00,
+  "latestPrice": 100.00,
+  "timestamp": "2026-06-05T07:00:00Z"
+}</code></pre>
+
+        <h2 class="h5 mt-4">Minimum Matching Event Shape</h2>
+        <p>ASSUMPTION: Matching is asynchronous because the existing SRS order lifecycle describes <code>PENDING</code> orders and RabbitMQ order events.</p>
+        <pre class="openapi-block"><code>{
+  "eventType": "ORDER_FILLED",
+  "eventVersion": 1,
+  "orderId": "UUID",
+  "userId": "UUID",
+  "portfolioId": "UUID",
+  "symbol": "FPT",
+  "type": "BUY",
+  "filledQuantity": 100,
+  "fillPrice": 100000.00,
+  "status": "FILLED",
+  "occurredAt": "2026-06-05T07:00:00Z"
+}</code></pre>
+
+        <h2 class="h5 mt-4">Acceptance Checklist For End-To-End Completion</h2>
+        <ul class="list-group">
+          <li class="list-group-item">BUY rejects orders outside the market daily band and outside trading hours.</li>
+          <li class="list-group-item">SELL rejects orders outside the market daily band and outside trading hours.</li>
+          <li class="list-group-item">Write APIs derive user identity from gateway/auth, not directly from untrusted client body/query fields.</li>
+          <li class="list-group-item">A filled order appends exactly one or more immutable transaction records and updates order status to <code>FILLED</code>.</li>
+          <li class="list-group-item">A cancel request handles the race where an order is already filled before cancellation is processed.</li>
+          <li class="list-group-item">Portfolio-updated events are versioned and consumed by ai-service without breaking payload compatibility.</li>
+          <li class="list-group-item">PnL uses latest market prices or an explicitly documented fallback when prices are unavailable.</li>
+        </ul>
+
+        <h2 class="h5 mt-4">Linked Artifacts</h2>
+        <ul class="list-group">
+          <li class="list-group-item">Use cases: <a href="../../use-cases/portfolio-service/uc-002-place-buy-order.html#UC-002"><code>UC-002</code></a>, <a href="../../use-cases/portfolio-service/uc-003-place-sell-order.html#UC-003"><code>UC-003</code></a>, <a href="../../use-cases/portfolio-service/uc-004-cancel-order.html#UC-004"><code>UC-004</code></a></li>
+          <li class="list-group-item">Business flow: <a href="../../business-flows/portfolio-service/bflow-order-lifecycle.html#BFLOW-001"><code>BFLOW-001</code></a></li>
+          <li class="list-group-item">Rules: <a href="../../business-rules/portfolio-service/br-order-validation.html#BR-100"><code>BR-100</code></a>, <a href="../../business-rules/portfolio-service/br-order-validation.html#BR-104"><code>BR-104</code></a>, <a href="../../business-rules/portfolio-service/br-order-validation.html#BR-105"><code>BR-105</code></a></li>
+          <li class="list-group-item">Messaging: <a href="../../messaging/portfolio-service/event-price-updated.html#MSG-001"><code>MSG-001</code></a>, <a href="../../messaging/portfolio-service/event-reply-status.html#MSG-002"><code>MSG-002</code></a></li>
+        </ul>
+
+        <h2 class="h5 mt-4">Unresolved Items</h2>
+        <ul class="list-group">
+          <li class="list-group-item">unspecified: exact market-service price updated event JSON schema versions.</li>
+          <li class="list-group-item">unspecified: trusted internal identity header name and gateway signing/forwarding policy.</li>
+          <li class="list-group-item">unspecified: matching engine ownership, queue names, routing keys, retry, and DLQ policy.</li>
+          <li class="list-group-item">unspecified: ai-service event payload version and consumer compatibility contract.</li>
+        </ul>
+      </div>
+    </article>
+  </main>
+  <script>
+    window.onload = function () {
+      if (window.mermaid) mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'default' });
+    };
+  </script>
+</body>
+</html>
