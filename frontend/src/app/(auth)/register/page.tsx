@@ -1,80 +1,139 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  AuthError,
+  AuthField,
+  AuthShell,
+  AuthSubmitButton,
+} from "@/components/auth/AuthShell";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const { register, error, setError, user, isLoading } = useAuth();
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, user, router]);
+
+  if (isLoading || user) return null;
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setValidationError(null);
+
+    if (password !== confirmPassword) {
+      setValidationError("Passwords do not match. Please try again.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setValidationError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(email, password, fullName || undefined);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
-        <h1 className="mb-6 text-2xl font-bold">Create an Account</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium"
-            >
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Register
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <a href="/login" className="text-primary underline">
-            Sign in
-          </a>
-        </p>
-      </div>
-    </main>
+    <AuthShell
+      eyebrow="Access protocol / 02"
+      title="Create account"
+      description="Provision a secure identity for your StockWise intelligence workspace."
+      footerText="Already registered?"
+      footerLinkLabel="Sign in"
+      footerLinkHref="/login"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {(validationError || error) && (
+          <AuthError message={validationError || error || ""} />
+        )}
+
+        <AuthField
+          id="fullName"
+          label="Full name"
+          hint="Optional"
+          type="text"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          placeholder="Nguyen Van A"
+          autoComplete="name"
+          autoFocus
+        />
+
+        <AuthField
+          id="email"
+          label="Email address"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setError(null);
+            setValidationError(null);
+          }}
+          placeholder="analyst@company.com"
+          autoComplete="email"
+          required
+        />
+
+        <AuthField
+          id="password"
+          label="Password"
+          hint="Minimum 6 characters"
+          type="password"
+          value={password}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setError(null);
+            setValidationError(null);
+          }}
+          placeholder="Create a secure password"
+          autoComplete="new-password"
+          minLength={6}
+          required
+        />
+
+        <AuthField
+          id="confirmPassword"
+          label="Confirm password"
+          type="password"
+          value={confirmPassword}
+          onChange={(event) => {
+            setConfirmPassword(event.target.value);
+            setError(null);
+            setValidationError(null);
+          }}
+          placeholder="Repeat your password"
+          autoComplete="new-password"
+          minLength={6}
+          required
+        />
+
+        <div className="pt-2">
+          <AuthSubmitButton
+            loading={loading}
+            idleLabel="Provision account"
+            loadingLabel="Creating identity"
+          />
+        </div>
+      </form>
+    </AuthShell>
   );
 }

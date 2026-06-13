@@ -2,15 +2,90 @@ export interface User {
   id: string;
   email: string;
   role: string;
+  fullName: string | null;
+  createdAt: string | null;
 }
 
 export interface AuthResponse {
   accessToken: string;
+  refreshToken: string | null;
+  user: User;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface RefreshRequest {
+  refreshToken: string;
+  user: User;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface RefreshRequest {
   refreshToken: string;
 }
 
-export interface StockPrice {
+export interface ApiError {
+  error: string;
+  message: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
+}
+
+export interface LatestPrice {
   symbol: string;
+  price: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  change: number;
+  changePercent: number;
+  tradeDate: string;
+  updatedAt: string;
+}
+
+export interface OhlcPoint {
   date: string;
   open: number;
   high: number;
@@ -19,7 +94,26 @@ export interface StockPrice {
   volume: number;
 }
 
-export interface OHLCV extends StockPrice {}
+export interface OhlcSeries {
+  symbol: string;
+  startDate: string;
+  endDate: string;
+  data: OhlcPoint[];
+}
+
+export interface FinancialRatioItem {
+  period: string;
+  peRatio: number | null;
+  pbRatio: number | null;
+  eps: number | null;
+  roe: number | null;
+  roa: number | null;
+}
+
+export interface FinancialRatioList {
+  symbol: string;
+  ratios: FinancialRatioItem[];
+}
 
 export interface Holding {
   symbol: string;
@@ -36,6 +130,96 @@ export interface Portfolio {
 export interface SSEEvent {
   type: "thought" | "answer" | "error";
   content: string;
+}
+
+export interface SSEEnvelope {
+  type: string;
+  data: Record<string, unknown>;
+  session_id: string;
+  sequence: number;
+}
+
+export interface AdvisorSession {
+  id: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AdvisorMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  session_id?: string;
+  created_at?: string;
+}
+
+// ─── Portfolio & Paper Trading ───────────────────────────────────────────────
+// Contract: portfolio-service (GET/POST/DELETE /portfolio*, GET /portfolio/pnl).
+
+export type OrderSide = "BUY" | "SELL";
+export type OrderStatus = "PENDING" | "FILLED" | "CANCELLED";
+
+export interface PortfolioAccount {
+  id: string;
+  userId: string;
+  virtualCash: number;
+}
+
+export interface PortfolioTransaction {
+  id: string;
+  symbol: string;
+  type: OrderSide;
+  price: number;
+  quantity: number;
+  executedAt: string;
+}
+
+// GET /portfolio response shape. The backend derives user ownership from JWT.
+export interface PortfolioSnapshot {
+  portfolio: PortfolioAccount;
+  holdings: Holding[];
+  transactions: PortfolioTransaction[];
+}
+
+// POST /portfolio/order request body.
+export interface PlaceOrderRequest {
+  symbol: string;
+  type: OrderSide;
+  quantity: number;
+  price?: number;
+}
+
+// POST /portfolio/order & DELETE /portfolio/order/{id} response (snake_case order_id).
+export interface OrderResult {
+  order_id: string;
+  status: OrderStatus;
+  message: string;
+}
+
+// Per-holding view-model derived on the client from holdings + live prices.
+export interface HoldingView extends Holding {
+  currentPrice: number | null;
+  costBasis: number;
+  marketValue: number | null;
+  unrealizedPnl: number | null;
+}
+
+// Aggregated portfolio view-model consumed by the dashboard & portfolio pages.
+export interface PortfolioView {
+  account: PortfolioAccount;
+  holdings: HoldingView[];
+  transactions: PortfolioTransaction[];
+  holdingsValue: number; // valued at current price, falling back to avg cost
+  totalValue: number; // cash + holdingsValue
+  unrealizedPnl: number; // sum over holdings with a known current price
+  realizedPnl: number; // GET /portfolio/pnl
+  hasMissingPrices: boolean;
 }
 
 // ─── Admin / Pipeline ───────────────────────────────────────────────────────────

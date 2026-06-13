@@ -9,7 +9,7 @@ const MOCK_EVENTS: SSEEvent[] = [
   { type: "answer", content: "Based on current trends, the market looks positive." },
 ];
 
-const AI_SERVICE_BASE = process.env.NEXT_PUBLIC_AI_SERVICE_URL || "http://localhost:18000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18080";
 
 export function useSSE(endpoint: string | null): SSEEvent[] {
   const [events, setEvents] = useState<SSEEvent[]>([]);
@@ -35,23 +35,62 @@ export function useSSE(endpoint: string | null): SSEEvent[] {
       return;
     }
 
-    const url = endpoint.startsWith("http") ? endpoint : `${AI_SERVICE_BASE}${endpoint}`;
+    const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint}`;
 
     try {
-      const es = new EventSource(url);
+      const es = new EventSource(url, { withCredentials: true });
       eventSourceRef.current = es;
 
-      es.onmessage = (event) => {
+      const handleEvent = (type: "thought" | "answer" | "error", dataStr: string, isToken = false, isFinal = false) => {
         try {
-          const data = JSON.parse(event.data) as SSEEvent;
-          setEvents((prev) => [...prev, data]);
-        } catch {
-          setEvents((prev) => [
-            ...prev,
-            { type: "answer", content: event.data },
-          ]);
+          let content = dataStr;
+          try {
+            const parsed = JSON.parse(dataStr);
+            if (parsed && typeof parsed === "object") {
+              if (parsed.data) {
+                if (isToken) {
+                  content = parsed.data.token || "";
+                } else if (isFinal) {
+                  content = parsed.data.answer || "";
+                } else {
+                  content = parsed.data.message || parsed.data.answer || dataStr;
+                }
+              } else {
+                content = parsed.content || parsed.message || dataStr;
+              }
+            }
+          } catch {}
+
+          if (!content && isToken) return;
+
+          setEvents((prev) => {
+            if (type === "answer" && prev.length > 0 && prev[prev.length - 1].type === "answer") {
+              const updated = [...prev];
+              const last = updated[updated.length - 1];
+              if (isFinal) {
+                updated[updated.length - 1] = { type, content };
+              } else {
+                updated[updated.length - 1] = { type, content: last.content + content };
+              }
+              return updated;
+            }
+            return [...prev, { type, content }];
+          });
+        } catch (err) {
+          console.error("SSE handling error:", err);
         }
       };
+
+      es.addEventListener("thought", (e) => handleEvent("thought", (e as MessageEvent).data));
+      es.addEventListener("token", (e) => handleEvent("answer", (e as MessageEvent).data, true));
+      es.addEventListener("final", (e) => handleEvent("answer", (e as MessageEvent).data, false, true));
+      es.addEventListener("error", (e) => {
+        const msg = e as MessageEvent;
+        if (msg.data) {
+          handleEvent("error", msg.data);
+        }
+      });
+      es.onmessage = (e) => handleEvent("answer", e.data);
 
       es.onerror = () => {
         es.close();

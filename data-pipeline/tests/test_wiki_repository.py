@@ -109,7 +109,7 @@ class TestWikiRepository:
             assert args[0] == "ABC"
             assert args[2] == 2
 
-    def test_get_recent_articles_uses_gin_index_query(self, repo):
+    def test_get_recent_articles_matches_symbol_array_member(self, repo):
         cur = _make_cursor_mock(fetchall_val=[])
         conn = _make_conn_mock(cur)
         repo.get_connection = MagicMock(return_value=conn)
@@ -117,7 +117,7 @@ class TestWikiRepository:
         repo.get_recent_articles("VNM")
 
         query = cur.execute.call_args[0][0]
-        assert "symbols @>" in query
+        assert "%s = ANY(symbols)" in query
         assert "ORDER BY published_at DESC" in query
 
     def test_get_recent_prices_orders_by_date_desc(self, repo):

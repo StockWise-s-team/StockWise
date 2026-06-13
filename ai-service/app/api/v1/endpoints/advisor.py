@@ -5,18 +5,16 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
 from app.api.dependencies import get_current_user
 from app.db.database import get_db
+from app.db.repositories.chat_repo import ChatRepository
 from app.db.repositories.content_repo import ContentRepository
-from app.db.repositories.market_repo import MarketRepository
-from app.graph.advisor_graph import create_advisor_graph
-from app.graph.graph_config import get_graph_config
-from app.graph.state import AdvisorState
-from app.models.schemas import ChatRequest, SourceRequest
+from app.models.schemas import ChatMessageView, ChatRequest, ChatSessionSummary, SourceRequest
+from app.services.advisor_service import AdvisorService
 from app.streaming.sse_manager import SSEManager
 
 router = APIRouter()
@@ -38,78 +36,62 @@ def _json_default(value: Any) -> str | float:
     return str(value)
 
 
-def _build_initial_state(
-    request: ChatRequest,
-    user_id: str,
-) -> AdvisorState:
-    """Build the initial AdvisorState from the chat request.
-
-    Args:
-        request: ChatRequest with message and optional session_id.
-        user_id: Authenticated user ID from header.
-
-    Returns:
-        Initial AdvisorState for LangGraph workflow.
-    """
-    session_id = request.session_id or str(uuid.uuid4())
-    return {
-        "user_message": request.message,
-        "user_id": user_id,
-        "session_id": session_id,
-        "conversation_history": [],
-        "intent": "",
-        "symbols": [],
-        "requires_portfolio": False,
-        "tool_results": [],
-        "portfolio_context": None,
-        "thoughts": [],
-        "streaming_tokens": [],
-        "risk_flags": [],
-        "is_safe": True,
-        "final_answer": "",
-        "citations": [],
-        "error": None,
-    }
+@router.get("/advisor/sessions", response_model=list[ChatSessionSummary])
+async def list_advisor_sessions(
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List persisted advisor sessions owned by the current user."""
+    sessions = await ChatRepository(db).list_sessions(user_id)
+    return [
+        ChatSessionSummary(
+            id=str(session.id),
+            title=session.title,
+            created_at=session.created_at,
+            updated_at=session.updated_at,
+        )
+        for session in sessions
+    ]
 
 
-async def _run_graph(
-    state: AdvisorState,
-    sse_manager: SSEManager,
-    db: AsyncSession,
-) -> None:
-    """Execute the LangGraph workflow and emit SSE events.
-
-    Args:
-        state: Initial AdvisorState.
-        sse_manager: SSEManager for event emission.
-        db: Database session.
-    """
+@router.get("/advisor/sessions/{session_id}/messages", response_model=list[ChatMessageView])
+async def list_advisor_session_messages(
+    session_id: str,
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List persisted advisor messages after verifying session ownership."""
     try:
-        graph = create_advisor_graph()
-        config = get_graph_config(state["session_id"])
+        messages = await ChatRepository(db).list_messages_for_user(session_id, user_id)
+    except (PermissionError, ValueError):
+        raise HTTPException(status_code=404, detail="Chat session not found") from None
+    return [
+        ChatMessageView(
+            id=str(message.id),
+            session_id=str(message.session_id),
+            role=message.role,
+            content=message.content,
+            metadata=message.message_metadata or {},
+            created_at=message.created_at,
+        )
+        for message in messages
+    ]
 
-        await sse_manager.emit_thought("Đang phân tích yêu cầu của bạn...", node="router")
 
-        result = await graph.ainvoke(state, config=config)
-
-        if result.get("final_answer"):
-            await sse_manager.emit_final(
-                answer=result["final_answer"],
-                citations=result.get("citations", []),
-                intent=result.get("intent", ""),
-                symbols=result.get("symbols", []),
-                has_disclaimer=not result.get("is_safe", True),
-            )
-        else:
-            await sse_manager.emit_error(
-                "Không thể tạo câu trả lời.",
-                "GRAPH_NO_ANSWER",
-            )
-
-    except Exception as e:
-        await sse_manager.emit_error(str(e), "GRAPH_ERROR")
-    finally:
-        await sse_manager.close()
+@router.delete("/advisor/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_advisor_session(
+    session_id: str,
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete an advisor session owned by the current user."""
+    try:
+        deleted = await ChatRepository(db).delete_session(session_id, user_id)
+    except ValueError:
+        deleted = False
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/advisor/chat")
@@ -120,21 +102,25 @@ async def advisor_chat(
 ):
     """AI Advisor chat endpoint with SSE streaming.
 
-    Args:
-        request: ChatRequest with message and optional session_id.
-        user_id: Authenticated user ID from X-User-Id header.
-        db: Database session.
-
-    Returns:
-        EventSourceResponse with SSE stream of thought, token, and final events.
+    Constructs AdvisorService to process the message via LangGraph and streams tokens back.
     """
-    state = _build_initial_state(request, user_id)
-    sse_manager = SSEManager()
+    session_id = request.session_id or str(uuid.uuid4())
+    # Ensure requests from endpoint carry the validated session_id
+    request.session_id = session_id
+    sse_manager = SSEManager(session_id=session_id)
 
-    async def run_graph_task() -> None:
-        await _run_graph(state, sse_manager, db)
+    async def run_advisor_task() -> None:
+        try:
+            service = AdvisorService(db, sse_manager)
+            await service.process(request, user_id)
+        except Exception as e:
+            await sse_manager.emit_error(str(e), "INTERNAL_ERROR")
+        finally:
+            await sse_manager.emit("done", {"status": "complete"})
+            await asyncio.sleep(0.05)
+            await sse_manager.close()
 
-    asyncio.create_task(run_graph_task())
+    asyncio.create_task(run_advisor_task())
 
     async def event_generator():
         while True:
@@ -149,27 +135,28 @@ async def advisor_chat(
 @router.get("/advisor/chat/stream")
 async def advisor_chat_stream(
     message: str = Query(..., min_length=1),
+    session_id: Optional[str] = Query(None),
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """AI Advisor chat endpoint for EventSource (GET with query param).
+    """AI Advisor chat endpoint for EventSource (GET with query param)."""
+    request = ChatRequest(message=message, session_id=session_id)
+    resolved_session_id = request.session_id or str(uuid.uuid4())
+    request.session_id = resolved_session_id
+    sse_manager = SSEManager(session_id=resolved_session_id)
 
-    Args:
-        message: User message.
-        user_id: Authenticated user ID from X-User-Id header.
-        db: Database session.
+    async def run_advisor_task() -> None:
+        try:
+            service = AdvisorService(db, sse_manager)
+            await service.process(request, user_id)
+        except Exception as e:
+            await sse_manager.emit_error(str(e), "INTERNAL_ERROR")
+        finally:
+            await sse_manager.emit("done", {"status": "complete"})
+            await asyncio.sleep(0.05)
+            await sse_manager.close()
 
-    Returns:
-        EventSourceResponse with SSE stream.
-    """
-    request = ChatRequest(message=message)
-    state = _build_initial_state(request, user_id)
-    sse_manager = SSEManager()
-
-    async def run_graph_task() -> None:
-        await _run_graph(state, sse_manager, db)
-
-    asyncio.create_task(run_graph_task())
+    asyncio.create_task(run_advisor_task())
 
     async def event_generator():
         while True:

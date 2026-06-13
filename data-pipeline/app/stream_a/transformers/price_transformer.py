@@ -93,6 +93,13 @@ class PriceTransformer(BaseTransformer):
         price_high  = self._parse_price(bar.get("high"), "high")
         price_low   = self._parse_price(bar.get("low"),  "low")
         price_close = self._parse_price(bar.get("close"), "close")
+
+        # Scale prices from HOSE units to standard VND if needed
+        if price_open < 1000: price_open *= 1000
+        if price_high < 1000: price_high *= 1000
+        if price_low < 1000: price_low *= 1000
+        if price_close < 1000: price_close *= 1000
+
         volume      = self._parse_volume(bar.get("volume"))
         self._validate_ohlc(price_high, price_low, price_open, price_close)
         return NormalizedPrice(

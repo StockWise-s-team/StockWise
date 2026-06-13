@@ -1,9 +1,7 @@
 package com.stockwise.market.application.port.in;
 
-import com.stockwise.market.domain.entity.FinancialRatio;
-
-import java.util.List;
+import com.stockwise.market.adapter.in.web.dto.FinancialRatioListResponse;
 
 public interface GetFinancialRatioUseCase {
-    List<FinancialRatio> getRatios(String symbol);
+    FinancialRatioListResponse getRatios(String symbol);
 }

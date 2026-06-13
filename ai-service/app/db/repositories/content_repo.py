@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import text
@@ -91,5 +92,27 @@ class ContentRepository:
                 """
             ),
             {"symbol": symbol.upper()},
+        )
+        return [dict(row._mapping) for row in result]
+
+    async def get_recent_articles(
+        self,
+        symbol: str,
+        days: int = 30,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=max(1, min(days, 365)))
+        result = await self.session.execute(
+            text(
+                """
+                SELECT id, title, content, url, symbols, published_at, crawled_at
+                FROM news_articles
+                WHERE :symbol = ANY(symbols)
+                  AND COALESCE(published_at, crawled_at) >= :since
+                ORDER BY COALESCE(published_at, crawled_at) DESC
+                LIMIT :limit
+                """
+            ),
+            {"symbol": symbol.upper(), "since": since, "limit": max(1, min(limit, 20))},
         )
         return [dict(row._mapping) for row in result]

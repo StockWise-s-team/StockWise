@@ -2,8 +2,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.stream_b.crawlers.vietstock_crawler import (
-    VietstockCrawler,
+from app.stream_b.crawlers.vietstock_crawler import VietstockCrawler
+from app.stream_b.crawlers.vietstock_sitemap_crawler import (
+    VietstockSitemapCrawler,
     _parse_relative_date,
 )
 
@@ -11,7 +12,7 @@ from app.stream_b.crawlers.vietstock_crawler import (
 class TestVietstockCrawler:
     @pytest.fixture
     def crawler(self):
-        return VietstockCrawler(max_articles=5)
+        return VietstockSitemapCrawler(max_articles=5)
 
     @pytest.mark.asyncio
     async def test_source_name(self, crawler):
@@ -68,7 +69,7 @@ class TestVietstockCrawler:
 
     @pytest.mark.asyncio
     async def test_crawl_respects_max_articles(self):
-        crawler = VietstockCrawler(max_articles=2)
+        crawler = VietstockSitemapCrawler(max_articles=2)
 
         async def fake_urls():
             return [f"https://vietstock.vn/a{i}.htm" for i in range(5)]

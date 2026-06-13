@@ -26,6 +26,10 @@ class TestSymbolExtractorRegex:
         assert "EPS" not in result
         assert "FPT" in result
 
+    def test_ignores_common_unaccented_vietnamese_words(self):
+        result = extract_symbols_regex("Phan tich FPT hom nay va ve bieu do")
+        assert result == ["FPT"]
+
     def test_case_insensitive(self):
         """Handles lowercase input by converting to uppercase."""
         result = extract_symbols_regex("đánh giá fpt hôm nay")

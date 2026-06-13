@@ -1,28 +1,91 @@
 "use client";
 
-import React from "react";
-import type { OHLCV } from "@/lib/types";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { LineChart } from "lucide-react";
+import type { OhlcPoint } from "@/lib/types";
+import { TerminalEmptyState, TerminalSectionHeader } from "@/components/ui";
 
 interface OHLCChartProps {
-  data: OHLCV[];
+  symbol: string;
+  data: OhlcPoint[];
 }
 
-export function OHLCChart({ data }: OHLCChartProps) {
+const numberFormatter = new Intl.NumberFormat("vi-VN");
+
+export function OHLCChart({ symbol, data }: OHLCChartProps) {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
-      <h3 className="mb-4 text-lg font-semibold">
-        {data.length > 0 ? data[0].symbol : "OHLC"} Chart
-      </h3>
-      <div className="flex h-64 items-center justify-center text-muted-foreground">
+    <section>
+      <TerminalSectionHeader
+        icon={LineChart}
+        title={`${symbol} Price Trend`}
+        subtitle={data.length > 0 ? `${data.length} recent sessions` : "No chart data"}
+      />
+
+      <div className="h-72 rounded border border-terminal-border bg-terminal-surface p-3">
         {data.length === 0 ? (
-          <p>No data available</p>
+          <TerminalEmptyState icon={LineChart} title="No OHLC data available" />
         ) : (
-          <div className="text-center">
-            <p>Chart placeholder</p>
-            <p className="text-xs">{data.length} data points loaded</p>
-          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="closeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f0b429" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#f0b429" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(value: string) => value.slice(5)}
+                minTickGap={24}
+                tick={{ fill: "#5c5c5c", fontSize: 10 }}
+                axisLine={{ stroke: "#2a2a2a" }}
+                tickLine={{ stroke: "#2a2a2a" }}
+              />
+              <YAxis
+                tickFormatter={(value: number) => numberFormatter.format(value)}
+                domain={["dataMin - 1000", "dataMax + 1000"]}
+                width={80}
+                tick={{ fill: "#5c5c5c", fontSize: 10 }}
+                axisLine={{ stroke: "#2a2a2a" }}
+                tickLine={{ stroke: "#2a2a2a" }}
+              />
+              <Tooltip
+                formatter={(value: number, name: string) => [
+                  numberFormatter.format(value),
+                  name,
+                ]}
+                labelFormatter={(label: string) => `Date: ${label}`}
+                contentStyle={{
+                  background: "#141414",
+                  border: "1px solid #2a2a2a",
+                  borderRadius: 4,
+                  color: "#d4d4d4",
+                  fontFamily: "JetBrains Mono, Fira Code, Consolas, monospace",
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: "#f0b429" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="close"
+                stroke="#f0b429"
+                strokeWidth={2}
+                fill="url(#closeGradient)"
+                activeDot={{ r: 5 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         )}
       </div>
-    </div>
+    </section>
   );
 }

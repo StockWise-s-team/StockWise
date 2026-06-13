@@ -1,10 +1,10 @@
 package com.stockwise.market.application.port.in;
 
-import com.stockwise.market.domain.entity.StockPrice;
-
-import java.util.List;
+import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
+import com.stockwise.market.adapter.in.web.dto.OhlcSeriesResponse;
 
 public interface GetStockPriceUseCase {
-    StockPrice getLatestPrice(String symbol);
-    List<StockPrice> getOhlc(String symbol, String startDate, String endDate);
+    LatestPriceResponse getLatestPrice(String symbol);
+
+    OhlcSeriesResponse getOhlc(String symbol, String startDate, String endDate);
 }
