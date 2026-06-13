@@ -13,11 +13,11 @@ def get_advisor_graph():
     """
     global _graph
     if _graph is None:
-        _graph = create_advisor_graph()
+        _graph = create_advisor_graph(checkpointer=_checkpointer)
     return _graph
 
 
-def get_graph_config(session_id: str) -> dict:
+def get_graph_config(session_id: str, runtime=None) -> dict:
     """Get the LangGraph config for a given session.
 
     Args:
@@ -26,4 +26,7 @@ def get_graph_config(session_id: str) -> dict:
     Returns:
         Config dict with thread_id for LangGraph checkpointing.
     """
-    return {"configurable": {"thread_id": session_id}}
+    configurable = {"thread_id": session_id}
+    if runtime is not None:
+        configurable["runtime"] = runtime
+    return {"configurable": configurable}

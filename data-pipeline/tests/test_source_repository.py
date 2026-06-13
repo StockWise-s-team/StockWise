@@ -7,9 +7,11 @@ from app.sources.source_repository import SourceRepository, _CACHE_TTL_SECONDS
 
 
 class TestSourceRepository:
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def repo(self):
-        return SourceRepository()
+        r = SourceRepository()
+        r.invalidate()
+        return r
 
     @pytest.fixture
     def mock_sources(self):

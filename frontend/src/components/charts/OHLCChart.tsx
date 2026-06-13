@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import {
-  ResponsiveContainer,
-  AreaChart,
   Area,
+  AreaChart,
   CartesianGrid,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { LineChart } from "lucide-react";
 import type { OhlcPoint } from "@/lib/types";
+import { TerminalEmptyState, TerminalSectionHeader } from "@/components/ui";
 
 interface OHLCChartProps {
   symbol: string;
@@ -21,51 +22,62 @@ const numberFormatter = new Intl.NumberFormat("vi-VN");
 
 export function OHLCChart({ symbol, data }: OHLCChartProps) {
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{symbol} Price Trend</h3>
-          <p className="text-sm text-muted-foreground">
-            {data.length > 0
-              ? `${data.length} phiên gần nhất`
-              : "Chưa có dữ liệu biểu đồ"}
-          </p>
-        </div>
-      </div>
+    <section>
+      <TerminalSectionHeader
+        icon={LineChart}
+        title={`${symbol} Price Trend`}
+        subtitle={data.length > 0 ? `${data.length} recent sessions` : "No chart data"}
+      />
 
-      <div className="h-72">
+      <div className="h-72 rounded border border-terminal-border bg-terminal-surface p-3">
         {data.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <p>No OHLC data available</p>
-          </div>
+          <TerminalEmptyState icon={LineChart} title="No OHLC data available" />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="closeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#f0b429" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#f0b429" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
               <XAxis
                 dataKey="date"
                 tickFormatter={(value: string) => value.slice(5)}
                 minTickGap={24}
+                tick={{ fill: "#5c5c5c", fontSize: 10 }}
+                axisLine={{ stroke: "#2a2a2a" }}
+                tickLine={{ stroke: "#2a2a2a" }}
               />
               <YAxis
                 tickFormatter={(value: number) => numberFormatter.format(value)}
                 domain={["dataMin - 1000", "dataMax + 1000"]}
                 width={80}
+                tick={{ fill: "#5c5c5c", fontSize: 10 }}
+                axisLine={{ stroke: "#2a2a2a" }}
+                tickLine={{ stroke: "#2a2a2a" }}
               />
               <Tooltip
-                formatter={(value: number, name: string) => [numberFormatter.format(value), name]}
-                labelFormatter={(label: string) => `Ngày: ${label}`}
+                formatter={(value: number, name: string) => [
+                  numberFormatter.format(value),
+                  name,
+                ]}
+                labelFormatter={(label: string) => `Date: ${label}`}
+                contentStyle={{
+                  background: "#141414",
+                  border: "1px solid #2a2a2a",
+                  borderRadius: 4,
+                  color: "#d4d4d4",
+                  fontFamily: "JetBrains Mono, Fira Code, Consolas, monospace",
+                  fontSize: 11,
+                }}
+                labelStyle={{ color: "#f0b429" }}
               />
               <Area
                 type="monotone"
                 dataKey="close"
-                stroke="#2563eb"
+                stroke="#f0b429"
                 strokeWidth={2}
                 fill="url(#closeGradient)"
                 activeDot={{ r: 5 }}
@@ -74,6 +86,6 @@ export function OHLCChart({ symbol, data }: OHLCChartProps) {
           </ResponsiveContainer>
         )}
       </div>
-    </div>
+    </section>
   );
 }

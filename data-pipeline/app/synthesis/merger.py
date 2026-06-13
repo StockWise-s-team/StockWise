@@ -82,7 +82,7 @@ class Merger:
 
         user_prompt = self._build_user_prompt(effective_wiki, new_articles, new_price_data, ratios)
         response_text = await self._call_llm(user_prompt)
-        parsed = self._parse_response(response_text)
+        parsed = self._parse_response(response_text, symbol)
         parsed["symbol"] = symbol
 
         # Always override with authoritative company info from DB (VnStock/VCI API)
@@ -157,20 +157,58 @@ class Merger:
     async def _call_llm(self, prompt: str) -> str:
         from app.synthesis.prompts import MERGE_SYSTEM_PROMPT
 
-        try:
-            response = await self._client.chat.completions.create(
-                model=settings.OPENAI_LLM_MODEL,
-                messages=[
-                    {"role": "system", "content": MERGE_SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                response_format={"type": "json_object"},
-            )
-            content = response.choices[0].message.content
-            return content or "{}"
-        except Exception as exc:
-            error_str = str(exc).lower()
-            status_code = getattr(exc, "status_code", None)
+        models = [settings.DATA_WIKI_PRIMARY_MODEL, settings.DATA_WIKI_FALLBACK_MODEL]
+        last_exception = None
+
+        for model_name in models:
+            if not model_name:
+                continue
+            try:
+                if "gemini" in model_name.lower() and settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "your-gemini-api-key":
+                    import google.generativeai as genai
+                    genai.configure(api_key=settings.GEMINI_API_KEY)
+                    model = genai.GenerativeModel(
+                        model_name=model_name,
+                        system_instruction=MERGE_SYSTEM_PROMPT
+                    )
+                    response = await model.generate_content_async(
+                        prompt,
+                        generation_config={"response_mime_type": "application/json"}
+                    )
+                    content = response.text
+                    return content or "{}"
+                else:
+                    response = await self._client.chat.completions.create(
+                        model=model_name,
+                        messages=[
+                            {"role": "system", "content": MERGE_SYSTEM_PROMPT},
+                            {"role": "user", "content": prompt},
+                        ],
+                        response_format={"type": "json_object"},
+                    )
+                    content = response.choices[0].message.content
+                    return content or "{}"
+            except Exception as exc:
+                last_exception = exc
+                error_str = str(exc).lower()
+                status_code = getattr(exc, "status_code", None)
+                is_rate_limit = (
+                    status_code in _RETRYABLE_STATUS_CODES
+                    or "429" in error_str
+                    or "rate_limit" in error_str
+                    or "quota" in error_str
+                    or "too many requests" in error_str
+                )
+                if is_rate_limit:
+                    logger.warning("[Merger] LLM model %s rate limit hit: %s", model_name, exc)
+                    continue
+                logger.error("[Merger] LLM model %s failed: %s", model_name, exc)
+                continue
+
+        # If all models failed
+        if last_exception:
+            error_str = str(last_exception).lower()
+            status_code = getattr(last_exception, "status_code", None)
             is_rate_limit = (
                 status_code in _RETRYABLE_STATUS_CODES
                 or "429" in error_str
@@ -179,12 +217,12 @@ class Merger:
                 or "too many requests" in error_str
             )
             if is_rate_limit:
-                logger.warning("[Merger] LLM rate limit hit: %s", exc)
-                raise LLMRateLimitError(str(exc)) from exc
-            logger.error("[Merger] LLM call failed: %s", exc)
-            raise SynthesisError(f"LLM call failed: {exc}") from exc
+                raise LLMRateLimitError(str(last_exception)) from last_exception
+            raise SynthesisError(f"All LLM models failed. Last error: {last_exception}") from last_exception
+        
+        raise SynthesisError("All LLM models failed.")
 
-    def _parse_response(self, response_text: str) -> Dict[str, Any]:
+    def _parse_response(self, response_text: str, symbol: str) -> Dict[str, Any]:
         try:
             data = json.loads(response_text.strip())
         except json.JSONDecodeError as e:

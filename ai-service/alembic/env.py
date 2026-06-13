@@ -9,9 +9,7 @@ from alembic import context
 
 from app.config import settings
 from app.db.database import Base
-
-# Import all models here so Alembic can detect them
-# from app.db.models import chat_session  # noqa
+from app.db.models import chat  # noqa: F401
 
 config = context.config
 

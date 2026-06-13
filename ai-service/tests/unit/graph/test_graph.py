@@ -107,5 +107,5 @@ class TestAdvisorGraph:
             "citations": [],
             "error": None,
         }
-        result = asyncio.get_event_loop().run_until_complete(risk_manager_node(state))
+        result = asyncio.run(risk_manager_node(state))
         assert result["is_safe"] is True

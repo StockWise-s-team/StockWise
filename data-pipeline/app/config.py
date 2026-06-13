@@ -50,7 +50,8 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
-    OPENAI_LLM_MODEL: str = "gpt-5.4-mini"
+    DATA_WIKI_PRIMARY_MODEL: str = "gpt-4o"
+    DATA_WIKI_FALLBACK_MODEL: str = "gpt-4o-mini"
     OPENAI_LLM_REASONING_EFFORT: str = "xhigh"
     EMBEDDING_MODEL: str = "openai"
     EMBEDDING_DIM: int = 1536

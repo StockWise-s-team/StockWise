@@ -12,6 +12,8 @@ _IGNORED_SYMBOLS = {
     "NAY", "SO", "VA", "CO", "KHONG", "KHONG", "DAU", "TANG", "GIAM", "MUA", "BAN",
     "HOI", "TUC", "PHI", "TAY", "BAC", "NAM", "DONG", "TAY", "TRUNG", "CAO", "THAP",
     "MOI", "CU", "MOI", "THE", "CHO", "PHI", "TIN", "TUC", "THI", "TRUONG",
+    "VE", "BIEU", "DO", "GIA", "RUI", "RO", "DANH", "MUC", "PHAN", "TICH", "HOM",
+    "THOI", "TIET", "NAO",
 }
 
 

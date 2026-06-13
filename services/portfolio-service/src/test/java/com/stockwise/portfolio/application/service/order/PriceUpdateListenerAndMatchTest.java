@@ -71,7 +71,8 @@ class PriceUpdateListenerAndMatchTest {
         priceUpdateListener = new PriceUpdateListener(
                 new ObjectMapper(),
                 symbolPriceCache,
-                orderMatchProcessor
+                orderMatchProcessor,
+                orderRepository
         );
     }
 
@@ -101,7 +102,7 @@ class PriceUpdateListenerAndMatchTest {
         when(holdingRepository.findByPortfolioIdAndSymbol(portfolioId, "FPT")).thenReturn(Optional.empty());
 
         // Trigger listener
-        priceUpdateListener.onPriceUpdate(jsonMessage);
+        priceUpdateListener.onPriceUpdate(new org.springframework.amqp.core.Message(jsonMessage.getBytes()));
 
         // Verify symbol price was saved in local in-memory cache
         assertThat(symbolPriceCache.get("FPT")).isPresent();
@@ -155,7 +156,7 @@ class PriceUpdateListenerAndMatchTest {
         when(holdingRepository.findByPortfolioIdAndSymbol(portfolioId, "FPT")).thenReturn(Optional.of(holding));
 
         // Trigger listener
-        priceUpdateListener.onPriceUpdate(jsonMessage);
+        priceUpdateListener.onPriceUpdate(new org.springframework.amqp.core.Message(jsonMessage.getBytes()));
 
         // Verify symbol price was saved in local in-memory cache
         assertThat(symbolPriceCache.get("FPT")).isPresent();

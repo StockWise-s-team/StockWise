@@ -11,7 +11,11 @@ import type {
   LatestPrice,
   OhlcSeries,
   FinancialRatioList,
+  AdvisorMessage,
+  AdvisorSession,
+  SSEEnvelope,
 } from "./types";
+import { parseSSEEnvelopeFrames } from "./sse";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:18080",
@@ -21,7 +25,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
-const AUTH_BYPASS_PATHS = ["/auth/refresh", "/auth/login", "/auth/register"];
+const apiBaseURL = () =>
+  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:18080").replace(/\/$/, "");
+
+const AUTH_BYPASS_PATHS = [
+  "/auth/refresh",
+  "/auth/refresh-token-cookie",
+  "/auth/login",
+  "/auth/register",
+];
 
 const isAuthBypass = (url: string | undefined): boolean => {
   if (!url) return false;
@@ -96,7 +108,7 @@ const performRefresh = async (
 ): Promise<string | null> => {
   try {
     const refreshResponse = await api.post<{ accessToken?: string }>(
-      "/auth/refresh"
+      "/auth/refresh-token-cookie"
     );
     const newToken = refreshResponse.data?.accessToken ?? null;
 
@@ -235,13 +247,124 @@ export const pipelineApi = {
     api.get<PipelineProgressState>("/pipeline/progress/poll").then((r) => r.data),
 };
 
+const mapAdvisorSession = (session: AdvisorSession): AdvisorSession => ({
+  ...session,
+  createdAt: session.createdAt ?? session.created_at ?? "",
+  updatedAt: session.updatedAt ?? session.updated_at ?? "",
+});
+
+const mapAdvisorMessage = (message: AdvisorMessage): AdvisorMessage => ({
+  ...message,
+  sessionId: message.sessionId ?? message.session_id ?? "",
+  createdAt: message.createdAt ?? message.created_at ?? "",
+  role: message.role,
+  metadata: message.metadata ?? {},
+});
+
+async function refreshAccessTokenForFetch(): Promise<string | null> {
+  try {
+    const response = await api.post<{ accessToken?: string }>("/auth/refresh-token-cookie");
+    const token = response.data?.accessToken ?? null;
+    if (token) {
+      setAccessToken(token);
+    }
+    return token;
+  } catch {
+    clearAccessToken();
+    return null;
+  }
+}
+
+async function postAdvisorStream(
+  body: { message: string; session_id?: string },
+  token: string | null,
+  signal?: AbortSignal
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(`${apiBaseURL()}/api/v1/advisor/chat`, {
+    method: "POST",
+    headers,
+    credentials: "include",
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+export const advisorApi = {
+  listSessions: () =>
+    api
+      .get<AdvisorSession[]>("/api/v1/advisor/sessions")
+      .then((r) => r.data.map(mapAdvisorSession)),
+
+  getMessages: (sessionId: string) =>
+    api
+      .get<AdvisorMessage[]>(`/api/v1/advisor/sessions/${sessionId}/messages`)
+      .then((r) => r.data.map(mapAdvisorMessage)),
+
+  deleteSession: (sessionId: string) =>
+    api.delete<void>(`/api/v1/advisor/sessions/${sessionId}`),
+
+  streamChat: async ({
+    message,
+    sessionId,
+    signal,
+    onEnvelope,
+  }: {
+    message: string;
+    sessionId?: string | null;
+    signal?: AbortSignal;
+    onEnvelope: (envelope: SSEEnvelope) => void;
+  }) => {
+    const body = {
+      message,
+      ...(sessionId ? { session_id: sessionId } : {}),
+    };
+
+    let response = await postAdvisorStream(body, getAccessToken(), signal);
+    if (response.status === 401) {
+      const refreshedToken = await refreshAccessTokenForFetch();
+      if (refreshedToken) {
+        response = await postAdvisorStream(body, refreshedToken, signal);
+      }
+    }
+
+    if (!response.ok || !response.body) {
+      throw new Error(`Advisor stream failed with status ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parsed = parseSSEEnvelopeFrames(buffer);
+      buffer = parsed.remainder;
+      parsed.events.forEach(onEnvelope);
+    }
+
+    buffer += decoder.decode();
+    const parsed = parseSSEEnvelopeFrames(buffer + "\n\n");
+    parsed.events.forEach(onEnvelope);
+  },
+};
+
 export function createProgressSSE(
   onEvent: (data: PipelineProgress) => void,
   onError?: (e: Event) => void
 ) {
-  const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18080";
   const url = `${baseURL}/pipeline/progress`;
-  const es = new EventSource(url);
+  const es = new EventSource(url, { withCredentials: true });
 
   es.onmessage = (evt) => {
     try {

@@ -1,116 +1,98 @@
-import asyncio
 import json
+
 import pytest
 
-from app.streaming.sse_manager import SSEManager, SSEEvent
+from app.models.schemas import Citation
+from app.streaming.sse_manager import SSEManager
 
 
 class TestSSEManager:
-    """Unit tests for SSEManager event emission."""
-
     @pytest.mark.asyncio
     async def test_emit_thought(self):
-        """Thought event is queued with correct format."""
-        manager = SSEManager()
-        await manager.emit_thought("Đang phân tích...", node="router")
-
+        manager = SSEManager(session_id="session-1")
+        await manager.emit_thought("Dang phan tich...", node="router")
         event = await manager.queue.get()
-        assert event is not None
+        envelope = json.loads(event.data)
         assert event.event == "thought"
-        data = json.loads(event.data)
-        assert data["message"] == "Đang phân tích..."
-        assert data["node"] == "router"
+        assert envelope["type"] == "thought"
+        assert envelope["session_id"] == "session-1"
+        assert envelope["sequence"] == 1
+        assert envelope["data"] == {"message": "Dang phan tich...", "node": "router"}
 
     @pytest.mark.asyncio
-    async def test_emit_tool_call(self):
-        """Tool call event is queued with correct format."""
+    async def test_emit_tool_call_and_result(self):
         manager = SSEManager()
-        await manager.emit_tool_call("wiki_reader", {"symbol": "FPT"}, status="running")
-
-        event = await manager.queue.get()
-        assert event.event == "tool_call"
-        data = json.loads(event.data)
-        assert data["tool"] == "wiki_reader"
-        assert data["input"] == {"symbol": "FPT"}
-        assert data["status"] == "running"
+        await manager.emit_tool_call("wiki_reader", {"symbol": "FPT"})
+        await manager.emit_tool_result("wiki_reader", "completed")
+        call = json.loads((await manager.queue.get()).data)
+        result = json.loads((await manager.queue.get()).data)
+        assert call["data"]["tool"] == "wiki_reader"
+        assert call["data"]["status"] == "started"
+        assert result["type"] == "tool_result"
 
     @pytest.mark.asyncio
     async def test_emit_token(self):
-        """Token event is queued with correct format."""
         manager = SSEManager()
         await manager.emit_token("Xin")
-
-        event = await manager.queue.get()
-        assert event.event == "token"
-        data = json.loads(event.data)
-        assert data["token"] == "Xin"
+        envelope = json.loads((await manager.queue.get()).data)
+        assert envelope["data"]["token"] == "Xin"
 
     @pytest.mark.asyncio
     async def test_emit_chart_data(self):
-        """Chart data event is queued with correct format."""
         manager = SSEManager()
-        chart = {"chart_type": "line", "symbol": "FPT", "data": [1, 2, 3]}
-        await manager.emit_chart_data(chart)
-
-        event = await manager.queue.get()
-        assert event.event == "chart_data"
-        data = json.loads(event.data)
-        assert data["chart_type"] == "line"
+        await manager.emit_chart_data({"symbol": "FPT", "series": []})
+        envelope = json.loads((await manager.queue.get()).data)
+        assert envelope["data"]["symbol"] == "FPT"
 
     @pytest.mark.asyncio
     async def test_emit_final(self):
-        """Final event is queued with correct format."""
         manager = SSEManager()
         await manager.emit_final(
-            answer="FPT đang tăng",
-            citations=["https://cafef.vn"],
+            answer="FPT dang tang",
+            citations=[
+                Citation(
+                    source_type="news_article",
+                    title="CafeF",
+                    reference="news_articles:1",
+                    url="https://cafef.vn",
+                )
+            ],
             intent="STOCK_OVERVIEW",
             symbols=["FPT"],
             has_disclaimer=True,
         )
-
-        event = await manager.queue.get()
-        assert event.event == "final"
-        data = json.loads(event.data)
-        assert data["answer"] == "FPT đang tăng"
-        assert data["has_disclaimer"] is True
-        assert "https://cafef.vn" in data["citations"]
+        envelope = json.loads((await manager.queue.get()).data)
+        assert envelope["data"]["answer"] == "FPT dang tang"
+        assert envelope["data"]["citations"][0]["url"] == "https://cafef.vn"
 
     @pytest.mark.asyncio
     async def test_emit_error(self):
-        """Error event is queued with correct format."""
         manager = SSEManager()
-        await manager.emit_error("LLM không khả dụng", "LLM_UNAVAILABLE")
-
-        event = await manager.queue.get()
-        assert event.event == "error"
-        data = json.loads(event.data)
-        assert data["message"] == "LLM không khả dụng"
-        assert data["code"] == "LLM_UNAVAILABLE"
+        await manager.emit_error("LLM unavailable", "LLM_UNAVAILABLE")
+        envelope = json.loads((await manager.queue.get()).data)
+        assert envelope["data"]["code"] == "LLM_UNAVAILABLE"
+        assert envelope["data"]["retryable"] is False
 
     @pytest.mark.asyncio
-    async def test_close_sends_sentinel(self):
-        """Close sends None sentinel to end the stream."""
+    async def test_close_is_idempotent(self):
         manager = SSEManager()
         await manager.close()
-
-        event = await manager.queue.get()
-        assert event is None
+        await manager.close()
+        assert await manager.queue.get() is None
+        assert manager.queue.empty()
 
     @pytest.mark.asyncio
-    async def test_event_order_preserved(self):
-        """Events are dequeued in the order they were emitted."""
+    async def test_event_order_and_sequence_are_preserved(self):
         manager = SSEManager()
         await manager.emit_thought("thought 1")
         await manager.emit_thought("thought 2")
         await manager.emit_final("answer")
         await manager.close()
-
-        events = []
+        envelopes = []
         while True:
             event = await manager.queue.get()
             if event is None:
                 break
-            events.append(event.event)
-
-        assert events == ["thought", "thought", "final"]
+            envelopes.append(json.loads(event.data))
+        assert [event["type"] for event in envelopes] == ["thought", "thought", "final"]
+        assert [event["sequence"] for event in envelopes] == [1, 2, 3]

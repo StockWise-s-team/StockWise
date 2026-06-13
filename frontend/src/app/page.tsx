@@ -19,8 +19,10 @@ export default function HomePage() {
   }, [isLoading, isAuthenticated, router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p className="text-lg text-muted-foreground">Loading StockWise...</p>
+    <main className="flex min-h-screen items-center justify-center bg-terminal-bg font-mono">
+      <p className="text-xs uppercase tracking-[0.2em] text-terminal-muted">
+        Loading StockWise...
+      </p>
     </main>
   );
 }
