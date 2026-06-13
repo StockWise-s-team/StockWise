@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,9 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenManagementService tokenManagementService;
+
+    @Value("${REFRESH_COOKIE_SECURE:true}")
+    private boolean refreshCookieSecure;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
@@ -210,15 +214,21 @@ public class AuthController {
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         long maxAgeSeconds = (jwtTokenProvider.getExpiration(refreshToken) - System.currentTimeMillis()) / 1000;
         String cookieValue = String.format(
-                "%s=%s; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=%d",
-                REFRESH_TOKEN_COOKIE_NAME, refreshToken, maxAgeSeconds);
+                "%s=%s; Path=/; HttpOnly;%s %s; Max-Age=%d",
+                REFRESH_TOKEN_COOKIE_NAME,
+                refreshToken,
+                refreshCookieSecure ? " Secure;" : "",
+                SAME_SITE_COOKIE_ATTRIBUTE,
+                maxAgeSeconds);
         response.addHeader("Set-Cookie", cookieValue);
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
         String cookieValue = String.format(
-                "%s=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
-                REFRESH_TOKEN_COOKIE_NAME);
+                "%s=; Path=/; HttpOnly;%s %s; Max-Age=0",
+                REFRESH_TOKEN_COOKIE_NAME,
+                refreshCookieSecure ? " Secure;" : "",
+                SAME_SITE_COOKIE_ATTRIBUTE);
         response.addHeader("Set-Cookie", cookieValue);
     }
 

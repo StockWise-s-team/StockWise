@@ -113,7 +113,7 @@ class PipelineRunsRepository:
                     finished_at = NOW(),
                     duration_seconds = EXTRACT(EPOCH FROM (NOW() - started_at))::INTEGER,
                     symbols_processed = (
-                        SELECT COUNT(*) FROM pipeline_run_symbols
+                        SELECT COUNT(DISTINCT symbol) FROM pipeline_run_symbols
                         WHERE run_id = %s AND status = 'success'
                     )
                 WHERE id = %s
@@ -238,8 +238,8 @@ class PipelineRunsRepository:
         try:
             cur.execute("""
                 SELECT r.*,
-                    (SELECT COUNT(*) FROM pipeline_run_symbols s WHERE s.run_id = r.id AND s.status = 'success') as success_count,
-                    (SELECT COUNT(*) FROM pipeline_run_symbols s WHERE s.run_id = r.id AND s.status = 'error') as error_count
+                    (SELECT COUNT(DISTINCT symbol) FROM pipeline_run_symbols s WHERE s.run_id = r.id AND s.status = 'success') as success_count,
+                    (SELECT COUNT(DISTINCT symbol) FROM pipeline_run_symbols s WHERE s.run_id = r.id AND s.status = 'error') as error_count
                 FROM pipeline_runs r
                 ORDER BY r.started_at DESC
                 LIMIT %s

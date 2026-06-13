@@ -34,6 +34,36 @@ export interface ChangePasswordRequest {
 
 export interface RefreshRequest {
   refreshToken: string;
+  user: User;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
 }
 
 export interface ApiError {
@@ -100,6 +130,33 @@ export interface Portfolio {
 export interface SSEEvent {
   type: "thought" | "answer" | "error";
   content: string;
+}
+
+export interface SSEEnvelope {
+  type: string;
+  data: Record<string, unknown>;
+  session_id: string;
+  sequence: number;
+}
+
+export interface AdvisorSession {
+  id: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AdvisorMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  session_id?: string;
+  created_at?: string;
 }
 
 // ─── Portfolio & Paper Trading ───────────────────────────────────────────────

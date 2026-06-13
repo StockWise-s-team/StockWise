@@ -115,6 +115,35 @@ def _upsert_prices(symbol: str, rows: list[dict[str, Any]], dry_run: bool) -> in
             if not trade_date or not close:
                 continue
 
+            if open_price is not None:
+                try:
+                    op_val = float(open_price)
+                    if op_val < 1000:
+                        open_price = op_val * 1000
+                except (ValueError, TypeError):
+                    pass
+            if high is not None:
+                try:
+                    hi_val = float(high)
+                    if hi_val < 1000:
+                        high = hi_val * 1000
+                except (ValueError, TypeError):
+                    pass
+            if low is not None:
+                try:
+                    lo_val = float(low)
+                    if lo_val < 1000:
+                        low = lo_val * 1000
+                except (ValueError, TypeError):
+                    pass
+            if close is not None:
+                try:
+                    cl_val = float(close)
+                    if cl_val < 1000:
+                        close = cl_val * 1000
+                except (ValueError, TypeError):
+                    pass
+
             if dry_run:
                 count += 1
                 continue

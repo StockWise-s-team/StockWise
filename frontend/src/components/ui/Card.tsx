@@ -8,7 +8,7 @@ export function Card({
   return (
     <div
       className={clsx(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "rounded border border-terminal-border bg-terminal-surface text-terminal-text",
         className
       )}
       {...props}
@@ -22,7 +22,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={clsx("flex flex-col space-y-1.5 p-6", className)}
+      className={clsx("flex flex-col space-y-1.5 border-b border-terminal-border p-4", className)}
       {...props}
     />
   );
@@ -35,7 +35,7 @@ export function CardTitle({
   return (
     <h3
       className={clsx(
-        "text-2xl font-semibold leading-none tracking-tight",
+        "font-mono text-sm font-semibold uppercase leading-none tracking-widest text-terminal-text",
         className
       )}
       {...props}
@@ -47,5 +47,5 @@ export function CardContent({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={clsx("p-6 pt-0", className)} {...props} />;
+  return <div className={clsx("p-4", className)} {...props} />;
 }

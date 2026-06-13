@@ -368,18 +368,19 @@ def _seed_sync(body: SeedRequest, progress) -> None:
     run_repo = PipelineRunsRepository()
     run_id = None
 
+    symbols = body.symbols if body.symbols is not None else _cfg.get_vn30_symbols()
+
     try:
         run_id = run_repo.create_run(
             run_type="seed",
             trigger_type="api",
-            symbols_requested=len(body.symbols or _cfg.get_vn30_symbols()),
+            symbols_requested=len(symbols),
         )
     except Exception as e:
         logger.error("[API/seed] Failed to create DB run record: %s", e)
         run_id = None
 
     vnstock.config.API_KEY = settings.VNSTOCK_API_KEY or ""
-    symbols = body.symbols or _cfg.get_vn30_symbols()
 
     processed = 0
     all_errors = []
@@ -476,16 +477,30 @@ def _seed_sync(body: SeedRequest, progress) -> None:
         for symbol in symbols:
             try:
                 import asyncio
-                asyncio.run(agent.synthesize([symbol]))
-                logger.info("[API/seed] Seeded wiki for %s", symbol)
-                processed += 1
-                progress.step_seed(symbol, processed)
-                if run_id:
-                    run_repo.add_symbol_result(run_id, symbol, "success")
+                results = asyncio.run(agent.synthesize([symbol]))
+                result = results[0] if results else None
+                if result and result.success:
+                    logger.info("[API/seed] Seeded wiki for %s", symbol)
+                    if body.wiki_only:
+                        processed += 1
+                        progress.step_seed(symbol, processed)
+                    else:
+                        progress.seed_progress.currentSymbol = symbol
+                        progress.seed_progress.message = f"Processing {symbol} wiki..."
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "success")
+                else:
+                    err_msg = f"{symbol}/wiki: {result.error if result else 'no synthesis result'}"
+                    logger.error("[API/seed] Failed wiki for %s: %s", symbol, err_msg)
+                    all_errors.append(err_msg)
+                    progress.seed_progress.errors.append(err_msg)
+                    if run_id:
+                        run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
             except Exception as e:
                 logger.error("[API/seed] Failed wiki for %s: %s", symbol, e)
                 err_msg = f"{symbol}/wiki: {e}"
                 all_errors.append(err_msg)
+                progress.seed_progress.errors.append(err_msg)
                 if run_id:
                     run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
 
@@ -549,12 +564,21 @@ def trigger_synthesis(body: SynthesisRequest, background_tasks: BackgroundTasks)
         try:
             for symbol in symbols:
                 try:
-                    await agent.synthesize([symbol])
-                    logger.info("[API/synthesis] Synthesized %s", symbol)
-                    processed += 1
-                    progress_store.step_synthesis(symbol, processed)
-                    if run_id:
-                        run_repo.add_symbol_result(run_id, symbol, "success")
+                    results = await agent.synthesize([symbol])
+                    result = results[0] if results else None
+                    if result and result.success:
+                        logger.info("[API/synthesis] Synthesized %s", symbol)
+                        processed += 1
+                        progress_store.step_synthesis(symbol, processed)
+                        if run_id:
+                            run_repo.add_symbol_result(run_id, symbol, "success")
+                    else:
+                        err_msg = f"{symbol}: {result.error if result else 'no synthesis result'}"
+                        logger.error("[API/synthesis] Failed %s: %s", symbol, err_msg)
+                        all_errors.append(err_msg)
+                        progress_store.synthesis_progress.errors.append(err_msg)
+                        if run_id:
+                            run_repo.add_symbol_result(run_id, symbol, "error", err_msg)
                 except Exception as e:
                     logger.error("[API/synthesis] Failed %s: %s", symbol, e)
                     err_msg = f"{symbol}: {e}"

@@ -1,66 +1,98 @@
-from typing import TypedDict, List, Annotated, Dict, Any
-import operator
+from typing import Any
 from langgraph.graph import StateGraph, END
+from app.graph.state import AdvisorState
+from app.graph.nodes import (
+    router_node,
+    route_intent,
+    context_planner_node,
+    market_context_node,
+    wiki_context_node,
+    news_context_node,
+    portfolio_context_node,
+    calculation_node,
+    chart_data_node,
+    analyst_node,
+    risk_manager_node,
+    respond_node,
+    safety_respond_node,
+)
 
 
-class AdvisorState(TypedDict):
-    messages: Annotated[List[str], operator.add]
-    intent: str
-    thoughts: Annotated[List[str], operator.add]
-    final_answer: str
+def create_advisor_graph(checkpointer: Any = None) -> Any:
+    """Create and compile the AI Advisor LangGraph workflow.
 
-
-async def router_node(state: AdvisorState) -> Dict[str, Any]:
-    return {
-        "intent": "analysis",
-        "thoughts": ["Router: Analyzing intent -> technical analysis requested."],
-    }
-
-
-async def route_intent(state: AdvisorState) -> str:
-    intent = state.get("intent", "")
-    if intent == "analysis":
-        return "analysis"
-    return "respond"
-
-
-async def analyst_node(state: AdvisorState) -> Dict[str, Any]:
-    return {
-        "thoughts": ["Analyst: Running technical analysis. RSI(14)=62, MACD bullish crossover detected."],
-    }
-
-
-async def risk_manager_node(state: AdvisorState) -> Dict[str, Any]:
-    return {
-        "thoughts": ["Risk Manager: Risk review passed. Moderate risk profile. Consider 5% stop-loss."],
-    }
-
-
-async def respond_node(state: AdvisorState) -> Dict[str, Any]:
-    thoughts = state.get("thoughts", [])
-    return {
-        "final_answer": (
-            "I've analyzed your query. The current technical indicators show bullish momentum "
-            "with RSI at 62 and a MACD bullish crossover. Risk assessment rates this as moderate. "
-            "Consider a stop-loss at 5% below current price."
-        ),
-        "thoughts": thoughts + ["Respond: Compiling final answer."],
-    }
-
-
-def create_advisor_graph():
+    Flow:
+    1. router -> classifies intent and extracts symbols.
+    2. conditional edge:
+       - GREETING/OUT_OF_SCOPE -> bypasses tools and goes to respond.
+       - Analysis intents -> context_planner -> runs tools in parallel.
+    3. Tool nodes execute parallel retrieval (market, wiki, news, etc.).
+    4. Parallel tool results join at analyst node to generate the draft.
+    5. Analyst output is passed to risk_manager to sanitize and apply policy.
+    6. Conditional edge:
+       - safe -> respond.
+       - unsafe -> safety_respond (disclaimer/warnings).
+    """
     workflow = StateGraph(AdvisorState)
+
+    # Add nodes
     workflow.add_node("router", router_node)
+    workflow.add_node("context_planner", context_planner_node)
+    workflow.add_node("market_context", market_context_node)
+    workflow.add_node("wiki_context", wiki_context_node)
+    workflow.add_node("news_context", news_context_node)
+    workflow.add_node("portfolio_reader", portfolio_context_node)
+    workflow.add_node("calculation", calculation_node)
+    workflow.add_node("chart_data", chart_data_node)
     workflow.add_node("analyst", analyst_node)
     workflow.add_node("risk_manager", risk_manager_node)
     workflow.add_node("respond", respond_node)
+    workflow.add_node("safety_respond", safety_respond_node)
+
+    # Set entry point
     workflow.set_entry_point("router")
+
+    # Routing from router node
     workflow.add_conditional_edges(
         "router",
         route_intent,
-        {"analysis": "analyst", "respond": "respond"},
+        {
+            "respond": "respond",
+            "context_planner": "context_planner",
+        },
     )
+
+    # Parallel retrieval branches from context_planner to tools
+    workflow.add_edge("context_planner", "market_context")
+    workflow.add_edge("context_planner", "wiki_context")
+    workflow.add_edge("context_planner", "news_context")
+    workflow.add_edge("context_planner", "portfolio_reader")
+    workflow.add_edge("context_planner", "calculation")
+    workflow.add_edge("context_planner", "chart_data")
+
+    # Joining parallel branches back at analyst node
+    workflow.add_edge("market_context", "analyst")
+    workflow.add_edge("wiki_context", "analyst")
+    workflow.add_edge("news_context", "analyst")
+    workflow.add_edge("portfolio_reader", "analyst")
+    workflow.add_edge("calculation", "analyst")
+    workflow.add_edge("chart_data", "analyst")
+
+    # Analyst results to risk_manager
     workflow.add_edge("analyst", "risk_manager")
-    workflow.add_edge("risk_manager", "respond")
+
+    # Conditional routing after safety checks
+    workflow.add_conditional_edges(
+        "risk_manager",
+        lambda state: "respond" if state.get("is_safe", True) else "safety_respond",
+        {
+            "respond": "respond",
+            "safety_respond": "safety_respond",
+        },
+    )
+
+    # Terminal edges
     workflow.add_edge("respond", END)
-    return workflow.compile()
+    workflow.add_edge("safety_respond", END)
+
+    return workflow.compile(checkpointer=checkpointer)

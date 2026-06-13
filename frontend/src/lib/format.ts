@@ -37,6 +37,6 @@ export function formatDateTime(iso: string | null | undefined): string {
 
 // Tailwind text color for a P/L value (up / down / neutral).
 export function pnlColor(value: number | null | undefined): string {
-  if (value === null || value === undefined || value === 0) return "text-body";
-  return value > 0 ? "text-trading-up" : "text-trading-down";
+  if (value === null || value === undefined || value === 0) return "text-terminal-text";
+  return value > 0 ? "text-terminal-green" : "text-terminal-red";
 }

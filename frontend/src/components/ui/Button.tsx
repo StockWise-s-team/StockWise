@@ -15,18 +15,19 @@ export function Button({
   return (
     <button
       className={clsx(
-        "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center rounded border font-mono font-semibold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-terminal-accent/50 disabled:pointer-events-none disabled:opacity-40",
         {
-          "bg-primary text-primary-foreground hover:bg-primary/90":
+          "border-terminal-accent/40 bg-terminal-accent/10 text-terminal-accent hover:bg-terminal-accent/20":
             variant === "default",
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground":
+          "border-terminal-border bg-transparent text-terminal-muted hover:border-terminal-accent/40 hover:text-terminal-accent":
             variant === "outline",
-          "hover:bg-accent hover:text-accent-foreground": variant === "ghost",
+          "border-transparent bg-transparent text-terminal-muted hover:text-terminal-text":
+            variant === "ghost",
         },
         {
-          "h-9 px-3 text-xs": size === "sm",
-          "h-10 px-4 py-2 text-sm": size === "md",
-          "h-11 px-8 text-base": size === "lg",
+          "h-8 px-2.5 text-[10px]": size === "sm",
+          "h-10 px-3 text-xs": size === "md",
+          "h-11 px-4 text-sm": size === "lg",
         },
         className
       )}

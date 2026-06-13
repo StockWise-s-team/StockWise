@@ -83,14 +83,24 @@ INTERNAL_ERROR: "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại."
 // Refresh access token using HttpOnly cookie (no manual token needed)
 async function tryRestoreToken(): Promise<boolean> {
   try {
-    const response = await api.post<{ accessToken?: string }>("/auth/refresh");
+    const response = await api.post<{ accessToken?: string }>("/auth/refresh-token-cookie");
     const newToken = response.data?.accessToken;
     if (newToken) {
       setAccessToken(newToken);
       return true;
     }
-  } catch {
-    // Refresh cookie expired or invalid — user must re-login
+  } catch (err: any) {
+    const status = err?.response?.status;
+    // Only clear session on explicit auth rejection (401/403).
+    // For server errors (500, network errors), keep user optimistically
+    // and let the axios 401 interceptor handle retries on subsequent requests.
+    if (status === 400 || status === 401 || status === 403) {
+      saveStoredUser(null);
+      clearAccessToken();
+      return false;
+    }
+    // Server error or network issue — keep user logged in optimistically
+    return true;
   }
   saveStoredUser(null);
   clearAccessToken();
@@ -107,12 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // On mount: restore token from refresh cookie if user profile exists in localStorage.
   // Access token in memory is already gone on reload, so we must rehydrate from /auth/refresh.
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-      tryRestoreToken();
+    async function initAuth() {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        setUser(storedUser);
+        const restored = await tryRestoreToken();
+        if (!restored) {
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
+    void initAuth();
   }, []);
 
   useEffect(() => {

@@ -1,0 +1,22 @@
+{
+  "FPT": ["FPT", "fpt", "F P T", "Công ty FPT"],
+  "VIC": ["Vingroup", "VIC", "vin group", "Vin Group"],
+  "HPG": ["Hòa Phát", "Hoa Phat", "HPG", "hoa phat"],
+  "VHM": ["Vinhomes", "VHM"],
+  "SSI": ["SSI", "chứng khoán SSI", "chung khoan SSI"],
+  "TCB": ["Techcombank", "TCB"],
+  "VCB": ["Vietcombank", "VCB"],
+  "BID": ["BIDV", "BID"],
+  "CTG": ["Vietinbank", "CTG"],
+  "MBB": ["MB Bank", "MBB", "Ngân hàng MB"],
+  "VNM": ["Vinamilk", "VNM"],
+  "MSN": ["Masan", "MSN"],
+  "GAS": ["PV Gas", "GAS"],
+  "PLX": ["Petrolimex", "PLX"],
+  "ACB": ["ACB", "Ngân hàng ACB"],
+  "TPB": ["TPBank", "TPB"],
+  "VPB": ["VPBank", "VPB"],
+  "STB": ["Sacombank", "STB"],
+  "HDB": ["HDBank", "HDB"],
+  "DXG": ["Dat Xanh", "DXG"]
+}

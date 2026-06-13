@@ -27,8 +27,8 @@ _EXCHANGE_NEWS = "news.exchange"
 _ROUTING_NEWS = "raw.ingested"
 
 _CRAWLER_MAP = {
-    "cafef": CafeFCrawler,
-    "vietstock": VietstockCrawler,
+    "cafef": "CafeFCrawler",
+    "vietstock": "VietstockCrawler",
 }
 
 
@@ -254,8 +254,18 @@ async def run_stream_b() -> None:
         tracked_symbols = tracked_repo.get_tracked_symbols()
         logger.info("[StreamB] Tracked symbols for priority: %s", tracked_symbols)
 
+        async def crawl_safe(source):
+            ctype = source.crawler_type
+            if ctype not in _CRAWLER_MAP:
+                raise ValueError(f"No crawler found for source type: {ctype}")
+            crawler_class_name = _CRAWLER_MAP[ctype]
+            crawler_class = globals().get(crawler_class_name)
+            if not crawler_class:
+                raise ValueError(f"Crawler class {crawler_class_name} not found in globals")
+            return await crawler_class().crawl(tracked_symbols=tracked_symbols)
+
         results = await asyncio.gather(
-            *[crawler_class().crawl(tracked_symbols=tracked_symbols) for crawler_class in [_CRAWLER_MAP[s.crawler_type] for s in active_sources]],
+            *[crawl_safe(s) for s in active_sources],
             return_exceptions=True,
         )
 
@@ -289,8 +299,8 @@ async def run_stream_b() -> None:
         else:
             normalized = news_transformer.transform(all_articles)
             # Convert dataclasses to dicts for embedder (uses .get())
-            from dataclasses import asdict
-            normalized_dicts = [asdict(a) for a in normalized]
+            from dataclasses import asdict, is_dataclass
+            normalized_dicts = [asdict(a) if is_dataclass(a) else a for a in normalized]
             await _embed_and_publish(
                 normalized_dicts, normalized, news_repo, embedder, producer, all_sources
             )
@@ -353,7 +363,12 @@ def _collect_symbols(articles: list) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
     for article in articles:
-        symbols = getattr(article, "symbols", None)
+        if not article:
+            continue
+        if isinstance(article, dict):
+            symbols = article.get("symbols")
+        else:
+            symbols = getattr(article, "symbols", None)
         if not symbols:
             continue
         for sym in symbols:
@@ -390,18 +405,13 @@ async def run_synthesis() -> None:
             return
 
         agent = SynthesisAgent()
-        for symbol in tracked:
-            try:
-                await agent.synthesize([symbol])
-                if run_id:
-                    repo.add_symbol_result(run_id, symbol, "success")
-            except Exception as exc:
-                err = f"{type(exc).__name__}: {exc}"
-                logger.error("[Synthesis] Failed for %s: %s", symbol, exc)
-                if run_id:
-                    repo.add_symbol_result(run_id, symbol, "error", err)
-                errors.append(f"{symbol}: {err}")
-                # continue to next symbol instead of re-raising
+        results = await agent.synthesize(tracked)
+        if run_id:
+            for r in results:
+                if r.success:
+                    repo.add_symbol_result(run_id, r.symbol, "success")
+                else:
+                    repo.add_symbol_result(run_id, r.symbol, "error", r.error or "Unknown error")
 
         logger.info("[Synthesis] Completed for %d symbols", len(tracked))
         if run_id:

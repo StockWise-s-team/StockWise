@@ -27,8 +27,6 @@ management:
       exposure:
         include: health,info
 
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:13000}
 
 jwt:
   secret: ${JWT_SECRET}

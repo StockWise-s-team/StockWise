@@ -8,6 +8,24 @@ from app.synthesis.exceptions import LLMParseError, LLMRateLimitError, Synthesis
 
 
 class TestMerger:
+    @pytest.fixture(autouse=True)
+    def mock_genai(self):
+        with patch("google.generativeai.GenerativeModel") as mock_model_cls, \
+             patch("google.generativeai.configure") as mock_configure:
+            mock_model = MagicMock()
+            mock_model.generate_content_async = AsyncMock()
+            mock_model_cls.return_value = mock_model
+            
+            mock_resp = MagicMock()
+            mock_resp.text = (
+                '{"company_name":"Test","sector":"Tech","business_summary":"Summ",'
+                '"recent_performance":{"trend":"neutral","notable":""},'
+                '"key_risks":[],"sentiment":"neutral","last_news_summary":"",'
+                '"financials_snapshot":{"pe":0,"pb":0,"roe":0},"version":2}'
+            )
+            mock_model.generate_content_async.return_value = mock_resp
+            yield mock_model_cls, mock_configure, mock_model
+
     @pytest.fixture
     def merger(self):
         with patch.object(merger_module, "AsyncOpenAI") as mock_client_cls:
@@ -83,7 +101,8 @@ class TestMerger:
 
         merger._client.chat.completions.create = AsyncMock(side_effect=fake_create)
 
-        await merger.merge(sample_wiki, [], [], "VNM")
+        with patch.object(merger_module.settings, "DATA_WIKI_FALLBACK_MODEL", ""):
+            await merger.merge(sample_wiki, [], [], "VNM")
 
         assert call_count[0] == 3
 
@@ -93,8 +112,9 @@ class TestMerger:
             side_effect=Exception("Connection refused")
         )
 
-        with pytest.raises(SynthesisError):
-            await merger.merge(sample_wiki, [], [], "VNM")
+        with patch.object(merger_module.settings, "DATA_WIKI_FALLBACK_MODEL", ""):
+            with pytest.raises(SynthesisError):
+                await merger.merge(sample_wiki, [], [], "VNM")
 
     @pytest.mark.asyncio
     async def test_merge_raises_rate_limit_error_on_429(self, merger, sample_wiki):
@@ -102,8 +122,9 @@ class TestMerger:
             side_effect=Exception("429 Too Many Requests")
         )
 
-        with pytest.raises(LLMRateLimitError):
-            await merger.merge(sample_wiki, [], [], "VNM")
+        with patch.object(merger_module.settings, "DATA_WIKI_FALLBACK_MODEL", ""):
+            with pytest.raises(LLMRateLimitError):
+                await merger.merge(sample_wiki, [], [], "VNM")
 
     @pytest.mark.asyncio
     async def test_merge_raises_parse_error_on_invalid_json(self, merger, sample_wiki, mock_response):

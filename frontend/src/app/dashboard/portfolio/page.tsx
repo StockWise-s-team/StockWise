@@ -1,171 +1,169 @@
 "use client";
 
+import { Briefcase, Clock, History, RefreshCw, Wallet } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { formatVnd, formatPnl, formatQty, formatDateTime, pnlColor } from "@/lib/format";
-import { RefreshCw } from "lucide-react";
+import {
+  TerminalButton,
+  TerminalEmptyState,
+  TerminalMetricCard,
+  TerminalNotice,
+  TerminalSectionHeader,
+  TerminalSkeletonRows,
+  TerminalTable,
+} from "@/components/ui";
 
 export default function PortfolioPage() {
   const { user } = useAuth();
   const { data, loading, error, reload } = usePortfolio(user?.id);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-body">Portfolio</h1>
-        <button
-          onClick={() => reload()}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-md border border-hairline-on-dark px-3 py-2 text-sm font-medium text-muted-strong transition-colors hover:text-primary disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Làm mới
-        </button>
-      </div>
-
-      {error && (
-        <div className="rounded-lg border border-trading-down/30 bg-trading-down/10 px-4 py-3 text-sm text-trading-down">
-          {error}
+    <div className="min-h-full space-y-5 font-mono text-terminal-text">
+      <header className="flex flex-col gap-3 border-b border-terminal-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-terminal-muted">
+            <Wallet className="h-3.5 w-3.5 text-terminal-accent" />
+            Portfolio console
+          </div>
+          <h1 className="font-display text-xl font-bold uppercase tracking-[0.18em] text-terminal-accent">
+            Portfolio
+          </h1>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-terminal-muted">
+            Holdings, account value, and executed paper-trading history.
+          </p>
         </div>
-      )}
+        <TerminalButton onClick={() => reload()} disabled={loading} tone="muted">
+          <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </TerminalButton>
+      </header>
 
-      {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Tổng giá trị" value={formatVnd(data?.totalValue)} />
-        <SummaryCard label="Tiền ảo khả dụng" value={formatVnd(data?.account.virtualCash)} />
-        <SummaryCard
-          label="Lãi/lỗ chưa thực hiện"
-          value={formatPnl(data?.unrealizedPnl)}
-          valueClass={pnlColor(data?.unrealizedPnl)}
+      {error && <TerminalNotice tone="danger">{error}</TerminalNotice>}
+
+      <section>
+        <TerminalSectionHeader
+          icon={Briefcase}
+          title="Account summary"
+          subtitle="Cash and profit/loss telemetry"
         />
-        <SummaryCard
-          label="Lãi/lỗ đã thực hiện"
-          value={formatPnl(data?.realizedPnl)}
-          valueClass={pnlColor(data?.realizedPnl)}
-        />
-      </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <TerminalMetricCard label="Total value" value={formatVnd(data?.totalValue)} />
+          <TerminalMetricCard label="Available virtual cash" value={formatVnd(data?.account.virtualCash)} />
+          <TerminalMetricCard
+            label="Unrealized P/L"
+            value={<span className={pnlColor(data?.unrealizedPnl)}>{formatPnl(data?.unrealizedPnl)}</span>}
+          />
+          <TerminalMetricCard
+            label="Realized P/L"
+            value={<span className={pnlColor(data?.realizedPnl)}>{formatPnl(data?.realizedPnl)}</span>}
+          />
+        </div>
+      </section>
 
       {data?.hasMissingPrices && (
-        <p className="text-xs text-muted">
-          * Một số mã chưa có giá thị trường — giá trị và lãi/lỗ của các mã đó tạm tính theo giá vốn.
-        </p>
+        <TerminalNotice tone="warning">
+          Some symbols do not have current market prices, so their value and P/L use cost basis fallback.
+        </TerminalNotice>
       )}
 
-      {/* Holdings */}
-      <section className="rounded-lg border border-hairline-on-dark bg-surface-card-dark">
-        <header className="border-b border-hairline-on-dark px-4 py-3">
-          <h2 className="text-lg font-semibold text-body">Danh mục nắm giữ</h2>
-        </header>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-hairline-on-dark text-muted-strong">
-                <th className="px-4 py-3 text-left font-medium">Mã</th>
-                <th className="px-4 py-3 text-right font-medium">Số lượng</th>
-                <th className="px-4 py-3 text-right font-medium">Giá vốn TB</th>
-                <th className="px-4 py-3 text-right font-medium">Giá hiện tại</th>
-                <th className="px-4 py-3 text-right font-medium">Giá trị thị trường</th>
-                <th className="px-4 py-3 text-right font-medium">Lãi/lỗ chưa TH</th>
+      <section>
+        <TerminalSectionHeader
+          icon={Briefcase}
+          title="Holdings"
+          subtitle={data ? `${data.holdings.length} open positions` : "Loading positions"}
+        />
+        {loading && !data ? (
+          <TerminalSkeletonRows rows={4} />
+        ) : data && data.holdings.length === 0 ? (
+          <TerminalEmptyState
+            icon={Briefcase}
+            title="No holdings yet"
+            description="Matched buy orders from Sandbox will appear here."
+          />
+        ) : (
+          <TerminalTable
+            headers={[
+              { label: "Symbol" },
+              { label: "Quantity", align: "right" },
+              { label: "Avg cost", align: "right" },
+              { label: "Current", align: "right" },
+              { label: "Market value", align: "right" },
+              { label: "Unrealized P/L", align: "right" },
+            ]}
+          >
+            {data?.holdings.map((holding) => (
+              <tr
+                key={holding.symbol}
+                className="border-b border-terminal-border/60 transition-colors hover:bg-terminal-bg"
+              >
+                <td className="px-3 py-2.5 font-semibold text-terminal-accent">{holding.symbol}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatQty(holding.quantity)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatVnd(holding.avgPrice)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatVnd(holding.currentPrice)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatVnd(holding.marketValue)}</td>
+                <td className={`px-3 py-2.5 text-right font-semibold ${pnlColor(holding.unrealizedPnl)}`}>
+                  {formatPnl(holding.unrealizedPnl)}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading && !data && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    Đang tải…
-                  </td>
-                </tr>
-              )}
-              {data && data.holdings.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    Chưa có cổ phiếu nào. Hãy đặt lệnh mua trong Sandbox.
-                  </td>
-                </tr>
-              )}
-              {data?.holdings.map((h) => (
-                <tr key={h.symbol} className="border-b border-hairline-on-dark/50">
-                  <td className="px-4 py-3 font-medium text-body">{h.symbol}</td>
-                  <td className="px-4 py-3 text-right text-body">{formatQty(h.quantity)}</td>
-                  <td className="px-4 py-3 text-right text-body">{formatVnd(h.avgPrice)}</td>
-                  <td className="px-4 py-3 text-right text-body">{formatVnd(h.currentPrice)}</td>
-                  <td className="px-4 py-3 text-right text-body">{formatVnd(h.marketValue)}</td>
-                  <td className={`px-4 py-3 text-right font-medium ${pnlColor(h.unrealizedPnl)}`}>
-                    {formatPnl(h.unrealizedPnl)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </TerminalTable>
+        )}
       </section>
 
-      {/* Transaction history */}
-      <section className="rounded-lg border border-hairline-on-dark bg-surface-card-dark">
-        <header className="border-b border-hairline-on-dark px-4 py-3">
-          <h2 className="text-lg font-semibold text-body">Lịch sử giao dịch</h2>
-        </header>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-hairline-on-dark text-muted-strong">
-                <th className="px-4 py-3 text-left font-medium">Thời gian</th>
-                <th className="px-4 py-3 text-left font-medium">Mã</th>
-                <th className="px-4 py-3 text-left font-medium">Loại</th>
-                <th className="px-4 py-3 text-right font-medium">Số lượng</th>
-                <th className="px-4 py-3 text-right font-medium">Giá khớp</th>
-                <th className="px-4 py-3 text-right font-medium">Giá trị</th>
+      <section>
+        <TerminalSectionHeader
+          icon={History}
+          title="Transaction history"
+          subtitle={data ? `${data.transactions.length} executed orders` : "Loading orders"}
+        />
+        {loading && !data ? (
+          <TerminalSkeletonRows rows={4} />
+        ) : data && data.transactions.length === 0 ? (
+          <TerminalEmptyState
+            icon={Clock}
+            title="No executed transactions"
+            description="Filled orders will be listed here."
+          />
+        ) : (
+          <TerminalTable
+            headers={[
+              { label: "Time" },
+              { label: "Symbol" },
+              { label: "Side" },
+              { label: "Quantity", align: "right" },
+              { label: "Fill price", align: "right" },
+              { label: "Value", align: "right" },
+            ]}
+          >
+            {data?.transactions.map((transaction) => (
+              <tr
+                key={transaction.id}
+                className="border-b border-terminal-border/60 transition-colors hover:bg-terminal-bg"
+              >
+                <td className="px-3 py-2.5 text-terminal-muted">{formatDateTime(transaction.executedAt)}</td>
+                <td className="px-3 py-2.5 font-semibold text-terminal-accent">{transaction.symbol}</td>
+                <td className="px-3 py-2.5">
+                  <span
+                    className={
+                      transaction.type === "BUY"
+                        ? "text-terminal-green"
+                        : "text-terminal-red"
+                    }
+                  >
+                    {transaction.type}
+                  </span>
+                </td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatQty(transaction.quantity)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatVnd(transaction.price)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">
+                  {formatVnd(transaction.price * transaction.quantity)}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {data && data.transactions.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    Chưa có giao dịch nào được khớp.
-                  </td>
-                </tr>
-              )}
-              {data?.transactions.map((t) => (
-                <tr key={t.id} className="border-b border-hairline-on-dark/50">
-                  <td className="px-4 py-3 text-muted-strong">{formatDateTime(t.executedAt)}</td>
-                  <td className="px-4 py-3 font-medium text-body">{t.symbol}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        t.type === "BUY" ? "text-trading-up" : "text-trading-down"
-                      }
-                    >
-                      {t.type === "BUY" ? "Mua" : "Bán"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-body">{formatQty(t.quantity)}</td>
-                  <td className="px-4 py-3 text-right text-body">{formatVnd(t.price)}</td>
-                  <td className="px-4 py-3 text-right text-body">
-                    {formatVnd(t.price * t.quantity)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </TerminalTable>
+        )}
       </section>
-    </div>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  valueClass = "text-body",
-}: {
-  label: string;
-  value: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-hairline-on-dark bg-surface-card-dark p-4">
-      <p className="text-sm text-muted-strong">{label}</p>
-      <p className={`mt-2 text-xl font-bold ${valueClass}`}>{value}</p>
     </div>
   );
 }
