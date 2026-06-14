@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import date, timedelta
 from typing import List
 
@@ -18,6 +19,8 @@ from app.api.schemas import (
     PipelineRunSymbolResponse,
     PipelineStatsResponse,
     PipelineStatus,
+    RabbitMessage,
+    RabbitPeekResponse,
     SeedRequest,
     SeedResponse,
     SynthesisRequest,
@@ -28,6 +31,7 @@ from app.api.schemas import (
 from app.config import settings
 from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
 from app.config import settings as _cfg
+from app.rabbitmq.consumer import RabbitPeeker
 from app.sources.source_repository import SourceRepository
 from app.synthesis.synthesis_agent import SynthesisAgent
 from app.synthesis.wiki_repository import WikiRepository
@@ -601,6 +605,55 @@ def trigger_synthesis(body: SynthesisRequest, background_tasks: BackgroundTasks)
         status="started",
         symbols_processed=0,
         errors=[],
+    )
+
+
+# ── RabbitMQ peek ──────────────────────────────────────────────────────────────
+
+@router.get("/rabbit/recent-messages", response_model=RabbitPeekResponse)
+async def rabbit_recent_messages(
+    exchange: str = "market.exchange",
+    routing_key: str = "price.updated",
+    count: int = 1,
+    timeout: int = 45,
+):
+    """
+    Tạo queue tạm, bind với exchange/routing_key, đợi message mới từ RabbitMQ.
+
+    Dùng để verify dữ liệu thật từ StreamC có publish đúng không mà không cần
+    start market-service/portfolio-service. Message được requeue để consumer
+    thật (nếu có) vẫn nhận được.
+
+    - exchange:    mặc định `market.exchange`
+    - routing_key: mặc định `price.updated`
+    - count:       số message tối đa (1-10)
+    - timeout:     thời gian đợi tối đa (giây, 5-120)
+    """
+    count = max(1, min(count, 10))
+    timeout = max(5, min(timeout, 120))
+
+    peeker = RabbitPeeker()
+    started = time.monotonic()
+    try:
+        messages, queue_used = await peeker.peek(
+            exchange_name=exchange,
+            routing_key=routing_key,
+            max_messages=count,
+            timeout_seconds=timeout,
+        )
+    except Exception as exc:
+        logger.exception("[API/rabbit] peek failed")
+        raise HTTPException(status_code=502, detail=f"RabbitMQ peek failed: {exc}")
+    finally:
+        await peeker.close()
+
+    return RabbitPeekResponse(
+        exchange=exchange,
+        routing_key=routing_key,
+        queue_used=queue_used,
+        waited_seconds=round(time.monotonic() - started, 2),
+        fetched_count=len(messages),
+        messages=[RabbitMessage(**m) for m in messages],
     )
 
 

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 from datetime import datetime, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -18,6 +19,7 @@ from app.stream_b.embedder import Embedder
 from app.synthesis.synthesis_agent import SynthesisAgent
 from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
 from app.sources.source_repository import SourceRepository
+from app.stream_c.runner import run_stream_c_loop
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +52,30 @@ def _run_async(coro):
     loop.close()
 
 
+def _start_stream_c_thread() -> None:
+    """Khởi động stream_c trong thread riêng với event-loop của chính nó."""
+    def _thread_target():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(run_stream_c_loop())
+        except Exception as exc:
+            logger.error("[StreamC] Thread crashed: %s", exc)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=_thread_target, name="stream_c", daemon=True)
+    t.start()
+    logger.info("[StreamC] Background thread started")
+
+
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
-    import threading
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_a(),)).start(), "interval", hours=4, id="stream_a", next_run_time=datetime.now(timezone.utc))
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_b(),)).start(), "interval", hours=4, id="stream_b", next_run_time=datetime.now(timezone.utc))
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_synthesis(),)).start(), "interval", hours=4, id="synthesis", next_run_time=datetime.now(timezone.utc))
+    # stream_c chạy liên tục trong thread riêng (không dùng APScheduler interval)
+    _start_stream_c_thread()
     scheduler.start()
     return scheduler
 
@@ -178,8 +198,13 @@ async def _fetch_and_save_prices(
     price_transformer: PriceTransformer,
     ratio_transformer: RatioTransformer,
     repo: PriceRepository,
-    producer: RabbitMQProducer,
+    producer: RabbitMQProducer,  # kept for signature compatibility, no longer used
 ) -> list[str]:
+    """Fetch lịch sử giá & ratios, lưu vào DB.
+
+    NOTE: publish RabbitMQ đã được chuyển sang stream_c (real-time feed).
+    Stream_a chỉ còn nhiệm vụ upsert historical data vào PostgreSQL.
+    """
     errors: list[str] = []
     fetcher = VnStockFetcher()
     ratio_fetcher = YahooFinanceFetcher()
@@ -208,18 +233,9 @@ async def _fetch_and_save_prices(
                 all_symbols.append(sym)
             logger.info("[StreamA] Fetched ratios for %s", sym)
 
-    if all_symbols:
-        await producer.publish(
-            exchange_name=_EXCHANGE_PRICE,
-            routing_key=_ROUTING_PRICE,
-            data={
-                "symbols": all_symbols,
-                "source": "vnstock",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "record_count": len(all_symbols),
-                "action": _ROUTING_PRICE,
-            },
-        )
+    # Publish đã được chuyển sang stream_c — không publish ở đây nữa
+    # (stream_c cung cấp giá real-time cho market-service với chu kỳ ngắn hơn)
+    return all_symbols
 
 
 async def run_stream_b() -> None:

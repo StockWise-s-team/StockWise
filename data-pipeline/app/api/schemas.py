@@ -228,3 +228,24 @@ class PipelineRunDetailResponse(BaseModel):
 class PipelineStatsResponse(BaseModel):
     by_type_status: List[Dict[str, Any]] = Field(default_factory=list)
     summary: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+# ── RabbitMQ peek ──────────────────────────────────────────────────────────────
+
+class RabbitMessage(BaseModel):
+    """Một message lấy được từ RabbitMQ."""
+    routing_key: str
+    exchange: str
+    payload: Dict[str, Any]
+    payload_size_bytes: int
+    redelivered: bool = False
+
+
+class RabbitPeekResponse(BaseModel):
+    """Response cho endpoint /rabbit/recent-messages."""
+    exchange: str
+    routing_key: str
+    queue_used: str
+    waited_seconds: float
+    fetched_count: int
+    messages: List[RabbitMessage]
