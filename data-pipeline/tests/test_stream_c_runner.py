@@ -36,6 +36,13 @@ class MockProducer:
         print("[MockProducer] close() called")
 
 
+class MockFallbackFetcher:
+    """YahooFinancePriceFetcher giả — dùng khi primary rate limit."""
+    async def fetch(self, symbols):
+        print(f"[MockFallbackFetcher] fetch() called for {len(symbols)} symbols")
+        return [{"symbol": s, "error": "mock fallback"} for s in symbols]
+
+
 class MockPriceRepo:
     """PriceRepository giả — trả về danh sách symbols cố định."""
     def get_tracked_symbols(self):
@@ -60,7 +67,8 @@ async def main():
     from app.stream_c import runner
 
     price_repo = MockPriceRepo()
-    fetcher = PriceBoardFetcher()
+    primary_fetcher = PriceBoardFetcher()
+    fallback_fetcher = MockFallbackFetcher()
     producer = MockProducer()
 
     # Patch run_repo trong runner để không cần DB
@@ -72,7 +80,7 @@ async def main():
     print("=" * 50)
 
     try:
-        await runner._run_once(price_repo, fetcher, producer)
+        await runner._run_once(price_repo, primary_fetcher, fallback_fetcher, producer)
     finally:
         runner.PipelineRunsRepository = original_repo_class
 

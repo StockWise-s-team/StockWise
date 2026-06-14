@@ -170,18 +170,38 @@ async def _run_once(
 
         # ── Bước 4: Publish lên RabbitMQ ───────────────────────────────────────
         if ok_records:
-            await producer.publish(
-                exchange_name=_EXCHANGE_PRICE,
-                routing_key=_ROUTING_PRICE,
-                data={
-                    "symbols":      [r["symbol"] for r in ok_records],
-                    "prices":       ok_records,
-                    "source":       source_used,
-                    "timestamp":    _now_iso(),
-                    "record_count": len(ok_records),
-                    "action":       _ROUTING_PRICE,
-                },
-            )
+            payload = {
+                "symbols":      [r["symbol"] for r in ok_records],
+                "prices":       ok_records,
+                "source":       source_used,
+                "timestamp":    _now_iso(),
+                "record_count": len(ok_records),
+                "action":       _ROUTING_PRICE,
+            }
+            try:
+                await producer.publish(
+                    exchange_name=_EXCHANGE_PRICE,
+                    routing_key=_ROUTING_PRICE,
+                    data=payload,
+                )
+            except Exception as pub_exc:
+                logger.warning(
+                    "[StreamC] Publish failed (%s: %s) — reconnecting and retrying once",
+                    type(pub_exc).__name__, pub_exc,
+                )
+                try:
+                    await producer.reconnect()
+                    await producer.publish(
+                        exchange_name=_EXCHANGE_PRICE,
+                        routing_key=_ROUTING_PRICE,
+                        data=payload,
+                    )
+                except Exception as retry_exc:
+                    logger.error(
+                        "[StreamC] Retry publish also failed (%s: %s) — skipping this cycle",
+                        type(retry_exc).__name__, retry_exc,
+                    )
+
             logger.info(
                 "[StreamC] Published %d/%d symbols via %s to %s/%s",
                 len(ok_records), len(tracked), source_used,
