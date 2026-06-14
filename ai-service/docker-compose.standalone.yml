@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stockwise}
+      POSTGRES_USER: ${POSTGRES_USER:-stockwise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stockwise_dev_password}
+    ports:
+      - "15432:5432"
+    volumes:
+      - standalone_postgres:/var/lib/postgresql/data
+      - ../infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stockwise} -d ${POSTGRES_DB:-stockwise}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "16379:6379"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "16333:6333"
+
+  ai-service:
+    build: .
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-stockwise}
+      POSTGRES_USER: ${POSTGRES_USER:-stockwise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stockwise_dev_password}
+      REDIS_HOST: redis
+      APP_QDRANT_HOST: qdrant
+      APP_QDRANT_PORT: 6333
+      AI_DATA_MODE: ${AI_DATA_MODE:-demo}
+      AI_AUTH_MODE: ${AI_AUTH_MODE:-development}
+      AI_RAG_MODE: ${AI_RAG_MODE:-sql}
+      AI_DEMO_USER_ID: ${AI_DEMO_USER_ID:-00000000-0000-0000-0000-000000000001}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "18000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  standalone_postgres:

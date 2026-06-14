@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     Optional<Order> findByIdAndUserId(UUID id, UUID userId);
+    List<Order> findByUserIdOrderByCreatedAtDesc(UUID userId);
     List<Order> findBySymbolAndStatus(String symbol, String status);
 
     @Query(value = "SELECT close FROM stock_prices WHERE symbol = :symbol ORDER BY trade_date DESC LIMIT 1", nativeQuery = true)

@@ -1,6 +1,7 @@
 package com.stockwise.portfolio.adapter.in.web;
 
 import com.stockwise.portfolio.adapter.in.web.dto.OrderResponse;
+import com.stockwise.portfolio.adapter.in.web.dto.OrderHistoryResponse;
 import com.stockwise.portfolio.adapter.in.web.dto.PlaceOrderRequest;
 import com.stockwise.portfolio.adapter.in.web.dto.PnlResponse;
 import com.stockwise.portfolio.adapter.in.web.dto.PortfolioResponse;
@@ -60,6 +61,15 @@ public class PortfolioController {
                 request.price()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(orderResponseMapper.placed(order));
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<OrderHistoryResponse>> getOrders() {
+        UUID userId = userIdResolver.resolveCurrentUserId();
+        List<OrderHistoryResponse> orders = getPortfolioUseCase.getOrderHistory(userId).stream()
+                .map(OrderHistoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(orders);
     }
 
     @DeleteMapping("/order/{orderId}")

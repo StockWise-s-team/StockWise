@@ -5,11 +5,13 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
+import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
 from app.api.dependencies import get_current_user
+from app.config import settings
 from app.db.database import get_db
 from app.db.repositories.chat_repo import ChatRepository
 from app.db.repositories.content_repo import ContentRepository
@@ -22,7 +24,7 @@ router = APIRouter()
 
 def _require_admin(role: str = Header(None), x_role: str = Header(None, alias="X-Role")):
     """Require admin role for admin endpoints."""
-    resolved = role or x_role
+    resolved = role if isinstance(role, str) and role else x_role if isinstance(x_role, str) else None
     if resolved != "admin":
         raise HTTPException(status_code=403, detail="Admin role required")
 
@@ -34,6 +36,30 @@ def _json_default(value: Any) -> str | float:
     if isinstance(value, Decimal):
         return float(value)
     return str(value)
+
+
+async def _request_data_pipeline_synthesis(symbol: str) -> dict[str, Any]:
+    """Trigger the data-pipeline synthesis endpoint for a single symbol."""
+    url = f"{settings.DATA_PIPELINE_URL.rstrip('/')}/synthesis/trigger"
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.post(
+                url,
+                json={"symbols": [symbol.upper()]},
+                headers={"X-Role": "admin"},
+            )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Data pipeline rejected synthesis trigger with status {exc.response.status_code}",
+        ) from None
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Data pipeline synthesis trigger is unavailable",
+        ) from None
 
 
 @router.get("/advisor/sessions", response_model=list[ChatSessionSummary])
@@ -223,8 +249,14 @@ async def delete_source(
 
 
 @router.get("/admin/wiki/{symbol}")
-async def get_wiki_state(symbol: str, db: AsyncSession = Depends(get_db)):
+async def get_wiki_state(
+    symbol: str,
+    role: str = Header(None),
+    x_role: str = Header(None, alias="X-Role"),
+    db: AsyncSession = Depends(get_db),
+):
     """Get company wiki state by symbol."""
+    _require_admin(role=role, x_role=x_role)
     wiki = await ContentRepository(db).get_wiki(symbol)
     if not wiki:
         raise HTTPException(status_code=404, detail="Wiki not found for symbol")
@@ -232,13 +264,19 @@ async def get_wiki_state(symbol: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/admin/wiki/{symbol}/history")
-async def get_wiki_history(symbol: str, db: AsyncSession = Depends(get_db)):
+async def get_wiki_history(
+    symbol: str,
+    role: str = Header(None),
+    x_role: str = Header(None, alias="X-Role"),
+    db: AsyncSession = Depends(get_db),
+):
     """Get company wiki version history by symbol."""
+    _require_admin(role=role, x_role=x_role)
     history = await ContentRepository(db).get_wiki_history(symbol)
     return {"symbol": symbol.upper(), "history": history}
 
 
-@router.post("/admin/wiki/{symbol}/trigger")
+@router.post("/admin/wiki/{symbol}/trigger", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_synthesis(
     symbol: str,
     role: str = Header(None),
@@ -246,8 +284,9 @@ async def trigger_synthesis(
 ):
     """Trigger wiki synthesis for a symbol. Admin only."""
     _require_admin(role=role, x_role=x_role)
+    pipeline_response = await _request_data_pipeline_synthesis(symbol)
     return {
-        "status": "accepted",
+        "status": "started",
         "symbol": symbol.upper(),
-        "message": "Synthesis trigger accepted by API. Queue-backed execution should be wired by the data-pipeline owner.",
+        "pipeline": pipeline_response,
     }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Activity, Briefcase, TrendingUp } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { marketApi, trackedSymbolsApi } from "@/lib/api";
+import { marketApi, trackedSymbolsApi, userSelectionsApi } from "@/lib/api";
 import { formatVnd, formatPnl, pnlColor } from "@/lib/format";
 import type { LatestPrice } from "@/lib/types";
 import {
@@ -38,7 +38,7 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
 
-        const symbols = await trackedSymbolsApi.list();
+        const symbols = await userSelectionsApi.listSymbols();
         if (cancelled) return;
         setTrackedSymbols(symbols);
 

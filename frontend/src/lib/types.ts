@@ -37,35 +37,6 @@ export interface RefreshRequest {
   user: User;
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName?: string;
-}
-
-export interface UpdateProfileRequest {
-  fullName: string;
-}
-
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
-export interface ApiError {
-  error: string;
-  message: string;
-}
-
 export interface ApiError {
   error: string;
   message: string;
@@ -180,6 +151,17 @@ export interface PortfolioTransaction {
   executedAt: string;
 }
 
+export interface PortfolioOrder {
+  id: string;
+  symbol: string;
+  type: OrderSide;
+  price: number;
+  quantity: number;
+  status: OrderStatus;
+  createdAt: string;
+  cancelledAt: string | null;
+}
+
 // GET /portfolio response shape. The backend derives user ownership from JWT.
 export interface PortfolioSnapshot {
   portfolio: PortfolioAccount;
@@ -236,6 +218,11 @@ export interface NewsSource {
   crawler_type?: string;
   is_active?: boolean;
   created_at?: string;
+}
+
+export interface UserNewsSource extends NewsSource {
+  isSelected: boolean;
+  is_selected?: boolean;
 }
 
 export interface TrackedSymbol {

@@ -8,8 +8,11 @@ import {
   BarChart3,
   Bot,
   BrainCircuit,
+  ChevronDown,
+  ChevronUp,
   CircleDollarSign,
   CornerDownLeft,
+  Cpu,
   MessageSquare,
   Plus,
   Radio,
@@ -73,6 +76,7 @@ export default function AdvisorPage() {
   const [sessions, setSessions] = useState<AdvisorSession[]>([]);
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [streamEvents, setStreamEvents] = useState<SSEEvent[]>([]);
+  const [showThoughts, setShowThoughts] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
@@ -121,6 +125,7 @@ export default function AdvisorPage() {
         setActiveSessionId(sessionId);
         persistActiveSession(sessionId);
         setStreamEvents([]);
+        setShowThoughts(false);
         setAssistantDraft("");
         draftRef.current = "";
       } catch {
@@ -208,6 +213,7 @@ export default function AdvisorPage() {
     persistActiveSession(null);
     setMessages([]);
     setStreamEvents([]);
+    setShowThoughts(false);
     setAssistantDraft("");
     setMessage("");
     setLoadError(null);
@@ -280,6 +286,7 @@ export default function AdvisorPage() {
     const controller = new AbortController();
     abortRef.current = controller;
     setIsStreaming(true);
+    setShowThoughts(true);
 
     try {
       await advisorApi.streamChat({
@@ -296,6 +303,7 @@ export default function AdvisorPage() {
         ]);
       }
       await refreshSessions();
+      setShowThoughts(false);
     } catch (error) {
       if (!controller.signal.aborted && !finalReceivedRef.current) {
         const content = error instanceof Error ? error.message : "Advisor stream failed.";
@@ -303,6 +311,7 @@ export default function AdvisorPage() {
       }
     } finally {
       setIsStreaming(false);
+      setShowThoughts(false);
       abortRef.current = null;
       draftRef.current = "";
       setAssistantDraft("");
@@ -311,12 +320,12 @@ export default function AdvisorPage() {
 
   return (
     <div
-      className="min-h-full bg-terminal-bg font-mono text-terminal-text"
+      className="flex h-[calc(100vh-5rem)] min-h-0 flex-col overflow-hidden bg-terminal-bg font-mono text-terminal-text sm:h-[calc(100vh-3rem)] lg:h-[calc(100vh-4rem)]"
       style={{
         fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
       }}
     >
-      <header className="mb-5 flex flex-col gap-4 border-b border-terminal-border pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-5 flex shrink-0 flex-col gap-4 border-b border-terminal-border pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-terminal-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-terminal-green" />
@@ -347,11 +356,11 @@ export default function AdvisorPage() {
         </div>
       </header>
 
-      <div className="grid min-h-[calc(100vh-11.5rem)] grid-cols-1 gap-5 xl:grid-cols-12">
-        <aside className="order-2 space-y-5 xl:order-1 xl:col-span-4">
-          <section>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-hidden xl:grid-cols-12">
+        <aside className="order-2 flex min-h-0 flex-col gap-5 overflow-hidden xl:order-1 xl:col-span-4">
+          <section className="flex min-h-0 flex-1 flex-col">
             <SectionTitle icon={MessageSquare} title="Sessions" subtitle="Persisted advisor history" />
-            <div className="space-y-1.5">
+            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
               {isLoadingSessions ? (
                 <p className="rounded border border-terminal-border bg-terminal-surface px-3 py-3 text-[10px] uppercase tracking-wider text-terminal-muted">
                   Loading sessions
@@ -403,7 +412,7 @@ export default function AdvisorPage() {
             </div>
           </section>
 
-          <section>
+          <section className="shrink-0">
             <SectionTitle icon={Sparkles} title="Research prompts" subtitle="Start with a focused mandate" />
             <div className="space-y-1.5">
               {promptGroups.map(({ icon: Icon, label, prompt }, index) => (
@@ -434,7 +443,7 @@ export default function AdvisorPage() {
             </div>
           </section>
 
-          <section>
+          <section className="shrink-0">
             <SectionTitle icon={Activity} title="Session telemetry" subtitle="Current analysis state" />
             <div className="grid grid-cols-3 gap-1.5">
               <TelemetryItem label="Status" value={status} state={status} />
@@ -453,8 +462,8 @@ export default function AdvisorPage() {
           </section>
         </aside>
 
-        <section className="order-1 flex min-h-[570px] flex-col overflow-hidden rounded border border-terminal-border bg-terminal-surface xl:order-2 xl:col-span-8">
-          <div className="flex items-center justify-between border-b border-terminal-border px-4 py-3">
+        <section className="order-1 flex min-h-0 flex-col overflow-hidden rounded border border-terminal-border bg-terminal-surface xl:order-2 xl:col-span-8">
+          <div className="flex shrink-0 items-center justify-between border-b border-terminal-border px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded border border-terminal-accent/30 bg-terminal-accent/5">
                 <BrainCircuit className="h-4 w-4 text-terminal-accent" />
@@ -471,7 +480,7 @@ export default function AdvisorPage() {
             <StatusBadge status={status} />
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-terminal-bg/60 p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-terminal-bg/60 p-4">
             {messages.length === 0 && streamEvents.length === 0 && !assistantDraft ? (
               <div className="flex h-full min-h-[360px] items-center justify-center">
                 <div className="max-w-sm text-center">
@@ -513,11 +522,46 @@ export default function AdvisorPage() {
                   )
                 )}
 
-                {streamEvents
-                  .filter((event) => event.type !== "answer")
-                  .map((event, index) => (
-                    <AgentThoughtStream key={`event-${index}`} event={event} />
-                  ))}
+                {(() => {
+                  const thoughts = streamEvents.filter((event) => event.type !== "answer");
+                  if (thoughts.length === 0) return null;
+
+                  return (
+                    <div className="rounded border border-terminal-border/60 bg-terminal-surface/30 p-2.5 transition-all">
+                      <button
+                        type="button"
+                        onClick={() => setShowThoughts((prev) => !prev)}
+                        className="flex w-full items-center justify-between text-left text-[10px] font-semibold uppercase tracking-wider text-terminal-muted hover:text-terminal-accent transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Cpu className={`h-3.5 w-3.5 text-terminal-amber ${isStreaming ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }} />
+                          <span>QuÃ¡ trÃ¬nh phÃ¢n tÃ­ch há»‡ thá»‘ng ({thoughts.length} bÆ°á»›c)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {showThoughts ? (
+                            <>
+                              <span>Thu gá»n</span>
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </>
+                          ) : (
+                            <>
+                              <span>Chi tiáº¿t</span>
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </>
+                          )}
+                        </div>
+                      </button>
+
+                      {showThoughts && (
+                        <div className="mt-3.5 space-y-2.5 border-t border-terminal-border/40 pt-3.5">
+                          {thoughts.map((event, index) => (
+                            <AgentThoughtStream key={`event-${index}`} event={event} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {assistantDraft && (
                   <AgentThoughtStream event={{ type: "answer", content: assistantDraft }} />
@@ -534,7 +578,7 @@ export default function AdvisorPage() {
             )}
           </div>
 
-          <div className="border-t border-terminal-border bg-terminal-surface p-3">
+          <div className="shrink-0 border-t border-terminal-border bg-terminal-surface p-3">
             <div className="flex items-end gap-2 rounded border border-terminal-border bg-terminal-bg p-1.5 transition-colors focus-within:border-terminal-accent/50">
               <textarea
                 value={message}

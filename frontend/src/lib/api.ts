@@ -3,6 +3,7 @@ import { getAccessToken, setAccessToken, clearAccessToken } from "./tokenStore";
 
 import type {
   NewsSource,
+  UserNewsSource,
   TrackedSymbol,
   WikiData,
   PipelineStatus,
@@ -175,6 +176,29 @@ export const trackedSymbolsApi = {
     }),
 
   triggerSeedForSymbols: (symbols: string[]) => api.post("/scripts/seed", { symbols }),
+};
+
+export const userSelectionsApi = {
+  listSymbols: () =>
+    api.get<string[]>("/user/tracked-symbols").then((r) => r.data),
+
+  updateSymbols: (symbols: string[]) =>
+    api.put("/user/tracked-symbols", { symbols }),
+
+  listNewsSources: () =>
+    api.get<UserNewsSource[]>("/user/news-sources").then((r) =>
+      r.data.map((s) => ({
+        ...s,
+        baseUrl: s.base_url ?? s.baseUrl,
+        crawlerType: s.crawler_type ?? s.crawlerType,
+        isActive: s.is_active ?? s.isActive,
+        isSelected: s.is_selected ?? s.isSelected,
+        createdAt: s.created_at ?? s.createdAt,
+      }))
+    ),
+
+  updateNewsSources: (sourceIds: string[]) =>
+    api.put("/user/news-sources", { source_ids: sourceIds }),
 };
 
 export const wikiApi = {

@@ -92,6 +92,25 @@ class NewsSourceToggle(BaseModel):
     isActive: bool = Field(alias="is_active")
 
 
+class UserNewsSourceResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    baseUrl: str = Field(alias="base_url")
+    crawlerType: str = Field(alias="crawler_type")
+    isActive: bool = Field(alias="is_active")
+    isSelected: bool = Field(alias="is_selected")
+
+
+class UserNewsSourcesUpdate(BaseModel):
+    source_ids: List[str] = Field(default_factory=list)
+
+
+class UserTrackedSymbolsUpdate(BaseModel):
+    symbols: List[str] = Field(default_factory=list)
+
+
 class TrackedSymbolAdd(BaseModel):
     symbol: str = Field(..., pattern=r"^[A-Z]{3,5}$")
 

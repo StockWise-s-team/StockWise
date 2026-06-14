@@ -3,7 +3,6 @@ package com.stockwise.portfolio.application.service.order;
 import com.stockwise.portfolio.application.service.order.reservation.BuyOrderReservationStrategy;
 import com.stockwise.portfolio.application.service.order.reservation.OrderReservationStrategyRegistry;
 import com.stockwise.portfolio.application.service.order.reservation.SellOrderReservationStrategy;
-import com.stockwise.portfolio.application.service.order.validation.DefaultOrderValidator;
 import com.stockwise.portfolio.application.exception.ConflictException;
 import com.stockwise.portfolio.application.port.out.OrderEventPublisher;
 import com.stockwise.portfolio.application.service.PortfolioAccountService;
@@ -64,7 +63,7 @@ class OrderServiceTest {
                         new com.stockwise.portfolio.application.service.order.validation.BasicFormatValidationRule(),
                         new com.stockwise.portfolio.application.service.order.validation.TradingHoursValidationRule(false, java.time.Clock.systemDefaultZone()),
                         new com.stockwise.portfolio.application.service.order.validation.PriceBandValidationRule(symbolPriceCache, false)
-                ), symbolPriceCache);
+                ), symbolPriceCache, orderRepository);
                 
         placeOrderService = new PlaceOrderService(
                 portfolioAccountService,
@@ -200,7 +199,7 @@ class OrderServiceTest {
                         new com.stockwise.portfolio.application.service.order.validation.BasicFormatValidationRule(),
                         new com.stockwise.portfolio.application.service.order.validation.TradingHoursValidationRule(true, sundayClock),
                         new com.stockwise.portfolio.application.service.order.validation.PriceBandValidationRule(symbolPriceCache, true)
-                ), symbolPriceCache);
+                ), symbolPriceCache, orderRepository);
 
         PlaceOrderService strictPlaceOrderService = new PlaceOrderService(
                 portfolioAccountService,

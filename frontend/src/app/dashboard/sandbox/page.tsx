@@ -1,28 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Banknote, Send, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Banknote, History, Send, ShoppingCart, TrendingDown, TrendingUp, XCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { portfolioGateway } from "@/lib/portfolio/gateway";
 import { validateOrderForm } from "@/lib/portfolio/orderValidation";
 import { extractErrorMessage } from "@/lib/apiError";
-import { formatVnd, formatQty } from "@/lib/format";
-import type { OrderResult, OrderSide } from "@/lib/types";
+import { formatVnd, formatQty, formatDateTime } from "@/lib/format";
+import { trackedSymbolsApi } from "@/lib/api";
+import type { OrderResult, OrderSide, OrderStatus, PortfolioOrder } from "@/lib/types";
 import {
   TerminalButton,
+  TerminalEmptyState,
   TerminalInput,
+  TerminalSelect,
   TerminalMetricCard,
   TerminalNotice,
   TerminalSectionHeader,
+  TerminalSkeletonRows,
+  TerminalTable,
 } from "@/components/ui";
 
 export default function SandboxPage() {
   const { user } = useAuth();
   const { data, reload } = usePortfolio(user?.id);
 
+  const [trackedSymbols, setTrackedSymbols] = useState<string[]>([]);
   const [symbol, setSymbol] = useState("");
+
+  useEffect(() => {
+    trackedSymbolsApi.list()
+      .then((symbols) => {
+        setTrackedSymbols(symbols);
+        if (symbols.length > 0) {
+          setSymbol(symbols[0]);
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [side, setSide] = useState<OrderSide>("BUY");
   const [quantity, setQuantity] = useState("100");
   const [price, setPrice] = useState("");
@@ -30,6 +47,30 @@ export default function SandboxPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<OrderResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<PortfolioOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null);
+
+  const loadOrders = useCallback(async () => {
+    if (!user?.id) {
+      setOrders([]);
+      return;
+    }
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      setOrders(await portfolioGateway.getOrders());
+    } catch (err) {
+      setOrdersError(extractErrorMessage(err, "Order history could not be loaded."));
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
 
   const heldQty = useMemo(() => {
     const normalizedSymbol = symbol.trim().toUpperCase();
@@ -63,10 +104,27 @@ export default function SandboxPage() {
       });
       setResult(response);
       await reload();
+      await loadOrders();
     } catch (err) {
       setError(extractErrorMessage(err, "Order placement failed."));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async (orderId: string) => {
+    setError(null);
+    setOrdersError(null);
+    setCancelingOrderId(orderId);
+    try {
+      const response = await portfolioGateway.cancelOrder(orderId);
+      setResult(response);
+      await reload();
+      await loadOrders();
+    } catch (err) {
+      setOrdersError(extractErrorMessage(err, "Order cancellation failed."));
+    } finally {
+      setCancelingOrderId(null);
     }
   };
 
@@ -135,14 +193,19 @@ export default function SandboxPage() {
           <div className="rounded border border-terminal-border bg-terminal-surface p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Symbol">
-                <TerminalInput
-                  type="text"
+                <TerminalSelect
                   value={symbol}
-                  onChange={(event) => setSymbol(event.target.value.toUpperCase())}
-                  placeholder="FPT"
-                  maxLength={10}
-                  className="uppercase"
-                />
+                  onChange={(event) => setSymbol(event.target.value)}
+                >
+                  {trackedSymbols.length === 0 && (
+                    <option value="">No tracked symbols</option>
+                  )}
+                  {trackedSymbols.map((sym) => (
+                    <option key={sym} value={sym} className="bg-terminal-surface text-terminal-text">
+                      {sym}
+                    </option>
+                  ))}
+                </TerminalSelect>
                 {side === "SELL" && symbol.trim() && (
                   <p className="mt-1.5 text-[10px] text-terminal-muted">
                     Held quantity: <span className="text-terminal-text">{formatQty(heldQty)}</span>
@@ -193,16 +256,105 @@ export default function SandboxPage() {
                   <p className="mt-1 text-[10px] text-terminal-green/80">
                     Status: {result.status} / Order ID: {result.order_id}
                   </p>
-                  <p className="mt-1 text-[10px] text-terminal-muted">
-                    The order will fill when matching market data is available.
-                  </p>
+                  {result.status === "PENDING" && (
+                    <p className="mt-1 text-[10px] text-terminal-muted">
+                      The order will fill when matching market data is available.
+                    </p>
+                  )}
                 </TerminalNotice>
               )}
             </div>
           </div>
         </section>
       </div>
+
+      <section>
+        <TerminalSectionHeader
+          icon={History}
+          title="Order history"
+          subtitle={`${orders.length} submitted orders`}
+          action={
+            <TerminalButton onClick={() => void loadOrders()} disabled={ordersLoading || !user} tone="muted">
+              Refresh
+            </TerminalButton>
+          }
+        />
+
+        {ordersError && <TerminalNotice tone="danger" className="mb-3">{ordersError}</TerminalNotice>}
+
+        {ordersLoading && orders.length === 0 ? (
+          <TerminalSkeletonRows rows={4} />
+        ) : orders.length === 0 ? (
+          <TerminalEmptyState
+            icon={History}
+            title="No submitted orders"
+            description="Orders placed from this sandbox will appear here."
+          />
+        ) : (
+          <TerminalTable
+            headers={[
+              { label: "Time" },
+              { label: "Symbol" },
+              { label: "Side" },
+              { label: "Quantity", align: "right" },
+              { label: "Limit price", align: "right" },
+              { label: "Status" },
+              { label: "Action", align: "right" },
+            ]}
+          >
+            {orders.map((order) => (
+              <tr
+                key={order.id}
+                className="border-b border-terminal-border/60 transition-colors hover:bg-terminal-bg"
+              >
+                <td className="px-3 py-2.5 text-terminal-muted">{formatDateTime(order.createdAt)}</td>
+                <td className="px-3 py-2.5 font-semibold text-terminal-accent">{order.symbol}</td>
+                <td className="px-3 py-2.5">
+                  <span className={order.type === "BUY" ? "text-terminal-green" : "text-terminal-red"}>
+                    {order.type}
+                  </span>
+                </td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatQty(order.quantity)}</td>
+                <td className="px-3 py-2.5 text-right text-terminal-text">{formatVnd(order.price)}</td>
+                <td className="px-3 py-2.5">
+                  <OrderStatusBadge status={order.status} />
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  {order.status === "PENDING" ? (
+                    <TerminalButton
+                      onClick={() => handleCancel(order.id)}
+                      disabled={cancelingOrderId === order.id}
+                      tone="danger"
+                      size="xs"
+                    >
+                      <XCircle className="h-3 w-3" />
+                      {cancelingOrderId === order.id ? "Canceling" : "Cancel"}
+                    </TerminalButton>
+                  ) : (
+                    <span className="text-terminal-muted">--</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </TerminalTable>
+        )}
+      </section>
     </div>
+  );
+}
+
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  return (
+    <span
+      className={clsx(
+        "inline-flex rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+        status === "PENDING" && "border-terminal-amber/30 bg-terminal-amber/5 text-terminal-amber",
+        status === "FILLED" && "border-terminal-green/30 bg-terminal-green/5 text-terminal-green",
+        status === "CANCELLED" && "border-terminal-border bg-terminal-bg text-terminal-muted"
+      )}
+    >
+      {status}
+    </span>
   );
 }
 

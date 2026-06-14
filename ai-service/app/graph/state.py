@@ -2,20 +2,7 @@ from typing import Annotated, Any, Optional, TypedDict
 import operator
 
 
-class ToolResult(TypedDict):
-    tool_name: str
-    tool_input: dict[str, Any]
-    tool_output: Any
-    success: bool
-    error: Optional[str]
-
-
-class PortfolioContext(TypedDict):
-    user_id: str
-    holdings: list[dict[str, Any]]
-    total_value: float
-    unrealized_pnl: float
-    fetched_at: str
+ToolResultState = dict[str, Any]
 
 
 class AdvisorState(TypedDict):
@@ -28,8 +15,8 @@ class AdvisorState(TypedDict):
     requested_symbols: list[str]
     requires_portfolio: bool
     planned_tools: list[str]
-    tool_results: Annotated[list[ToolResult], operator.add]
-    portfolio_context: Optional[PortfolioContext]
+    tool_results: Annotated[list[ToolResultState], operator.add]
+    portfolio_context: Optional[dict[str, Any]]
     thoughts: Annotated[list[str], operator.add]
     streaming_tokens: Annotated[list[str], operator.add]
     risk_flags: list[str]

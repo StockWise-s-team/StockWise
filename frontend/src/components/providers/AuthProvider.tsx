@@ -52,8 +52,10 @@ function saveStoredUser(user: User | null) {
   if (typeof window === "undefined") return;
   if (user) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    document.cookie = `user_role=${user.role}; path=/; max-age=604800; SameSite=Lax`;
   } else {
     localStorage.removeItem(STORAGE_KEY);
+    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
 }
 

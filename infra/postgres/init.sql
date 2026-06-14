@@ -100,6 +100,29 @@ INSERT INTO news_sources (name, base_url, crawler_type) VALUES
     ('Vietstock', 'https://vietstock.vn', 'vietstock')
 ON CONFLICT DO NOTHING;
 
+-- Tracked symbols (admin-managed list)
+CREATE TABLE IF NOT EXISTS tracked_symbols (
+    symbol VARCHAR(10) PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- User's selected news sources (toggle visibility)
+CREATE TABLE IF NOT EXISTS user_news_sources (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    source_id UUID NOT NULL REFERENCES news_sources(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (user_id, source_id)
+);
+
+-- User's selected tracked symbols (toggle visibility)
+CREATE TABLE IF NOT EXISTS user_tracked_symbols (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL REFERENCES tracked_symbols(symbol) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (user_id, symbol)
+);
+
+
 -- Company wiki (living state — Karpathy pattern)
 CREATE TABLE IF NOT EXISTS company_wiki (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

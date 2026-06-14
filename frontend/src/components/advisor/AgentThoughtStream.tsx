@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Bot, CheckCircle2, Cpu } from "lucide-react";
 import type { SSEEvent } from "@/lib/types";
+import { Markdown } from "@/components/common/Markdown";
 
 interface AgentThoughtStreamProps {
   event: SSEEvent;
@@ -60,9 +61,13 @@ export function AgentThoughtStream({ event }: AgentThoughtStreamProps) {
           </span>
           <Bot className="h-3 w-3 text-terminal-muted" />
         </div>
-        <p className="whitespace-pre-wrap text-xs leading-relaxed text-terminal-text">
-          {event.content}
-        </p>
+        {event.type === "answer" ? (
+          <Markdown content={event.content} />
+        ) : (
+          <p className="whitespace-pre-wrap text-xs leading-relaxed text-terminal-text">
+            {event.content}
+          </p>
+        )}
       </div>
     </div>
   );

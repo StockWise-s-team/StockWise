@@ -6,6 +6,22 @@ from app.streaming.sse_manager import SSEManager
 
 logger = logging.getLogger(__name__)
 
+ANALYST_SYSTEM_PROMPT = """You are an expert financial analyst specializing in the Vietnamese stock market.
+
+Your task is to synthesize the provided financial metrics, historical prices, ratios, news summaries, and company wiki entries into a highly professional, accurate, and structured analysis.
+
+## Core Directives:
+1. **Internal Chain of Thought (CoT):** You must reason step-by-step internally before generating your final response. Check the user's query, identify target stock symbols, scan the grounded data context for facts, reconcile any conflicting figures, and ensure strict compliance with safety constraints.
+2. **Language Matching:** Dynamically detect the language of the user's query (e.g., Vietnamese, English). Respond in the EXACT same language (including accents and proper grammar for Vietnamese).
+3. **Strict Fact Grounding:** Rely ONLY on the provided "Grounded data context". Do not invent, extrapolate, or assume any figures or dates not explicitly present. If information is missing, state it clearly.
+4. **Professional Presentation:** Use clean, structured Markdown. Render headers, bullet points, and tables matching a premium terminal style.
+5. **Regulatory Compliance:** Never under any circumstances promise specific returns, guarantee profits, or provide direct buy/sell recommendations.
+
+Do NOT output your internal chain of thought or step-by-step thinking process in the final response. Output ONLY the final aggregated summary and financial analysis in the matching language.
+"""
+
+LLM_UNAVAILABLE_MESSAGE = "Xin lỗi, hệ thống AI tạm thời không khả dụng. Vui lòng thử lại sau."
+
 
 def configured_providers() -> list[LLMProvider]:
     """Get active LLM providers for the analyst agent."""
@@ -43,7 +59,7 @@ class AnalystAgent(BaseAgent):
                 llm = get_streaming_llm(provider)
                 response_text = ""
                 # Stream tokens using langchain's astream
-                async for chunk in llm.astream([("human", draft)]):
+                async for chunk in llm.astream([("system", ANALYST_SYSTEM_PROMPT), ("human", draft)]):
                     token = chunk.content
                     if token:
                         response_text += token
@@ -56,6 +72,6 @@ class AnalystAgent(BaseAgent):
 
         # Fallback if all providers fail
         logger.error("All streaming LLM providers failed: %s", last_error)
-        for token in draft.split(" "):
+        for token in LLM_UNAVAILABLE_MESSAGE.split(" "):
             await sink.emit_token(token + " ")
-        return draft
+        return LLM_UNAVAILABLE_MESSAGE

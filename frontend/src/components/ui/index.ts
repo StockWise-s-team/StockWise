@@ -5,6 +5,7 @@ export {
   TerminalButton,
   TerminalEmptyState,
   TerminalInput,
+  TerminalSelect,
   TerminalMetricCard,
   TerminalNotice,
   TerminalSectionHeader,
