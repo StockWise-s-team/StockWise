@@ -32,6 +32,11 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/refresh-token-cookie").permitAll()
                         .requestMatchers("/api/v1/health", "/api/v1/advisor/health", "/api/v1/advisor/chat/stream", "/pipeline/progress").permitAll()
                         .requestMatchers("/auth/logout", "/auth/profile", "/auth/password", "/auth/me").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/tracked-symbols").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/tracked-symbols/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/news-sources/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/scripts/seed").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/synthesis/trigger").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/health", "/actuator/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

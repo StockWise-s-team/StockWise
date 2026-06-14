@@ -1,6 +1,6 @@
 import pytest
 
-from app.graph.state import AdvisorState, ToolResult, PortfolioContext
+from app.graph.state import AdvisorState
 from app.graph.advisor_graph import create_advisor_graph
 from app.graph.graph_config import get_advisor_graph, get_graph_config
 
@@ -31,21 +31,23 @@ class TestAdvisorState:
         assert state["user_message"] == "test"
         assert state["intent"] == ""
 
-    def test_tool_result_structure(self):
-        """ToolResult has correct structure."""
-        result: ToolResult = {
+    def test_tool_result_state_uses_serialized_schema_shape(self):
+        """Tool results in graph state use serialized Pydantic ToolResult shape."""
+        result = {
             "tool_name": "wiki_reader",
-            "tool_input": {"symbol": "FPT"},
-            "tool_output": {"data": "test"},
             "success": True,
-            "error": None,
+            "data": {"summary": "test"},
+            "error_code": None,
+            "error_message": None,
+            "citations": [],
+            "freshness": {},
         }
         assert result["tool_name"] == "wiki_reader"
         assert result["success"] is True
 
-    def test_portfolio_context_structure(self):
-        """PortfolioContext has correct structure."""
-        ctx: PortfolioContext = {
+    def test_portfolio_context_is_plain_dict_when_present(self):
+        """Portfolio context is optional plain state data."""
+        ctx = {
             "user_id": "user-1",
             "holdings": [{"symbol": "FPT", "quantity": 100}],
             "total_value": 10000000.0,

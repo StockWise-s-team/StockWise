@@ -4,9 +4,11 @@ import com.stockwise.portfolio.application.port.in.GetPnLUseCase;
 import com.stockwise.portfolio.application.port.in.GetPortfolioUseCase;
 import com.stockwise.portfolio.application.service.order.OrderConstants;
 import com.stockwise.portfolio.domain.entity.Holding;
+import com.stockwise.portfolio.domain.entity.Order;
 import com.stockwise.portfolio.domain.entity.Portfolio;
 import com.stockwise.portfolio.domain.entity.Transaction;
 import com.stockwise.portfolio.domain.repository.HoldingRepository;
+import com.stockwise.portfolio.domain.repository.OrderRepository;
 import com.stockwise.portfolio.domain.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class PortfolioService implements GetPortfolioUseCase, GetPnLUseCase {
     private final PortfolioAccountService portfolioAccountService;
     private final HoldingRepository holdingRepository;
     private final TransactionRepository transactionRepository;
+    private final OrderRepository orderRepository;
 
     @Override
     @Transactional
@@ -44,6 +47,12 @@ public class PortfolioService implements GetPortfolioUseCase, GetPnLUseCase {
     @Transactional(readOnly = true)
     public List<Transaction> getTransactionHistory(UUID portfolioId) {
         return transactionRepository.findByPortfolioIdOrderByExecutedAtDesc(portfolioId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> getOrderHistory(UUID userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     @Override

@@ -1,12 +1,12 @@
 import logging
 import time
 from datetime import date, timedelta
-from typing import List
+from typing import List, Optional
 
 import psycopg2
 import psycopg2.extras
 import vnstock
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
 from fastapi.responses import JSONResponse
 
 from app.api.schemas import (
@@ -26,6 +26,9 @@ from app.api.schemas import (
     SynthesisRequest,
     SynthesisResponse,
     TrackedSymbolAdd,
+    UserNewsSourceResponse,
+    UserNewsSourcesUpdate,
+    UserTrackedSymbolsUpdate,
     progress_store,
 )
 from app.config import settings
@@ -62,70 +65,29 @@ def _get_conn():
 
 @router.get("/news-sources", response_model=List[NewsSourceResponse])
 def list_news_sources():
-    import json
-    from datetime import datetime
-    _log_path = "d:/StockWise/debug-07e1c9.log"
-    _log_id = f"log_{int(datetime.now().timestamp()*1000)}"
-    try:
-        with open(_log_path, "a") as _f:
-            _f.write(json.dumps({
-                "id": _log_id, "timestamp": int(datetime.now().timestamp()*1000),
-                "location": "routes.py:list_news_sources:entry",
-                "message": "GET /news-sources entry",
-                "runId": "hypothesis-test", "hypothesisId": "H1+H2+H3",
-                "data": {}
-            }) + "\n")
-    except: pass
     conn = _get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         cur.execute("SELECT id, name, base_url, crawler_type, is_active FROM news_sources ORDER BY name")
         rows = cur.fetchall()
-        sources = [NewsSourceResponse(
+        return [NewsSourceResponse(
             id=str(row["id"]), name=row["name"],
             base_url=row["base_url"], crawler_type=row["crawler_type"],
             is_active=row["is_active"]
         ) for row in rows]
-        _src_ids = [str(row["id"]) for row in rows]
-        _src_count = len(sources)
-        try:
-            with open(_log_path, "a") as _f:
-                _f.write(json.dumps({
-                    "id": f"{_log_id}_exit", "timestamp": int(datetime.now().timestamp()*1000),
-                    "location": "routes.py:list_news_sources:exit",
-                    "message": f"GET /news-sources returning {_src_count} sources (ALL)",
-                    "runId": "hypothesis-test", "hypothesisId": "H1+H2+H3",
-                    "data": {"source_count": _src_count, "source_ids": _src_ids}
-                }) + "\n")
-        except: pass
-        return sources
     finally:
         cur.close()
         conn.close()
 
 
 @router.patch("/news-sources/{source_id}", response_model=NewsSourceResponse)
-def toggle_source(source_id: str, body: NewsSourceToggle):
-    import json
-    from datetime import datetime
-    _log_path = "d:/StockWise/debug-07e1c9.log"
-    _log_id = f"log_{int(datetime.now().timestamp()*1000)}"
-    _entry_ts = int(datetime.now().timestamp()*1000)
-
-    def _w(loc, msg, hid, extra=None):
-        try:
-            d = {"id": f"{_log_id}_{loc}", "timestamp": int(datetime.now().timestamp()*1000),
-                 "location": f"routes.py:toggle_source:{loc}", "message": msg,
-                 "runId": "hypothesis-test", "hypothesisId": hid}
-            if extra:
-                d["data"] = extra
-            with open(_log_path, "a") as _f:
-                _f.write(json.dumps(d) + "\n")
-        except: pass
-
-    _w("entry", "PATCH toggle_source entry", "H1+H2+H3",
-       {"source_id": source_id, "body_isActive": body.isActive})
-
+def toggle_source(
+    source_id: str,
+    body: NewsSourceToggle,
+    x_role: Optional[str] = Header(None, alias="X-Role")
+):
+    if x_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
     conn = _get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
@@ -134,16 +96,10 @@ def toggle_source(source_id: str, body: NewsSourceToggle):
             (body.isActive, source_id),
         )
         row = cur.fetchone()
-        _w("after_update", "After UPDATE, row fetched", "H1+H2",
-           {"row": dict(row) if row else None, "source_id": source_id, "is_active": body.isActive})
         conn.commit()
         if not row:
-            _w("not_found", "Source not found in DB", "H1",
-               {"source_id": source_id})
             raise HTTPException(status_code=404, detail="Source not found")
         SourceRepository().invalidate()
-        _w("before_response", "Returning NewsSourceResponse", "H2",
-           {"id": str(row["id"]), "name": row["name"], "is_active": row["is_active"]})
         return NewsSourceResponse(
             id=str(row["id"]),
             name=row["name"],
@@ -155,13 +111,10 @@ def toggle_source(source_id: str, body: NewsSourceToggle):
         raise
     except Exception as e:
         conn.rollback()
-        _w("exception", f"PATCH exception: {type(e).__name__}: {e}", "H1+H2+H3",
-           {"source_id": source_id, "isActive": body.isActive})
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
-        _w("finally", "toggle_source cleanup done", "H1+H2+H3", {})
 
 
 # ── Tracked Symbols ────────────────────────────────────────────────────────────
@@ -180,7 +133,13 @@ def list_tracked_symbols():
 
 
 @router.post("/tracked-symbols", response_model=dict, status_code=201)
-def add_tracked_symbol(body: TrackedSymbolAdd, background_tasks: BackgroundTasks):
+def add_tracked_symbol(
+    body: TrackedSymbolAdd,
+    background_tasks: BackgroundTasks,
+    x_role: Optional[str] = Header(None, alias="X-Role")
+):
+    if x_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
     conn = _get_conn()
     cur = conn.cursor()
     try:
@@ -253,7 +212,12 @@ def add_tracked_symbol(body: TrackedSymbolAdd, background_tasks: BackgroundTasks
 
 
 @router.delete("/tracked-symbols/{symbol}", status_code=204)
-def remove_tracked_symbol(symbol: str):
+def remove_tracked_symbol(
+    symbol: str,
+    x_role: Optional[str] = Header(None, alias="X-Role")
+):
+    if x_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
     conn = _get_conn()
     cur = conn.cursor()
     try:
@@ -334,7 +298,13 @@ def get_wiki(symbol: str):
 # ── Seed ───────────────────────────────────────────────────────────────────────
 
 @router.post("/scripts/seed", response_model=SeedResponse)
-def trigger_seed(body: SeedRequest, background_tasks: BackgroundTasks):
+def trigger_seed(
+    body: SeedRequest,
+    background_tasks: BackgroundTasks,
+    x_role: Optional[str] = Header(None, alias="X-Role")
+):
+    if x_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
     from app.stream_a.repositories.price_repository import PriceRepository
     if body.symbols is None:
         price_repo = PriceRepository()
@@ -536,7 +506,13 @@ def _seed_sync(body: SeedRequest, progress) -> None:
 # ── Synthesis ─────────────────────────────────────────────────────────────────
 
 @router.post("/synthesis/trigger", response_model=SynthesisResponse)
-def trigger_synthesis(body: SynthesisRequest, background_tasks: BackgroundTasks):
+def trigger_synthesis(
+    body: SynthesisRequest,
+    background_tasks: BackgroundTasks,
+    x_role: Optional[str] = Header(None, alias="X-Role")
+):
+    if x_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin role required")
     from app.stream_a.repositories.price_repository import PriceRepository
     if body.symbols is None:
         price_repo = PriceRepository()
@@ -790,3 +766,118 @@ def get_pipeline_run(run_id: str):
     if not run:
         raise HTTPException(status_code=404, detail="Pipeline run not found")
     return run
+
+
+# ── User Selections ─────────────────────────────────────────────────────────────
+
+@router.get("/user/tracked-symbols", response_model=List[str])
+def get_user_tracked_symbols(
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-Id header missing")
+    conn = _get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT symbol FROM user_tracked_symbols WHERE user_id = %s ORDER BY symbol",
+            (x_user_id,),
+        )
+        rows = cur.fetchall()
+        return [r[0] for r in rows]
+    finally:
+        cur.close()
+        conn.close()
+
+
+@router.put("/user/tracked-symbols", status_code=204)
+def update_user_tracked_symbols(
+    body: UserTrackedSymbolsUpdate,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-Id header missing")
+    conn = _get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM user_tracked_symbols WHERE user_id = %s", (x_user_id,))
+        if body.symbols:
+            cur.execute("SELECT symbol FROM tracked_symbols")
+            valid_symbols = {r[0] for r in cur.fetchall()}
+            insert_symbols = [sym for sym in body.symbols if sym in valid_symbols]
+            if insert_symbols:
+                psycopg2.extras.execute_values(
+                    cur,
+                    "INSERT INTO user_tracked_symbols (user_id, symbol) VALUES %s ON CONFLICT DO NOTHING",
+                    [(x_user_id, sym) for sym in insert_symbols],
+                )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+
+@router.get("/user/news-sources", response_model=List[UserNewsSourceResponse])
+def get_user_news_sources(
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-Id header missing")
+    conn = _get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute(
+            """
+            SELECT ns.id, ns.name, ns.base_url, ns.crawler_type, ns.is_active,
+                   (uns.user_id IS NOT NULL) as is_selected
+            FROM news_sources ns
+            LEFT JOIN user_news_sources uns ON ns.id = uns.source_id AND uns.user_id = %s
+            ORDER BY ns.name
+            """,
+            (x_user_id,),
+        )
+        rows = cur.fetchall()
+        return [UserNewsSourceResponse(
+            id=str(row["id"]),
+            name=row["name"],
+            base_url=row["base_url"],
+            crawler_type=row["crawler_type"],
+            is_active=row["is_active"],
+            is_selected=row["is_selected"]
+        ) for row in rows]
+    finally:
+        cur.close()
+        conn.close()
+
+
+@router.put("/user/news-sources", status_code=204)
+def update_user_news_sources(
+    body: UserNewsSourcesUpdate,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-Id header missing")
+    conn = _get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM user_news_sources WHERE user_id = %s", (x_user_id,))
+        if body.source_ids:
+            cur.execute("SELECT id FROM news_sources")
+            valid_ids = {str(r[0]) for r in cur.fetchall()}
+            insert_ids = [sid for sid in body.source_ids if sid in valid_ids]
+            if insert_ids:
+                psycopg2.extras.execute_values(
+                    cur,
+                    "INSERT INTO user_news_sources (user_id, source_id) VALUES %s ON CONFLICT DO NOTHING",
+                    [(x_user_id, sid) for sid in insert_ids],
+                )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()

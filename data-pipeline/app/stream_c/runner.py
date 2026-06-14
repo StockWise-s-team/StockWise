@@ -49,7 +49,10 @@ _RATE_LIMIT_HINTS = ("rate limit", "gioi han api", "request limit", "too many", 
 
 
 def _is_market_open() -> bool:
-    """True nếu đang trong giờ giao dịch VN."""
+    """True nếu đang trong giờ giao dịch VN hoặc nếu tắt kiểm tra giờ giao dịch."""
+    from app.config import settings
+    if not settings.TRADING_HOURS_ENABLED:
+        return True
     now_utc = datetime.now(timezone.utc).time()
     return MARKET_OPEN_UTC <= now_utc <= MARKET_CLOSE_UTC
 

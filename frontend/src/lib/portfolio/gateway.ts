@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import type {
   OrderResult,
   PlaceOrderRequest,
+  PortfolioOrder,
   PortfolioSnapshot,
   LatestPrice,
 } from "@/lib/types";
@@ -14,6 +15,10 @@ export class HttpPortfolioGateway implements PortfolioGateway {
 
   getRealizedPnl(): Promise<number> {
     return api.get<{ totalPnl: number }>("/portfolio/pnl").then((r) => r.data.totalPnl);
+  }
+
+  getOrders(): Promise<PortfolioOrder[]> {
+    return api.get<PortfolioOrder[]>("/portfolio/orders").then((r) => r.data);
   }
 
   placeOrder(request: PlaceOrderRequest): Promise<OrderResult> {

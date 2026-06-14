@@ -9,6 +9,7 @@ from app.graph.nodes import (
     wiki_context_node,
     news_context_node,
     portfolio_context_node,
+    tracked_symbols_node,
     calculation_node,
     chart_data_node,
     analyst_node,
@@ -42,6 +43,7 @@ def create_advisor_graph(checkpointer: Any = None) -> Any:
     workflow.add_node("wiki_context", wiki_context_node)
     workflow.add_node("news_context", news_context_node)
     workflow.add_node("portfolio_reader", portfolio_context_node)
+    workflow.add_node("tracked_symbols_reader", tracked_symbols_node)
     workflow.add_node("calculation", calculation_node)
     workflow.add_node("chart_data", chart_data_node)
     workflow.add_node("analyst", analyst_node)
@@ -67,6 +69,7 @@ def create_advisor_graph(checkpointer: Any = None) -> Any:
     workflow.add_edge("context_planner", "wiki_context")
     workflow.add_edge("context_planner", "news_context")
     workflow.add_edge("context_planner", "portfolio_reader")
+    workflow.add_edge("context_planner", "tracked_symbols_reader")
     workflow.add_edge("context_planner", "calculation")
     workflow.add_edge("context_planner", "chart_data")
 
@@ -75,6 +78,7 @@ def create_advisor_graph(checkpointer: Any = None) -> Any:
     workflow.add_edge("wiki_context", "analyst")
     workflow.add_edge("news_context", "analyst")
     workflow.add_edge("portfolio_reader", "analyst")
+    workflow.add_edge("tracked_symbols_reader", "analyst")
     workflow.add_edge("calculation", "analyst")
     workflow.add_edge("chart_data", "analyst")
 

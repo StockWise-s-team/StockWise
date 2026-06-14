@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  Shield,
   User,
   X,
 } from "lucide-react";
@@ -23,7 +24,8 @@ const navItems = [
   { href: "/dashboard/sandbox", label: "Sandbox", code: "03", icon: FlaskConical },
   { href: "/dashboard/advisor", label: "AI Advisor", code: "04", icon: Bot },
   { href: "/dashboard/profile", label: "Profile", code: "05", icon: User },
-  { href: "/dashboard/admin", label: "Admin", code: "06", icon: Settings },
+  { href: "/dashboard/settings", label: "Settings", code: "06", icon: Settings },
+  { href: "/dashboard/admin", label: "Admin", code: "07", icon: Shield },
 ];
 
 export default function DashboardLayout({
@@ -34,6 +36,13 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { logout, user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === "/dashboard/admin") {
+      return user?.role === "ROLE_ADMIN";
+    }
+    return true;
+  });
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
@@ -112,7 +121,7 @@ export default function DashboardLayout({
             Navigation
           </p>
           <div className="space-y-1">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link

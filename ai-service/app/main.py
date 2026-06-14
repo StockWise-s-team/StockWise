@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.db.database import engine, Base
 from app.api.v1.router import api_router
+from app.core.error_handler import register_error_handlers
 
 
 @asynccontextmanager
@@ -19,3 +20,4 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+register_error_handlers(app)

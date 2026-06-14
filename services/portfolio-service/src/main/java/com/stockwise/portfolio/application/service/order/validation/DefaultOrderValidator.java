@@ -19,10 +19,15 @@ public class DefaultOrderValidator implements OrderValidator {
 
     private final List<OrderValidationRule> validationRules;
     private final SymbolPriceCache symbolPriceCache;
+    private final com.stockwise.portfolio.domain.repository.OrderRepository orderRepository;
 
-    public DefaultOrderValidator(List<OrderValidationRule> validationRules, SymbolPriceCache symbolPriceCache) {
+    public DefaultOrderValidator(
+            List<OrderValidationRule> validationRules,
+            SymbolPriceCache symbolPriceCache,
+            com.stockwise.portfolio.domain.repository.OrderRepository orderRepository) {
         this.validationRules = validationRules;
         this.symbolPriceCache = symbolPriceCache;
+        this.orderRepository = orderRepository;
     }
 
     /**
@@ -42,9 +47,15 @@ public class DefaultOrderValidator implements OrderValidator {
 
         BigDecimal effectivePrice;
         if (price == null) {
-            effectivePrice = symbolPriceCache.get(validSymbol)
+            BigDecimal cachedPrice = symbolPriceCache.get(validSymbol)
                     .map(SymbolPriceCache.CachedPrice::price)
-                    .orElse(OrderConstants.DEFAULT_ORDER_PRICE);
+                    .orElse(null);
+            if (cachedPrice != null) {
+                effectivePrice = cachedPrice;
+            } else {
+                BigDecimal dbPrice = orderRepository.findLatestPriceBySymbol(validSymbol);
+                effectivePrice = dbPrice != null ? dbPrice : OrderConstants.DEFAULT_ORDER_PRICE;
+            }
         } else {
             effectivePrice = price;
         }

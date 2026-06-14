@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASS: str = "guest"
 
+    TRADING_HOURS_ENABLED: bool = True
+
     APP_QDRANT_HOST: str = "qdrant"
     APP_QDRANT_PORT: int = 16333
 

@@ -1,9 +1,11 @@
 package com.stockwise.portfolio.application.service;
 
 import com.stockwise.portfolio.application.service.order.OrderConstants;
+import com.stockwise.portfolio.domain.entity.Order;
 import com.stockwise.portfolio.domain.entity.Portfolio;
 import com.stockwise.portfolio.domain.entity.Transaction;
 import com.stockwise.portfolio.domain.repository.HoldingRepository;
+import com.stockwise.portfolio.domain.repository.OrderRepository;
 import com.stockwise.portfolio.domain.repository.PortfolioRepository;
 import com.stockwise.portfolio.domain.repository.TransactionRepository;
 import org.junit.jupiter.api.Test;
@@ -23,11 +25,13 @@ class PortfolioServiceTest {
     private final PortfolioRepository portfolioRepository = mock(PortfolioRepository.class);
     private final HoldingRepository holdingRepository = mock(HoldingRepository.class);
     private final TransactionRepository transactionRepository = mock(TransactionRepository.class);
+    private final OrderRepository orderRepository = mock(OrderRepository.class);
     private final PortfolioAccountService portfolioAccountService = new PortfolioAccountService(portfolioRepository);
     private final PortfolioService portfolioService = new PortfolioService(
             portfolioAccountService,
             holdingRepository,
-            transactionRepository);
+            transactionRepository,
+            orderRepository);
 
     @Test
     void getTotalPnlReturnsZeroAfterBuyOnly() {
@@ -55,6 +59,16 @@ class PortfolioServiceTest {
         assertThat(portfolioService.getTotalPnl(userId)).isEqualByComparingTo("110.00");
     }
 
+    @Test
+    void getOrderHistoryReturnsUserOrdersNewestFirstFromRepository() {
+        UUID userId = UUID.randomUUID();
+        Order newest = order(userId, "FILLED", 2);
+        Order oldest = order(userId, "PENDING", 1);
+        when(orderRepository.findByUserIdOrderByCreatedAtDesc(userId)).thenReturn(List.of(newest, oldest));
+
+        assertThat(portfolioService.getOrderHistory(userId)).containsExactly(newest, oldest);
+    }
+
     private Portfolio portfolio(UUID userId) {
         Portfolio portfolio = new Portfolio();
         portfolio.setId(UUID.randomUUID());
@@ -73,5 +87,18 @@ class PortfolioServiceTest {
         transaction.setQuantity(quantity);
         transaction.setExecutedAt(LocalDateTime.of(2026, 6, day, 10, 0));
         return transaction;
+    }
+
+    private Order order(UUID userId, String status, int day) {
+        Order order = new Order();
+        order.setId(UUID.randomUUID());
+        order.setUserId(userId);
+        order.setSymbol("FPT");
+        order.setType(OrderConstants.BUY);
+        order.setPrice(new BigDecimal("100.00"));
+        order.setQuantity(10);
+        order.setStatus(status);
+        order.setCreatedAt(LocalDateTime.of(2026, 6, day, 10, 0));
+        return order;
     }
 }

@@ -59,6 +59,11 @@ services:
       - "16334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/6333"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - stockwise-net
 
@@ -149,7 +154,7 @@ services:
       redis:
         condition: service_healthy
       qdrant:
-        condition: service_started
+        condition: service_healthy
     networks:
       - stockwise-net
 
@@ -165,7 +170,7 @@ services:
       rabbitmq:
         condition: service_healthy
       qdrant:
-        condition: service_started
+        condition: service_healthy
     networks:
       - stockwise-net
 
