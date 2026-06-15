@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { IChartApi, ISeriesApi, LineData, Time, UTCTimestamp } from "lightweight-charts";
@@ -153,7 +153,7 @@ export function MultiSymbolChart({
         borderColor: "#2a2a2a",
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 20,
+        rightOffset: 80,
       },
       rightPriceScale: {
         borderColor: "#2a2a2a",

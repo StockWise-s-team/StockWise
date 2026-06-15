@@ -136,7 +136,7 @@ function SandboxContent() {
   };
 
   return (
-    <div className="min-h-full max-w-6xl space-y-5 font-mono text-terminal-text">
+    <div className="min-h-full w-full space-y-5 font-mono text-terminal-text">
       <header className="border-b border-terminal-border pb-4">
         <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-terminal-muted">
           <ShoppingCart className="h-3.5 w-3.5 text-terminal-accent" />
@@ -152,7 +152,7 @@ function SandboxContent() {
 
       <div className="grid gap-5 xl:grid-cols-12">
         {/* Left column — order ticket + account */}
-        <section className="xl:col-span-8 space-y-5">
+        <section className="xl:col-span-3 space-y-5">
           <TerminalSectionHeader
             icon={Banknote}
             title="Account"
@@ -281,7 +281,7 @@ function SandboxContent() {
         </section>
 
         {/* Right column — chart stays in view while placing orders */}
-        <aside className="xl:col-span-4">
+        <aside className="xl:col-span-7">
           <div className="xl:sticky xl:top-4">
             <MultiSymbolChart
               symbols={trackedSymbols}
