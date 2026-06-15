@@ -2,7 +2,7 @@ package com.stockwise.portfolio.messaging;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stockwise.portfolio.application.service.order.OrderMatchProcessor;
+import com.stockwise.portfolio.application.service.order.match.OrderMatchProcessor;
 import com.stockwise.portfolio.application.service.order.validation.SymbolPriceCache;
 import com.stockwise.portfolio.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
