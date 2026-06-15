@@ -281,7 +281,7 @@ function SandboxContent() {
         </section>
 
         {/* Right column — chart stays in view while placing orders */}
-        <aside className="xl:col-span-7">
+        <aside className="xl:col-span-9">
           <div className="xl:sticky xl:top-4">
             <MultiSymbolChart
               symbols={trackedSymbols}
