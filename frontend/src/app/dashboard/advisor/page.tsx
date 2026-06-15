@@ -373,11 +373,10 @@ export default function AdvisorPage() {
                 sessions.map((session) => (
                   <div
                     key={session.id}
-                    className={`group flex w-full items-start gap-2 rounded border p-1.5 transition-colors ${
-                      activeSessionId === session.id
+                    className={`group flex w-full items-start gap-2 rounded border p-1.5 transition-colors ${activeSessionId === session.id
                         ? "border-terminal-accent/50 bg-terminal-accent/10"
                         : "border-terminal-border bg-terminal-surface hover:border-terminal-accent/40 hover:bg-terminal-accent/5"
-                    }`}
+                      }`}
                   >
                     <button
                       type="button"
@@ -535,17 +534,17 @@ export default function AdvisorPage() {
                       >
                         <div className="flex items-center gap-2">
                           <Cpu className={`h-3.5 w-3.5 text-terminal-amber ${isStreaming ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }} />
-                          <span>QuÃ¡ trÃ¬nh phÃ¢n tÃ­ch há»‡ thá»‘ng ({thoughts.length} bÆ°á»›c)</span>
+                          <span>Quá trình phân tích hệ thống ({thoughts.length} bước)</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {showThoughts ? (
                             <>
-                              <span>Thu gá»n</span>
+                              <span>Thu gọn</span>
                               <ChevronUp className="h-3.5 w-3.5" />
                             </>
                           ) : (
                             <>
-                              <span>Chi tiáº¿t</span>
+                              <span>Chi tiết</span>
                               <ChevronDown className="h-3.5 w-3.5" />
                             </>
                           )}
@@ -679,9 +678,8 @@ function StatusBadge({ status }: { status: string }) {
       className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[9px] font-medium uppercase tracking-widest ${classes}`}
     >
       <span
-        className={`h-1.5 w-1.5 rounded-full ${
-          status === "processing" ? "animate-pulse bg-terminal-amber" : "bg-current"
-        }`}
+        className={`h-1.5 w-1.5 rounded-full ${status === "processing" ? "animate-pulse bg-terminal-amber" : "bg-current"
+          }`}
       />
       {status}
     </span>
