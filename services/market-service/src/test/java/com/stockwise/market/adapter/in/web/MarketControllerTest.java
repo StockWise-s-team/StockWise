@@ -7,6 +7,7 @@ import com.stockwise.market.exception.InvalidSymbolException;
 import com.stockwise.market.exception.SymbolNotFoundException;
 import com.stockwise.market.security.JwtAuthenticationFilter;
 import com.stockwise.market.security.JwtTokenProvider;
+import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,6 +47,9 @@ class MarketControllerTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private com.stockwise.market.messaging.MarketDataConsumer marketDataConsumer;
 
     @Test
     @DisplayName("should return 404 with error response when symbol not found")
@@ -79,5 +88,46 @@ class MarketControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("INVALID_DATE_RANGE"));
+    }
+
+    @Test
+    @DisplayName("should return cached prices for batch endpoint")
+    void returnsCachedBatchPrices() throws Exception {
+        LatestPriceResponse fpt = new LatestPriceResponse(
+                "FPT", new BigDecimal("120000"), new BigDecimal("118000"),
+                new BigDecimal("121000"), new BigDecimal("118000"),
+                new BigDecimal("120000"), 1500000L,
+                new BigDecimal("2000"), new BigDecimal("1.69"),
+                LocalDate.of(2026, 6, 14), java.time.Instant.now()
+        );
+        when(marketDataConsumer.getCachedPrices(List.of("FPT"))).thenReturn(Map.of("FPT", fpt));
+
+        mockMvc.perform(get("/market/price/batch")
+                        .param("symbols", "FPT")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.FPT.symbol").value("FPT"))
+                .andExpect(jsonPath("$.FPT.price").value(120000));
+    }
+
+    @Test
+    @DisplayName("should fall back to use case when cache miss in batch")
+    void fallsBackToUseCaseInBatch() throws Exception {
+        LatestPriceResponse shb = new LatestPriceResponse(
+                "SHB", new BigDecimal("14000"), new BigDecimal("13900"),
+                new BigDecimal("14100"), new BigDecimal("13800"),
+                new BigDecimal("14000"), 2000000L,
+                new BigDecimal("100"), new BigDecimal("0.72"),
+                LocalDate.of(2026, 6, 14), java.time.Instant.now()
+        );
+        when(marketDataConsumer.getCachedPrices(List.of("SHB"))).thenReturn(Map.of());
+        when(getStockPriceUseCase.getLatestPrice("SHB")).thenReturn(shb);
+
+        mockMvc.perform(get("/market/price/batch")
+                        .param("symbols", "SHB")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.SHB.symbol").value("SHB"))
+                .andExpect(jsonPath("$.SHB.close").value(14000));
     }
 }

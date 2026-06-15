@@ -14,9 +14,11 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { clsx } from "clsx";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { AuthProvider, useAuth } from "@/components/providers/AuthProvider";
+import { MarketDataProvider, useMarketData } from "@/components/providers/MarketDataProvider";
+import { trackedSymbolsApi } from "@/lib/api";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", code: "01", icon: LayoutDashboard },
@@ -176,8 +178,50 @@ export default function DashboardLayout({
       </aside>
 
       <main className="min-h-screen md:pl-64">
-        <div className="min-h-screen p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="min-h-screen p-4 sm:p-6 lg:p-8">
+          <DashboardMarketDataBridge>{children}</DashboardMarketDataBridge>
+        </div>
       </main>
     </div>
   );
+}
+
+/**
+ * Wraps the dashboard children with a MarketDataProvider that
+ * auto-subscribes to the user's tracked symbols. The wrapper itself
+ * fetches the symbol list and re-fetches when the tab regains focus
+ * (so admin additions in another tab show up without a hard reload).
+ */
+function DashboardMarketDataBridge({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const [symbols, setSymbols] = useState<string[]>([]);
+  const lastFetchRef = useRef(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const data = await trackedSymbolsApi.list();
+        if (cancelled) return;
+        setSymbols(data);
+        lastFetchRef.current = Date.now();
+      } catch {
+        // ignore
+      }
+    }
+    void refresh();
+    const interval = setInterval(refresh, 15_000);
+    const onFocus = () => {
+      if (Date.now() - lastFetchRef.current > 1_500) void refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [isAuthenticated]);
+
+  return <MarketDataProvider symbols={symbols}>{children}</MarketDataProvider>;
 }

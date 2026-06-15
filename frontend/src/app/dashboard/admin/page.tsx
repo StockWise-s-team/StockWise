@@ -548,7 +548,6 @@ function PipelineActions() {
   const [state, setState] = useState<{ queuedSymbols: string[] }>({ queuedSymbols: [] });
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [sseActive, setSseActive] = useState(false);
   const [allSymbols, setAllSymbols] = useState<string[]>([]);
 
   // Load tracked symbols for autocomplete
@@ -622,11 +621,9 @@ function PipelineActions() {
 
   // SSE for live progress
   useEffect(() => {
-    if (sseActive) return;
-    setSseActive(true);
-    const es = createProgressSSE(handleProgress, () => setSseActive(false));
-    return () => { es.close(); setSseActive(false); };
-  }, []);
+    const es = createProgressSSE(handleProgress);
+    return () => es.close();
+  }, [handleProgress]);
 
   const runPipeline = async () => {
     if (state.queuedSymbols.length === 0) return;
@@ -814,7 +811,7 @@ export default function AdminPage() {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { setMounted(true); loadTrackedSymbols(); }, []);
+  useEffect(() => { setMounted(true); loadTrackedSymbols(); }, [loadTrackedSymbols]);
 
   if (!mounted) return null;
 

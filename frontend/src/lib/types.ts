@@ -53,7 +53,7 @@ export interface LatestPrice {
   change: number;
   changePercent: number;
   tradeDate: string;
-  updatedAt: string;
+  timestamp: string;
 }
 
 export interface OhlcPoint {
@@ -352,3 +352,7 @@ export interface PipelineStats {
   }>;
   summary: PipelineStatsSummary[];
 }
+
+// ─── Chart timeframes & multi-symbol chart types ─────────────────────────────
+
+export type Timeframe = "1m" | "5m" | "1d" | "1M";

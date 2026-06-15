@@ -135,6 +135,13 @@ export const marketApi = {
   getLatestPrice: (symbol: string) =>
     api.get<LatestPrice>(`/market/price/${symbol}`).then((r) => r.data),
 
+  getLatestPriceBatch: (symbols: string[]) =>
+    api
+      .get<Record<string, LatestPrice>>(`/market/price/batch`, {
+        params: { symbols: symbols.join(",") },
+      })
+      .then((r) => r.data),
+
   getOhlc: (symbol: string, params?: { startDate?: string; endDate?: string }) =>
     api
       .get<OhlcSeries>(`/market/ohlc/${symbol}`, { params })
@@ -142,6 +149,9 @@ export const marketApi = {
 
   getRatios: (symbol: string) =>
     api.get<FinancialRatioList>(`/market/ratio/${symbol}`).then((r) => r.data),
+
+  getIntradayPrices: (symbol: string) =>
+    api.get<{ symbol: string; price: number; timestamp: string }[]>(`/market/prices/intraday/${symbol}`).then((r) => r.data),
 };
 
 export const newsSourcesApi = {

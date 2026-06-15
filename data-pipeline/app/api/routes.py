@@ -152,6 +152,31 @@ def add_tracked_symbol(
         cur.close()
         conn.close()
 
+    # ── Auto-add to every existing user's watch list so it shows up on /dashboard ──
+    try:
+        conn2 = _get_conn()
+        cur2 = conn2.cursor()
+        cur2.execute("SELECT id FROM users")
+        user_ids = [row[0] for row in cur2.fetchall()]
+        if user_ids:
+            psycopg2.extras.execute_values(
+                cur2,
+                "INSERT INTO user_tracked_symbols (user_id, symbol) VALUES %s ON CONFLICT DO NOTHING",
+                [(uid, body.symbol) for uid in user_ids],
+            )
+            conn2.commit()
+            logger.info(
+                "[API/tracked-symbols] Auto-subscribed %d users to %s",
+                len(user_ids), body.symbol,
+            )
+        cur2.close()
+        conn2.close()
+    except Exception as e:
+        logger.warning(
+            "[API/tracked-symbols] Could not auto-subscribe users to %s: %s",
+            body.symbol, e,
+        )
+
     async def _run():
         from app.synthesis.synthesis_agent import SynthesisAgent
         from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
@@ -223,6 +248,11 @@ def remove_tracked_symbol(
     try:
         cur.execute(
             "DELETE FROM tracked_symbols WHERE symbol = %s", (symbol,)
+        )
+        # Also drop it from every user's watch list so the dashboard stops
+        # showing the row immediately rather than waiting for them to refresh.
+        cur.execute(
+            "DELETE FROM user_tracked_symbols WHERE symbol = %s", (symbol,)
         )
         conn.commit()
     finally:

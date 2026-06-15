@@ -14,6 +14,7 @@ import com.stockwise.user.dto.UserDto;
 import com.stockwise.user.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenManagementService tokenManagementService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -46,6 +48,13 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
         user.setCreatedAt(LocalDateTime.now());
 
         userPersistencePort.save(user);
+
+        try {
+            jdbcTemplate.update("INSERT INTO user_tracked_symbols (user_id, symbol) SELECT ?::uuid, symbol FROM tracked_symbols ON CONFLICT DO NOTHING", user.getId().toString());
+            jdbcTemplate.update("INSERT INTO user_news_sources (user_id, source_id) SELECT ?::uuid, id FROM news_sources ON CONFLICT DO NOTHING", user.getId().toString());
+        } catch (Exception e) {
+            log.warn("Could not auto-subscribe new user {} to default symbols/news", user.getEmail(), e);
+        }
 
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId().toString(), user.getEmail(), user.getRole());

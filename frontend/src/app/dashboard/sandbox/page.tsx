@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Banknote, History, Send, ShoppingCart, TrendingDown, TrendingUp, XCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -11,6 +12,7 @@ import { extractErrorMessage } from "@/lib/apiError";
 import { formatVnd, formatQty, formatDateTime } from "@/lib/format";
 import { trackedSymbolsApi } from "@/lib/api";
 import type { OrderResult, OrderSide, OrderStatus, PortfolioOrder } from "@/lib/types";
+import { MultiSymbolChart } from "@/components/charts/MultiSymbolChart";
 import {
   TerminalButton,
   TerminalEmptyState,
@@ -22,10 +24,13 @@ import {
   TerminalSkeletonRows,
   TerminalTable,
 } from "@/components/ui";
+import { Suspense } from "react";
 
-export default function SandboxPage() {
+function SandboxContent() {
   const { user } = useAuth();
   const { data, reload } = usePortfolio(user?.id);
+  const searchParams = useSearchParams();
+  const symbolFromQuery = searchParams.get("symbol") || "";
 
   const [trackedSymbols, setTrackedSymbols] = useState<string[]>([]);
   const [symbol, setSymbol] = useState("");
@@ -34,12 +39,14 @@ export default function SandboxPage() {
     trackedSymbolsApi.list()
       .then((symbols) => {
         setTrackedSymbols(symbols);
-        if (symbols.length > 0) {
+        if (symbolFromQuery && symbols.includes(symbolFromQuery)) {
+          setSymbol(symbolFromQuery);
+        } else if (symbols.length > 0) {
           setSymbol(symbols[0]);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [symbolFromQuery]);
   const [side, setSide] = useState<OrderSide>("BUY");
   const [quantity, setQuantity] = useState("100");
   const [price, setPrice] = useState("");
@@ -129,7 +136,7 @@ export default function SandboxPage() {
   };
 
   return (
-    <div className="min-h-full max-w-4xl space-y-5 font-mono text-terminal-text">
+    <div className="min-h-full max-w-6xl space-y-5 font-mono text-terminal-text">
       <header className="border-b border-terminal-border pb-4">
         <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-terminal-muted">
           <ShoppingCart className="h-3.5 w-3.5 text-terminal-accent" />
@@ -144,21 +151,27 @@ export default function SandboxPage() {
       </header>
 
       <div className="grid gap-5 xl:grid-cols-12">
-        <aside className="space-y-5 xl:col-span-4">
-          <section>
-            <TerminalSectionHeader
-              icon={Banknote}
-              title="Account"
-              subtitle="Available buying power"
-            />
+        {/* Left column — order ticket + account */}
+        <section className="xl:col-span-8 space-y-5">
+          <TerminalSectionHeader
+            icon={Banknote}
+            title="Account"
+            subtitle="Available buying power"
+          />
+          <div className="grid gap-3 sm:grid-cols-2">
             <TerminalMetricCard
               label="Virtual cash"
               value={formatVnd(data?.account.virtualCash)}
               tone="accent"
             />
-          </section>
+            <TerminalMetricCard
+              label="Active symbol"
+              value={symbol || "—"}
+              tone="default"
+            />
+          </div>
 
-          <section>
+          <div>
             <TerminalSectionHeader
               icon={side === "BUY" ? TrendingUp : TrendingDown}
               title="Order mode"
@@ -180,92 +193,102 @@ export default function SandboxPage() {
                 onClick={() => setSide("SELL")}
               />
             </div>
-          </section>
-        </aside>
+          </div>
 
-        <section className="xl:col-span-8">
-          <TerminalSectionHeader
-            icon={Send}
-            title="Order ticket"
-            subtitle={side === "BUY" ? "Create a buy order" : "Create a sell order"}
-          />
+          <div>
+            <TerminalSectionHeader
+              icon={Send}
+              title="Order ticket"
+              subtitle={side === "BUY" ? "Create a buy order" : "Create a sell order"}
+            />
 
-          <div className="rounded border border-terminal-border bg-terminal-surface p-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Symbol">
-                <TerminalSelect
-                  value={symbol}
-                  onChange={(event) => setSymbol(event.target.value)}
-                >
-                  {trackedSymbols.length === 0 && (
-                    <option value="">No tracked symbols</option>
-                  )}
-                  {trackedSymbols.map((sym) => (
-                    <option key={sym} value={sym} className="bg-terminal-surface text-terminal-text">
-                      {sym}
-                    </option>
-                  ))}
-                </TerminalSelect>
-                {side === "SELL" && symbol.trim() && (
-                  <p className="mt-1.5 text-[10px] text-terminal-muted">
-                    Held quantity: <span className="text-terminal-text">{formatQty(heldQty)}</span>
-                  </p>
-                )}
-              </Field>
-
-              <Field label="Quantity">
-                <TerminalInput
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                />
-              </Field>
-
-              <Field label="Limit price">
-                <TerminalInput
-                  type="number"
-                  min={0}
-                  value={price}
-                  onChange={(event) => setPrice(event.target.value)}
-                  placeholder="Leave empty for default market price"
-                />
-              </Field>
-
-              <div className="flex items-end">
-                <TerminalButton
-                  onClick={handleSubmit}
-                  disabled={submitting || !user}
-                  tone={side === "BUY" ? "success" : "danger"}
-                  size="md"
-                  className="w-full"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  {submitting ? "Submitting" : side === "BUY" ? "Place buy order" : "Place sell order"}
-                </TerminalButton>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              {error && <TerminalNotice tone="danger">{error}</TerminalNotice>}
-
-              {result && (
-                <TerminalNotice tone="success">
-                  <p className="font-semibold">{result.message}</p>
-                  <p className="mt-1 text-[10px] text-terminal-green/80">
-                    Status: {result.status} / Order ID: {result.order_id}
-                  </p>
-                  {result.status === "PENDING" && (
-                    <p className="mt-1 text-[10px] text-terminal-muted">
-                      The order will fill when matching market data is available.
+            <div className="rounded border border-terminal-border bg-terminal-surface p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Symbol">
+                  <TerminalSelect
+                    value={symbol}
+                    onChange={(event) => setSymbol(event.target.value)}
+                  >
+                    {trackedSymbols.length === 0 && (
+                      <option value="">No tracked symbols</option>
+                    )}
+                    {trackedSymbols.map((sym) => (
+                      <option key={sym} value={sym} className="bg-terminal-surface text-terminal-text">
+                        {sym}
+                      </option>
+                    ))}
+                  </TerminalSelect>
+                  {side === "SELL" && symbol.trim() && (
+                    <p className="mt-1.5 text-[10px] text-terminal-muted">
+                      Held quantity: <span className="text-terminal-text">{formatQty(heldQty)}</span>
                     </p>
                   )}
-                </TerminalNotice>
-              )}
+                </Field>
+
+                <Field label="Quantity">
+                  <TerminalInput
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                  />
+                </Field>
+
+                <Field label="Limit price">
+                  <TerminalInput
+                    type="number"
+                    min={0}
+                    value={price}
+                    onChange={(event) => setPrice(event.target.value)}
+                    placeholder="Leave empty for default market price"
+                  />
+                </Field>
+
+                <div className="flex items-end">
+                  <TerminalButton
+                    onClick={handleSubmit}
+                    disabled={submitting || !user}
+                    tone={side === "BUY" ? "success" : "danger"}
+                    size="md"
+                    className="w-full"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {submitting ? "Submitting" : side === "BUY" ? "Place buy order" : "Place sell order"}
+                  </TerminalButton>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {error && <TerminalNotice tone="danger">{error}</TerminalNotice>}
+
+                {result && (
+                  <TerminalNotice tone="success">
+                    <p className="font-semibold">{result.message}</p>
+                    <p className="mt-1 text-[10px] text-terminal-green/80">
+                      Status: {result.status} / Order ID: {result.order_id}
+                    </p>
+                    {result.status === "PENDING" && (
+                      <p className="mt-1 text-[10px] text-terminal-muted">
+                        The order will fill when matching market data is available.
+                      </p>
+                    )}
+                  </TerminalNotice>
+                )}
+              </div>
             </div>
           </div>
         </section>
+
+        {/* Right column — chart stays in view while placing orders */}
+        <aside className="xl:col-span-4">
+          <div className="xl:sticky xl:top-4">
+            <MultiSymbolChart
+              symbols={trackedSymbols}
+              defaultSymbol={symbolFromQuery || symbol}
+            />
+          </div>
+        </aside>
       </div>
 
       <section>
@@ -340,6 +363,14 @@ export default function SandboxPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function SandboxPage() {
+  return (
+    <Suspense fallback={<div className="p-4 font-mono text-sm text-terminal-muted">Loading sandbox...</div>}>
+      <SandboxContent />
+    </Suspense>
   );
 }
 
