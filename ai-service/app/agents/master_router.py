@@ -231,7 +231,7 @@ class MasterRouterAgent(BaseAgent):
                             "intent": intent,
                             "symbols": llm_symbols,
                             "requires_portfolio": requires_portfolio,
-                            "thoughts": [f"Router: ÄÃ£ phÃ¢n loáº¡i intent={intent} dÃ¹ng {provider.value}"],
+                            "thoughts": [f"Router: Đã phân loại intent={intent} dùng {provider.value}"],
                         }
                     except (json.JSONDecodeError, KeyError) as e:
                         last_error = e
@@ -256,5 +256,5 @@ class MasterRouterAgent(BaseAgent):
             "intent": decision.intent,
             "symbols": symbols,
             "requires_portfolio": decision.requires_portfolio,
-            "thoughts": ["Router: PhÃ¢n loáº¡i tháº¥t báº¡i, sá»­ dá»¥ng fallback deterministic."],
+            "thoughts": ["Router: Phân loại thất bại, sử dụng fallback deterministic."],
         }

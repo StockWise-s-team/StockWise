@@ -43,7 +43,7 @@ class NewsSearchTool(BaseTool):
         return ToolResult(
             tool_name=self.name,
             success=True,
-            data={"articles": articles},
+            data={"symbol": symbol, "articles": articles},
             citations=citations,
             freshness={"news_updated_at": str(newest) if newest else None},
         )
