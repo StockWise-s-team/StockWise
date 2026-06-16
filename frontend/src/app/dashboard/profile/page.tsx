@@ -23,6 +23,22 @@ import { clsx } from "clsx";
 import { useAuth } from "@/components/providers/AuthProvider";
 import type { User } from "@/lib/types";
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+
+function getPasswordStrength(pw: string): { label: string; color: string; pct: number } {
+  if (!pw) return { label: "", color: "", pct: 0 };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw)) score++;
+  if (score <= 2) return { label: "Weak", color: "bg-terminal-red", pct: 33 };
+  if (score <= 3) return { label: "Fair", color: "bg-terminal-amber", pct: 60 };
+  if (score === 4) return { label: "Good", color: "bg-terminal-accent", pct: 80 };
+  return { label: "Strong", color: "bg-terminal-green", pct: 100 };
+}
+
 type NoticeState = { type: "success" | "error"; text: string } | null;
 
 function SectionHeader({
@@ -255,8 +271,14 @@ export default function ProfilePage() {
       setPasswordError("Current password is required.");
       return;
     }
-    if (newPassword.length < 6) {
-      setPasswordError("New password must contain at least 6 characters.");
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      setPasswordError(
+        "New password must be at least 8 characters and contain uppercase, lowercase, number, and special character."
+      );
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError("New password must be different from the current password.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -275,13 +297,18 @@ export default function ProfilePage() {
         text: "Password changed. Your account credentials are up to date.",
       });
     } catch (error: any) {
-      setPasswordMessage({
-        type: "error",
-        text:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Unable to change password.",
-      });
+      const serverMsg: string =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to change password.";
+      // Map backend error codes to user-friendly messages
+      const friendlyMsg =
+        serverMsg.toLowerCase().includes("same") || serverMsg.toLowerCase().includes("different")
+          ? "New password must be different from the current password."
+          : serverMsg.toLowerCase().includes("incorrect")
+          ? "Current password is incorrect."
+          : serverMsg;
+      setPasswordMessage({ type: "error", text: friendlyMsg });
     } finally {
       setPasswordLoading(false);
     }
@@ -574,7 +601,7 @@ export default function ProfilePage() {
                       value={newPassword}
                       onChange={setNewPassword}
                       autoComplete="new-password"
-                      placeholder="Minimum 6 characters"
+                      placeholder="≥8 chars · A-Z · a-z · 0-9 · !@#…"
                     />
                     <PasswordField
                       label="Confirm password"
@@ -585,21 +612,59 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-4 border-t border-terminal-border pt-3">
-                    <p className="text-[9px] leading-relaxed text-terminal-muted">
-                      Use at least 6 characters and avoid reusing an old
-                      password.
-                    </p>
-                    <span
-                      className={clsx(
-                        "shrink-0 text-[9px] uppercase tracking-wider",
-                        newPassword.length >= 6
-                          ? "text-terminal-green"
-                          : "text-terminal-muted"
-                      )}
-                    >
-                      {Math.min(newPassword.length, 99)} chars
-                    </span>
+                  <div className="mt-3 flex items-start justify-between gap-4 border-t border-terminal-border pt-3">
+                    <div className="space-y-1">
+                      <p className="text-[9px] leading-relaxed text-terminal-muted">
+                        Password must be ≥8 chars · A-Z · a-z · 0-9 · special character · must differ from current.
+                      </p>
+                      {newPassword && (() => {
+                        const s = getPasswordStrength(newPassword);
+                        return (
+                          <div className="space-y-1">
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-terminal-border">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${s.color}`}
+                                style={{ width: `${s.pct}%` }}
+                              />
+                            </div>
+                            <p className="text-[9px] uppercase tracking-wider text-terminal-muted">
+                              Strength:{" "}
+                              <span
+                                className={clsx(
+                                  "font-semibold",
+                                  s.label === "Strong" && "text-terminal-green",
+                                  s.label === "Good" && "text-terminal-accent",
+                                  s.label === "Fair" && "text-terminal-amber",
+                                  s.label === "Weak" && "text-terminal-red"
+                                )}
+                              >
+                                {s.label}
+                              </span>
+                            </p>
+                            <ul className="space-y-0.5 text-[9px] text-terminal-muted">
+                              <li className={/[A-Z]/.test(newPassword) ? "text-terminal-green" : ""}>· Uppercase letter</li>
+                              <li className={/[a-z]/.test(newPassword) ? "text-terminal-green" : ""}>· Lowercase letter</li>
+                              <li className={/\d/.test(newPassword) ? "text-terminal-green" : ""}>· Number</li>
+                              <li className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? "text-terminal-green" : ""}>· Special character</li>
+                              <li className={newPassword.length >= 8 ? "text-terminal-green" : ""}>· At least 8 characters</li>
+                              <li className={newPassword !== currentPassword && newPassword.length > 0 ? "text-terminal-green" : ""}>· Different from current password</li>
+                            </ul>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    {newPassword && (
+                      <span
+                        className={clsx(
+                          "shrink-0 text-[9px] uppercase tracking-wider",
+                          PASSWORD_REGEX.test(newPassword)
+                            ? "text-terminal-green"
+                            : "text-terminal-muted"
+                        )}
+                      >
+                        {Math.min(newPassword.length, 99)} chars
+                      </span>
+                    )}
                   </div>
 
                   {passwordError && (

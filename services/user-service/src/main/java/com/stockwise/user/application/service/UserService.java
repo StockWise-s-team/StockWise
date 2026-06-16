@@ -113,6 +113,10 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
             throw new IncorrectPasswordException("Current password is incorrect");
         }
 
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new SamePasswordException("New password must be different from the current password");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userPersistencePort.save(user);
         log.info("Password changed for user: {}", user.getEmail());
@@ -142,6 +146,12 @@ public class UserService implements RegisterUserUseCase, AuthenticateUserUseCase
 
     public static class IncorrectPasswordException extends RuntimeException {
         public IncorrectPasswordException(String message) {
+            super(message);
+        }
+    }
+
+    public static class SamePasswordException extends RuntimeException {
+        public SamePasswordException(String message) {
             super(message);
         }
     }
