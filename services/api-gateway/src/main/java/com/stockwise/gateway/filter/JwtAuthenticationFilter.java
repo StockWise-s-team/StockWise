@@ -32,7 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        if ("POST".equals(method) && (path.equals("/auth/register") || path.equals("/auth/login") || path.equals("/auth/refresh"))) {
+        if ("POST".equals(method) && (
+                path.equals("/auth/register") ||
+                path.equals("/auth/login") ||
+                path.equals("/auth/refresh") ||
+                path.equals("/auth/forgot-password") ||
+                path.equals("/auth/verify-otp") ||
+                path.equals("/auth/reset-password")
+        )) {
             filterChain.doFilter(request, response);
             return;
         }

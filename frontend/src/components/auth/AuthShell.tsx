@@ -184,7 +184,7 @@ function Brand() {
 
 interface AuthFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  hint?: string;
+  hint?: ReactNode;
 }
 
 export function AuthField({
