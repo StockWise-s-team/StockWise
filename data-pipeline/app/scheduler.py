@@ -20,6 +20,7 @@ from app.synthesis.synthesis_agent import SynthesisAgent
 from app.pipeline_runs.pipeline_runs_repository import PipelineRunsRepository
 from app.sources.source_repository import SourceRepository
 from app.stream_c.runner import run_stream_c_loop
+from app.stream_d.runner import run_stream_d_loop
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,23 @@ def _start_stream_c_thread() -> None:
     logger.info("[StreamC] Background thread started")
 
 
+def _start_stream_d_thread() -> None:
+    """Khoi dong stream_d trong thread rieng voi event-loop cua chinh no."""
+    def _thread_target():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(run_stream_d_loop())
+        except Exception as exc:
+            logger.error("[StreamD] Thread crashed: %s", exc)
+        finally:
+            loop.close()
+
+    t = threading.Thread(target=_thread_target, name="stream_d", daemon=True)
+    t.start()
+    logger.info("[StreamD] Background thread started")
+
+
 def start_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_stream_a(),)).start(), "interval", hours=4, id="stream_a", next_run_time=datetime.now(timezone.utc))
@@ -76,6 +94,7 @@ def start_scheduler() -> BackgroundScheduler:
     scheduler.add_job(lambda: threading.Thread(target=_run_async, args=(run_synthesis(),)).start(), "interval", hours=4, id="synthesis", next_run_time=datetime.now(timezone.utc))
     # stream_c chạy liên tục trong thread riêng (không dùng APScheduler interval)
     _start_stream_c_thread()
+    _start_stream_d_thread()
     scheduler.start()
     return scheduler
 

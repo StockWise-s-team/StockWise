@@ -26,6 +26,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_TIMEOUT_SECONDS = 45
 POLL_INTERVAL_SECONDS = 1
 
+# Static queue name for RabbitPeeker — single queue for all peek calls
+PEEKER_QUEUE_NAME = "rabbitmq_peeker"
+
 
 class RabbitPeeker:
     """Tạo queue tạm, bind, đợi message, lấy về rồi cleanup."""
@@ -67,13 +70,17 @@ class RabbitPeeker:
         await self.connect()
         assert self._channel is not None
 
-        queue_name = f"peek_{int(time.time() * 1000)}"
         queue = await self._channel.declare_queue(
-            queue_name,
+            PEEKER_QUEUE_NAME,
             durable=False,
             exclusive=False,
             auto_delete=True,
         )
+        # Purge stale messages from previous peek sessions
+        try:
+            await queue.purge()
+        except Exception:
+            pass
         # Đảm bảo exchange tồn tại (idempotent — nếu chưa có, declare topic durable)
         exchange = await self._channel.declare_exchange(
             exchange_name, aio_pika.ExchangeType.TOPIC, durable=True
@@ -81,8 +88,8 @@ class RabbitPeeker:
         await queue.bind(exchange, routing_key=routing_key)
 
         logger.info(
-            "[RabbitPeeker] Temp queue '%s' bound to %s/%s — waiting up to %ds for %d message(s)",
-            queue_name, exchange_name, routing_key, timeout_seconds, max_messages,
+            "[RabbitPeeker] Queue '%s' bound to %s/%s -- waiting up to %ds for %d message(s)",
+            PEEKER_QUEUE_NAME, exchange_name, routing_key, timeout_seconds, max_messages,
         )
 
         results: List[Dict[str, Any]] = []
@@ -109,7 +116,7 @@ class RabbitPeeker:
                         "payload_size_bytes": len(msg.body),
                         "redelivered": msg.redelivered,
                     })
-            return results, queue_name
+            return results, PEEKER_QUEUE_NAME
         finally:
             try:
                 await queue.delete(if_unused=False, if_empty=False)
