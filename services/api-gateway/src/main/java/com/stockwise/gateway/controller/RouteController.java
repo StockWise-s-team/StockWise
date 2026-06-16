@@ -51,6 +51,21 @@ public class RouteController {
         return forward(userServiceUrl + "/auth/refresh-token-cookie", HttpMethod.POST, body, headers);
     }
 
+    @PostMapping("/auth/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody String body, @RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/forgot-password", HttpMethod.POST, body, headers);
+    }
+
+    @PostMapping("/auth/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody String body, @RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/verify-otp", HttpMethod.POST, body, headers);
+    }
+
+    @PostMapping("/auth/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody String body, @RequestHeader HttpHeaders headers) {
+        return forward(userServiceUrl + "/auth/reset-password", HttpMethod.POST, body, headers);
+    }
+
     @GetMapping("/auth/me")
     public ResponseEntity<?> me(@RequestHeader HttpHeaders headers) {
         return forwardGet(userServiceUrl + "/auth/me", headers);

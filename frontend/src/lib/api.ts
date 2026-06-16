@@ -34,6 +34,9 @@ const AUTH_BYPASS_PATHS = [
   "/auth/refresh-token-cookie",
   "/auth/login",
   "/auth/register",
+  "/auth/forgot-password",
+  "/auth/verify-otp",
+  "/auth/reset-password",
 ];
 
 const isAuthBypass = (url: string | undefined): boolean => {

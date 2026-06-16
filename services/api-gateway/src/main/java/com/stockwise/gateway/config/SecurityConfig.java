@@ -29,7 +29,15 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/refresh-token-cookie").permitAll()
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/refresh-token-cookie",
+                                "/auth/forgot-password",
+                                "/auth/verify-otp",
+                                "/auth/reset-password"
+                        ).permitAll()
                         .requestMatchers("/api/v1/health", "/api/v1/advisor/health", "/api/v1/advisor/chat/stream", "/pipeline/progress").permitAll()
                         .requestMatchers("/auth/logout", "/auth/profile", "/auth/password", "/auth/me").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/tracked-symbols").hasAuthority("ROLE_ADMIN")

@@ -1,5 +1,6 @@
 package com.stockwise.user.exception;
 
+import com.stockwise.user.application.service.PasswordResetService;
 import com.stockwise.user.application.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleSamePassword(UserService.SamePasswordException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("SAME_PASSWORD", ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(PasswordResetService.InvalidOtpException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOtp(PasswordResetService.InvalidOtpException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_OTP", ex.getMessage(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

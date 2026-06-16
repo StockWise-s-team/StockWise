@@ -4,13 +4,18 @@ import com.stockwise.user.adapter.out.persistence.TokenManagementService;
 import com.stockwise.user.application.service.UserService;
 import com.stockwise.user.application.port.in.AuthenticateUserUseCase;
 import com.stockwise.user.application.port.in.RegisterUserUseCase;
+import com.stockwise.user.application.service.PasswordResetService;
 import com.stockwise.user.dto.AuthResponse;
 import com.stockwise.user.dto.ChangePasswordRequest;
+import com.stockwise.user.dto.ForgotPasswordRequest;
 import com.stockwise.user.dto.LoginRequest;
+import com.stockwise.user.dto.MessageResponse;
 import com.stockwise.user.dto.RefreshRequest;
 import com.stockwise.user.dto.RegisterRequest;
+import com.stockwise.user.dto.ResetPasswordRequest;
 import com.stockwise.user.dto.UpdateProfileRequest;
 import com.stockwise.user.dto.UserDto;
+import com.stockwise.user.dto.VerifyOtpRequest;
 import com.stockwise.user.security.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,6 +50,7 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenManagementService tokenManagementService;
+    private final PasswordResetService passwordResetService;
 
     @Value("${REFRESH_COOKIE_SECURE:true}")
     private boolean refreshCookieSecure;
@@ -156,6 +162,29 @@ public class AuthController {
         String userId = jwtTokenProvider.getUserIdFromToken(token);
         userService.changePassword(userId, request);
         return ResponseEntity.ok().build();
+    }
+
+    // ─── Forgot Password (OTP) ────────────────────────────────────────────────
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.forgotPassword(request.email());
+        return ResponseEntity.ok(new MessageResponse("OTP has been sent"));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<MessageResponse> verifyOtp(
+            @Valid @RequestBody VerifyOtpRequest request) {
+        passwordResetService.verifyOtp(request.email(), request.otp());
+        return ResponseEntity.ok(new MessageResponse("OTP verified"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.email(), request.otp(), request.newPassword());
+        return ResponseEntity.ok(new MessageResponse("Password has been reset successfully"));
     }
 
     @PostMapping("/refresh-token-cookie")

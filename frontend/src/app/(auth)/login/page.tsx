@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -66,7 +67,14 @@ export default function LoginPage() {
         <AuthField
           id="password"
           label="Password"
-          hint="Secure entry"
+          hint={
+            <Link
+              href="/forgot-password"
+              className="text-[9px] uppercase tracking-wider text-terminal-accent hover:text-terminal-amber hover:underline transition-colors"
+            >
+              Forgot password?
+            </Link>
+          }
           type="password"
           value={password}
           onChange={(event) => {

@@ -30,7 +30,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/refresh-token-cookie").permitAll()
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/refresh-token-cookie",
+                                "/auth/forgot-password",
+                                "/auth/verify-otp",
+                                "/auth/reset-password"
+                        ).permitAll()
                         .requestMatchers("/auth/logout", "/auth/profile", "/auth/password", "/auth/me").authenticated()
                         .requestMatchers("/health", "/actuator/**").permitAll()
                         .anyRequest().authenticated())
