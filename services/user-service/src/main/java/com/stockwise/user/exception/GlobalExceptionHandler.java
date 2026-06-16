@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INCORRECT_PASSWORD", ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(UserService.SamePasswordException.class)
+    public ResponseEntity<ErrorResponse> handleSamePassword(UserService.SamePasswordException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("SAME_PASSWORD", ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
