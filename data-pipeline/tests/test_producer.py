@@ -16,6 +16,7 @@ class TestRabbitMQProducer:
         mock_exchange = AsyncMock()
         mock_channel.declare_exchange = AsyncMock(return_value=mock_exchange)
         mock_connection = MagicMock()
+        mock_connection.is_closed = False
         mock_connection.channel = AsyncMock(return_value=mock_channel)
         producer.connection = mock_connection
         producer.channel = mock_channel
@@ -46,6 +47,7 @@ class TestRabbitMQProducer:
         producer.channel = None
 
         mock_connection = MagicMock()
+        mock_connection.is_closed = False
         mock_channel = AsyncMock()
         mock_connection.channel = AsyncMock(return_value=mock_channel)
         mock_exchange = AsyncMock()
@@ -65,6 +67,7 @@ class TestRabbitMQProducer:
     async def test_close_cleans_up_connection(self):
         producer = RabbitMQProducer()
         mock_connection = AsyncMock()
+        mock_connection.is_closed = False
         mock_channel = MagicMock()
         producer.connection = mock_connection
         producer.channel = mock_channel
@@ -96,6 +99,7 @@ class TestRabbitMQProducer:
         mock_connection.channel = AsyncMock(return_value=mock_channel)
         producer.connection = mock_connection
         producer.channel = mock_channel
+        mock_connection.is_closed = False
 
         await producer.publish(
             "market.exchange",
@@ -118,6 +122,7 @@ class TestRabbitMQProducer:
         mock_connection.channel = AsyncMock(return_value=mock_channel)
         producer.connection = mock_connection
         producer.channel = mock_channel
+        mock_connection.is_closed = False
 
         test_data = {
             "symbols": ["VNM"],

@@ -1,5 +1,6 @@
 package com.stockwise.portfolio.application.service.order.validation;
 
+import com.stockwise.portfolio.application.service.order.ports.SymbolPriceCache;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;

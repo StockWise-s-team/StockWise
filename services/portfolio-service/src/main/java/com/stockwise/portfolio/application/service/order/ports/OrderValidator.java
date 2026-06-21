@@ -1,4 +1,4 @@
-package com.stockwise.portfolio.application.service.order.validation;
+package com.stockwise.portfolio.application.service.order.ports;
 
 import com.stockwise.portfolio.application.service.order.ValidatedOrderRequest;
 

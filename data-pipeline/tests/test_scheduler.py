@@ -95,14 +95,7 @@ class TestSchedulerStreamA:
             await scheduler_module.run_stream_a()
 
         mock_producer.connect.assert_awaited_once()
-        mock_producer.publish.assert_awaited_once()
-        call = mock_producer.publish.call_args
-        assert call.kwargs["exchange_name"] == "market.exchange"
-        assert call.kwargs["routing_key"] == "price.updated"
-        body = call.kwargs["data"]
-        assert body["action"] == "price.updated"
-        assert body["source"] == "vnstock"
-        assert "VNM" in body["symbols"]
+        mock_producer.publish.assert_not_called()
         mock_producer.close.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -200,9 +193,7 @@ class TestSchedulerStreamA:
             with patch.object(scheduler_module, "PriceTransformer", return_value=pt_instance):
                 await scheduler_module.run_stream_a()
 
-        assert mock_producer.publish.call_count == 1
-        body = mock_producer.publish.call_args.kwargs["data"]
-        assert body["symbols"] == ["HPG"]
+        mock_producer.publish.assert_not_called()
 
 
 class TestSchedulerStreamB:

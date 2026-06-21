@@ -1,4 +1,4 @@
-package com.stockwise.portfolio.application.service.order.validation;
+package com.stockwise.portfolio.application.service.order.ports;
 
 import java.math.BigDecimal;
 import java.util.UUID;

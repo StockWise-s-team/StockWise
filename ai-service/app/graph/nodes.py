@@ -18,7 +18,7 @@ async def router_node(state: AdvisorState) -> dict[str, Any]:
 
 
 async def route_intent(state: AdvisorState) -> str:
-    return "respond" if state.get("intent") in {"GREETING", "OUT_OF_SCOPE"} else "context_planner"
+    return "respond" if state.get("intent") == "GREETING" else "context_planner"
 
 
 async def context_planner_node(state: AdvisorState, config: RunnableConfig) -> dict[str, Any]:
