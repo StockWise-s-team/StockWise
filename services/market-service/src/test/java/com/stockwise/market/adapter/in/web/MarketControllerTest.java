@@ -6,7 +6,6 @@ import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import com.stockwise.market.application.port.in.GetFinancialRatioUseCase;
 import com.stockwise.market.application.port.in.GetStockPriceUseCase;
 import com.stockwise.market.application.service.IntradayOhlcService;
-import com.stockwise.market.domain.repository.IntradayPriceRepository;
 import com.stockwise.market.exception.InvalidDateRangeException;
 import com.stockwise.market.exception.InvalidSymbolException;
 import com.stockwise.market.exception.SymbolNotFoundException;
@@ -57,9 +56,6 @@ class MarketControllerTest {
 
     @MockBean
     private com.stockwise.market.messaging.MarketDataConsumer marketDataConsumer;
-
-    @MockBean
-    private IntradayPriceRepository intradayPriceRepository;
 
     @MockBean
     private IntradayOhlcService intradayOhlcService;

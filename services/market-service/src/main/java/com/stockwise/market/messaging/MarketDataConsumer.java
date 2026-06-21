@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
-import com.stockwise.market.domain.entity.IntradayPrice;
-import com.stockwise.market.domain.repository.IntradayPriceRepository;
 import com.stockwise.market.websocket.WebSocketSessionRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,18 +33,15 @@ public class MarketDataConsumer {
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
-    private final IntradayPriceRepository intradayPriceRepository;
 
     private final Map<String, LatestPriceResponse> lastKnownPrice = new ConcurrentHashMap<>();
 
     public MarketDataConsumer(ObjectMapper objectMapper,
                              SimpMessagingTemplate messagingTemplate,
-                             WebSocketSessionRegistry sessionRegistry,
-                             IntradayPriceRepository intradayPriceRepository) {
+                             WebSocketSessionRegistry sessionRegistry) {
         this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
         this.sessionRegistry = sessionRegistry;
-        this.intradayPriceRepository = intradayPriceRepository;
     }
 
     @RabbitListener(queues = "market_service_price_q")
@@ -81,13 +76,6 @@ public class MarketDataConsumer {
 
                 LatestPriceResponse priceData = buildResponse(rec, symbol);
                 lastKnownPrice.put(symbol, priceData);
-
-                try {
-                    IntradayPrice intradayPrice = new IntradayPrice(symbol, priceData.price(), priceData.updatedAt());
-                    intradayPriceRepository.save(intradayPrice);
-                } catch (Exception e) {
-                    log.warn("Failed to save intraday price for {}: {}", symbol, e.getMessage());
-                }
 
                 if (!sessionRegistry.getSessionsForSymbol(symbol).isEmpty()) {
                     String destination = "/topic/price/" + symbol;

@@ -2,13 +2,11 @@ package com.stockwise.market.adapter.in.web;
 
 import com.stockwise.market.adapter.in.web.dto.FinancialRatioListResponse;
 import com.stockwise.market.adapter.in.web.dto.IntradayOhlcResponse;
-import com.stockwise.market.adapter.in.web.dto.IntradayPriceDto;
 import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import com.stockwise.market.adapter.in.web.dto.OhlcSeriesResponse;
 import com.stockwise.market.application.port.in.GetFinancialRatioUseCase;
 import com.stockwise.market.application.port.in.GetStockPriceUseCase;
 import com.stockwise.market.application.service.IntradayOhlcService;
-import com.stockwise.market.domain.repository.IntradayPriceRepository;
 import com.stockwise.market.messaging.MarketDataConsumer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/market")
@@ -31,18 +26,15 @@ public class MarketController {
     private final GetStockPriceUseCase getStockPriceUseCase;
     private final GetFinancialRatioUseCase getFinancialRatioUseCase;
     private final MarketDataConsumer marketDataConsumer;
-    private final IntradayPriceRepository intradayPriceRepository;
     private final IntradayOhlcService intradayOhlcService;
 
     public MarketController(GetStockPriceUseCase getStockPriceUseCase,
                            GetFinancialRatioUseCase getFinancialRatioUseCase,
                            MarketDataConsumer marketDataConsumer,
-                           IntradayPriceRepository intradayPriceRepository,
                            IntradayOhlcService intradayOhlcService) {
         this.getStockPriceUseCase = getStockPriceUseCase;
         this.getFinancialRatioUseCase = getFinancialRatioUseCase;
         this.marketDataConsumer = marketDataConsumer;
-        this.intradayPriceRepository = intradayPriceRepository;
         this.intradayOhlcService = intradayOhlcService;
     }
 
@@ -89,17 +81,6 @@ public class MarketController {
             @RequestParam(defaultValue = "2024-01-01") String startDate,
             @RequestParam(defaultValue = "2025-12-31") String endDate) {
         return ResponseEntity.ok(getStockPriceUseCase.getOhlc(symbol, startDate, endDate));
-    }
-
-    @GetMapping("/prices/intraday/{symbol}")
-    public ResponseEntity<List<IntradayPriceDto>> getIntradayPrices(@PathVariable String symbol) {
-        Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-        List<IntradayPriceDto> result = intradayPriceRepository
-                .findBySymbolAndTimestampAfterOrderByTimestampAsc(symbol.trim().toUpperCase(), oneHourAgo)
-                .stream()
-                .map(p -> new IntradayPriceDto(p.getSymbol(), p.getPrice(), p.getTimestamp()))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/ohlc/intraday/{symbol}")

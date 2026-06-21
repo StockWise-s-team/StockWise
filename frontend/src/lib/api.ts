@@ -151,9 +151,6 @@ export const marketApi = {
   getRatios: (symbol: string) =>
     api.get<FinancialRatioList>(`/market/ratio/${symbol}`).then((r) => r.data),
 
-  getIntradayPrices: (symbol: string) =>
-    api.get<{ symbol: string; price: number; timestamp: string }[]>(`/market/prices/intraday/${symbol}`).then((r) => r.data),
-
   getIntradayOhlc: (symbol: string, interval = "5m") =>
     api
       .get<IntradayOhlcSeries>(`/market/ohlc/intraday/${symbol}`, {
