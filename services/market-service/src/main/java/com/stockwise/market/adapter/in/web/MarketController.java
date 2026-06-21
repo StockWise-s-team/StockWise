@@ -1,12 +1,10 @@
 package com.stockwise.market.adapter.in.web;
 
 import com.stockwise.market.adapter.in.web.dto.FinancialRatioListResponse;
-import com.stockwise.market.adapter.in.web.dto.IntradayOhlcResponse;
 import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import com.stockwise.market.adapter.in.web.dto.OhlcSeriesResponse;
 import com.stockwise.market.application.port.in.GetFinancialRatioUseCase;
 import com.stockwise.market.application.port.in.GetStockPriceUseCase;
-import com.stockwise.market.application.service.IntradayOhlcService;
 import com.stockwise.market.messaging.MarketDataConsumer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,16 +24,13 @@ public class MarketController {
     private final GetStockPriceUseCase getStockPriceUseCase;
     private final GetFinancialRatioUseCase getFinancialRatioUseCase;
     private final MarketDataConsumer marketDataConsumer;
-    private final IntradayOhlcService intradayOhlcService;
 
     public MarketController(GetStockPriceUseCase getStockPriceUseCase,
                            GetFinancialRatioUseCase getFinancialRatioUseCase,
-                           MarketDataConsumer marketDataConsumer,
-                           IntradayOhlcService intradayOhlcService) {
+                           MarketDataConsumer marketDataConsumer) {
         this.getStockPriceUseCase = getStockPriceUseCase;
         this.getFinancialRatioUseCase = getFinancialRatioUseCase;
         this.marketDataConsumer = marketDataConsumer;
-        this.intradayOhlcService = intradayOhlcService;
     }
 
     @GetMapping("/price/{symbol}")
@@ -81,13 +76,6 @@ public class MarketController {
             @RequestParam(defaultValue = "2024-01-01") String startDate,
             @RequestParam(defaultValue = "2025-12-31") String endDate) {
         return ResponseEntity.ok(getStockPriceUseCase.getOhlc(symbol, startDate, endDate));
-    }
-
-    @GetMapping("/ohlc/intraday/{symbol}")
-    public ResponseEntity<IntradayOhlcResponse> getIntradayOhlc(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "5m") String interval) {
-        return ResponseEntity.ok(intradayOhlcService.getIntradayBars(symbol, interval));
     }
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MarketController.class);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -12,12 +12,9 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { marketApi, wikiApi } from "@/lib/api";
-import { extractErrorMessage } from "@/lib/apiError";
 import { formatPercent, formatVnd, toVndYmd } from "@/lib/format";
 import { useMarketTicker } from "@/components/providers/MarketDataProvider";
 import type {
-  IntradayOhlcBar,
-  IntradayOhlcSeries,
   LatestPrice,
   OhlcSeries,
   WikiData,
@@ -32,9 +29,6 @@ import {
   TerminalEmptyState,
 } from "@/components/ui";
 import { OHLCChart } from "@/components/charts/OHLCChart";
-import { IntradayOhlcChart } from "@/components/charts/IntradayOhlcChart";
-
-type ChartTimeframe = "DAILY" | "INTRADAY";
 
 const numberFormatter = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: 2,
@@ -50,11 +44,6 @@ export default function MarketDetailPage() {
   const [ratios, setRatios] = useState<FinancialRatioList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [timeframe, setTimeframe] = useState<ChartTimeframe>("DAILY");
-  const [intradaySeries, setIntradaySeries] = useState<IntradayOhlcSeries | null>(null);
-  const [intradayLoading, setIntradayLoading] = useState(false);
-  const [intradayError, setIntradayError] = useState<string | null>(null);
 
   const { ticker } = useMarketTicker(symbol);
   const livePrice = useMemo<LatestPrice | null>(() => {
@@ -109,26 +98,6 @@ export default function MarketDetailPage() {
       cancelled = true;
     };
   }, [symbol]);
-
-  const loadIntraday = useCallback(async () => {
-    if (!symbol) return;
-    setIntradayLoading(true);
-    setIntradayError(null);
-    try {
-      const data = await marketApi.getIntradayOhlc(symbol, "5m");
-      setIntradaySeries(data);
-    } catch (err) {
-      setIntradayError(extractErrorMessage(err, "Failed to load intraday bars."));
-    } finally {
-      setIntradayLoading(false);
-    }
-  }, [symbol]);
-
-  useEffect(() => {
-    if (timeframe === "INTRADAY" && !intradaySeries && !intradayLoading) {
-      void loadIntraday();
-    }
-  }, [timeframe, intradaySeries, intradayLoading, loadIntraday]);
 
   if (loading) {
     return (
@@ -248,22 +217,12 @@ export default function MarketDetailPage() {
           {/* Chart */}
           <div className="rounded border border-terminal-border bg-terminal-surface p-4">
             <div className="mb-3 flex items-center justify-end gap-1.5">
-              <TimeframeToggle value={timeframe} onChange={setTimeframe} />
+              <TimeframeToggle />
             </div>
-            {timeframe === "DAILY" ? (
-              ohlcSeries && ohlcSeries.data && ohlcSeries.data.length > 0 ? (
-                <OHLCChart symbol={symbol} data={ohlcSeries.data} />
-              ) : (
-                <TerminalEmptyState icon={Activity} title="No historical price data" />
-              )
+            {ohlcSeries && ohlcSeries.data && ohlcSeries.data.length > 0 ? (
+              <OHLCChart symbol={symbol} data={ohlcSeries.data} />
             ) : (
-              <IntradayChartPanel
-                symbol={symbol}
-                series={intradaySeries}
-                loading={intradayLoading}
-                error={intradayError}
-                onRetry={loadIntraday}
-              />
+              <TerminalEmptyState icon={Activity} title="No historical price data" />
             )}
           </div>
 
@@ -308,69 +267,19 @@ export default function MarketDetailPage() {
   );
 }
 
-function TimeframeToggle({ value, onChange }: { value: ChartTimeframe; onChange: (v: ChartTimeframe) => void }) {
+function TimeframeToggle() {
   return (
     <div className="inline-flex rounded border border-terminal-border bg-terminal-bg p-0.5">
-      <ToggleButton active={value === "DAILY"} onClick={() => onChange("DAILY")}>
+      <button
+        type="button"
+        className={clsx(
+          "rounded px-3 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors",
+          "bg-terminal-accent/15 text-terminal-accent"
+        )}
+      >
         Daily 30D
-      </ToggleButton>
-      <ToggleButton active={value === "INTRADAY"} onClick={() => onChange("INTRADAY")}>
-        Intraday 5m
-      </ToggleButton>
+      </button>
     </div>
-  );
-}
-
-function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={clsx(
-        "rounded px-3 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors",
-        active
-          ? "bg-terminal-accent/15 text-terminal-accent"
-          : "text-terminal-muted hover:text-terminal-text"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function IntradayChartPanel({
-  symbol,
-  series,
-  loading,
-  error,
-  onRetry,
-}: {
-  symbol: string;
-  series: IntradayOhlcSeries | null;
-  loading: boolean;
-  error: string | null;
-  onRetry: () => void;
-}) {
-  const bars: IntradayOhlcBar[] = series?.data ?? [];
-  if (error) {
-    return (
-      <div className="space-y-2">
-        <TerminalNotice tone="danger">{error}</TerminalNotice>
-        <div className="text-right">
-          <TerminalButton size="xs" tone="muted" onClick={onRetry}>
-            Retry
-          </TerminalButton>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <IntradayOhlcChart
-      symbol={symbol}
-      bars={bars}
-      interval={series?.interval ?? "5m"}
-      loading={loading}
-    />
   );
 }
 

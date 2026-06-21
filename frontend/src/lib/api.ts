@@ -11,7 +11,6 @@ import type {
   PipelineProgressState,
   LatestPrice,
   OhlcSeries,
-  IntradayOhlcSeries,
   FinancialRatioList,
   AdvisorMessage,
   AdvisorSession,
@@ -150,13 +149,6 @@ export const marketApi = {
 
   getRatios: (symbol: string) =>
     api.get<FinancialRatioList>(`/market/ratio/${symbol}`).then((r) => r.data),
-
-  getIntradayOhlc: (symbol: string, interval = "5m") =>
-    api
-      .get<IntradayOhlcSeries>(`/market/ohlc/intraday/${symbol}`, {
-        params: { interval },
-      })
-      .then((r) => r.data),
 };
 
 export const newsSourcesApi = {
