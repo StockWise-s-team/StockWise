@@ -12,7 +12,6 @@ import { extractErrorMessage } from "@/lib/apiError";
 import { formatVnd, formatQty, formatDateTime } from "@/lib/format";
 import { trackedSymbolsApi } from "@/lib/api";
 import type { OrderResult, OrderSide, OrderStatus, PortfolioOrder } from "@/lib/types";
-import { MultiSymbolChart } from "@/components/charts/MultiSymbolChart";
 import {
   TerminalButton,
   TerminalEmptyState,
@@ -150,9 +149,8 @@ function SandboxContent() {
         </p>
       </header>
 
-      <div className="grid gap-5 xl:grid-cols-12">
-        {/* Left column — order ticket + account */}
-        <section className="xl:col-span-3 space-y-5">
+      <div>
+        <section className="space-y-5">
           <TerminalSectionHeader
             icon={Banknote}
             title="Account"
@@ -279,16 +277,6 @@ function SandboxContent() {
             </div>
           </div>
         </section>
-
-        {/* Right column — chart stays in view while placing orders */}
-        <aside className="xl:col-span-9">
-          <div className="xl:sticky xl:top-4">
-            <MultiSymbolChart
-              symbols={trackedSymbols}
-              defaultSymbol={symbolFromQuery || symbol}
-            />
-          </div>
-        </aside>
       </div>
 
       <section>

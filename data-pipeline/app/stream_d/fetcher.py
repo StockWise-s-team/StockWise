@@ -7,6 +7,7 @@ Moi symbol -> goi q.history(start=today, end=today, interval="5m", length=50).
 Tra ve danh sach OHLCV dicts.
 
 Nguon: vnstock Quote.history() (kbs source)
+Don vi gia: raw VND (dong bo voi stream C).
 """
 
 import asyncio
@@ -94,7 +95,7 @@ class IntradayFetcher:
 
     @staticmethod
     def _df_to_records(df: pd.DataFrame, symbol: str) -> list[dict[str, Any]]:
-        """Chuan hoa DataFrame thanh list OHLCV dicts, gia nhan 1000."""
+        """Chuan hoa DataFrame thanh list OHLCV dicts, giu nguyen don vi VND."""
         if df is None or df.empty:
             return []
 
@@ -110,10 +111,10 @@ class IntradayFetcher:
                 "symbol": symbol,
                 "time": str(row.get("time", "")),
                 "interval": INTERVAL,
-                "open":   _round1000(_float(row.get("open"))) if _float(row.get("open")) is not None else None,
-                "high":   _round1000(_float(row.get("high"))) if _float(row.get("high")) is not None else None,
-                "low":    _round1000(_float(row.get("low")))  if _float(row.get("low"))  is not None else None,
-                "close":  _round1000(raw_close),
+                "open":   _float(row.get("open")),
+                "high":   _float(row.get("high")),
+                "low":    _float(row.get("low")),
+                "close":  raw_close,
                 "volume": int(row.get("volume", 0) or 0),
                 "timestamp": now_iso,
             })
@@ -128,9 +129,3 @@ def _float(v) -> float | None:
         return float(v)
     except (TypeError, ValueError):
         return None
-
-
-def _round1000(v: float | None) -> float | None:
-    if v is None:
-        return None
-    return round(v * 1000, 1)

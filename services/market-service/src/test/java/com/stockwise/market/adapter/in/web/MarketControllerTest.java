@@ -1,13 +1,17 @@
 package com.stockwise.market.adapter.in.web;
 
+import com.stockwise.market.adapter.in.web.dto.IntradayOhlcBarResponse;
+import com.stockwise.market.adapter.in.web.dto.IntradayOhlcResponse;
+import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import com.stockwise.market.application.port.in.GetFinancialRatioUseCase;
 import com.stockwise.market.application.port.in.GetStockPriceUseCase;
+import com.stockwise.market.application.service.IntradayOhlcService;
+import com.stockwise.market.domain.repository.IntradayPriceRepository;
 import com.stockwise.market.exception.InvalidDateRangeException;
 import com.stockwise.market.exception.InvalidSymbolException;
 import com.stockwise.market.exception.SymbolNotFoundException;
 import com.stockwise.market.security.JwtAuthenticationFilter;
 import com.stockwise.market.security.JwtTokenProvider;
-import com.stockwise.market.adapter.in.web.dto.LatestPriceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +23,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,6 +57,12 @@ class MarketControllerTest {
 
     @MockBean
     private com.stockwise.market.messaging.MarketDataConsumer marketDataConsumer;
+
+    @MockBean
+    private IntradayPriceRepository intradayPriceRepository;
+
+    @MockBean
+    private IntradayOhlcService intradayOhlcService;
 
     @Test
     @DisplayName("should return 404 with error response when symbol not found")
@@ -129,5 +142,44 @@ class MarketControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.SHB.symbol").value("SHB"))
                 .andExpect(jsonPath("$.SHB.close").value(14000));
+    }
+
+    @Test
+    @DisplayName("should return intraday OHLC bars from service")
+    void returnsIntradayOhlcBars() throws Exception {
+        Instant bar1 = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(5, ChronoUnit.MINUTES);
+        Instant bar2 = bar1.plus(5, ChronoUnit.MINUTES);
+        List<IntradayOhlcBarResponse> bars = List.of(
+                new IntradayOhlcBarResponse(bar1, new BigDecimal("100"), new BigDecimal("105"),
+                        new BigDecimal("99"), new BigDecimal("103"), 1000L, "5m"),
+                new IntradayOhlcBarResponse(bar2, new BigDecimal("103"), new BigDecimal("108"),
+                        new BigDecimal("102"), new BigDecimal("107"), 1500L, "5m")
+        );
+        when(intradayOhlcService.getIntradayBars(eq("FPT"), eq("5m")))
+                .thenReturn(new IntradayOhlcResponse("FPT", "5m", bars, Instant.now()));
+
+        mockMvc.perform(get("/market/ohlc/intraday/FPT")
+                        .param("interval", "5m")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.symbol").value("FPT"))
+                .andExpect(jsonPath("$.interval").value("5m"))
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].open").value(100))
+                .andExpect(jsonPath("$.data[0].high").value(105))
+                .andExpect(jsonPath("$.data[1].close").value(107));
+    }
+
+    @Test
+    @DisplayName("should default interval to 5m when not provided")
+    void defaultsIntervalTo5m() throws Exception {
+        when(intradayOhlcService.getIntradayBars(eq("FPT"), eq("5m")))
+                .thenReturn(new IntradayOhlcResponse("FPT", "5m", List.of(), Instant.now()));
+
+        mockMvc.perform(get("/market/ohlc/intraday/FPT")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.interval").value("5m"))
+                .andExpect(jsonPath("$.data.length()").value(0));
     }
 }

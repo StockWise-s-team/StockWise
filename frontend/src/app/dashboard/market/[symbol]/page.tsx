@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -12,9 +12,19 @@ import {
   Info,
   TrendingDown,
 } from "lucide-react";
+import { clsx } from "clsx";
 import { marketApi, wikiApi } from "@/lib/api";
+import { extractErrorMessage } from "@/lib/apiError";
 import { formatVnd } from "@/lib/format";
-import type { LatestPrice, OhlcSeries, WikiData, FinancialRatioList } from "@/lib/types";
+import { useMarketTicker } from "@/components/providers/MarketDataProvider";
+import type {
+  IntradayOhlcBar,
+  IntradayOhlcSeries,
+  LatestPrice,
+  OhlcSeries,
+  WikiData,
+  FinancialRatioList,
+} from "@/lib/types";
 import {
   TerminalMetricCard,
   TerminalNotice,
@@ -24,6 +34,9 @@ import {
   TerminalEmptyState,
 } from "@/components/ui";
 import { OHLCChart } from "@/components/charts/OHLCChart";
+import { IntradayOhlcChart } from "@/components/charts/IntradayOhlcChart";
+
+type ChartTimeframe = "DAILY" | "INTRADAY";
 
 const numberFormatter = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: 2,
@@ -39,6 +52,17 @@ export default function MarketDetailPage() {
   const [ratios, setRatios] = useState<FinancialRatioList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [timeframe, setTimeframe] = useState<ChartTimeframe>("DAILY");
+  const [intradaySeries, setIntradaySeries] = useState<IntradayOhlcSeries | null>(null);
+  const [intradayLoading, setIntradayLoading] = useState(false);
+  const [intradayError, setIntradayError] = useState<string | null>(null);
+
+  const { ticker } = useMarketTicker(symbol);
+  const livePrice = useMemo<LatestPrice | null>(() => {
+    if (!ticker) return null;
+    return ticker as LatestPrice;
+  }, [ticker]);
 
   useEffect(() => {
     if (!symbol) return;
@@ -87,6 +111,26 @@ export default function MarketDetailPage() {
     };
   }, [symbol]);
 
+  const loadIntraday = useCallback(async () => {
+    if (!symbol) return;
+    setIntradayLoading(true);
+    setIntradayError(null);
+    try {
+      const data = await marketApi.getIntradayOhlc(symbol, "5m");
+      setIntradaySeries(data);
+    } catch (err) {
+      setIntradayError(extractErrorMessage(err, "Failed to load intraday bars."));
+    } finally {
+      setIntradayLoading(false);
+    }
+  }, [symbol]);
+
+  useEffect(() => {
+    if (timeframe === "INTRADAY" && !intradaySeries && !intradayLoading) {
+      void loadIntraday();
+    }
+  }, [timeframe, intradaySeries, intradayLoading, loadIntraday]);
+
   if (loading) {
     return (
       <div className="space-y-6 font-mono text-terminal-text">
@@ -99,11 +143,16 @@ export default function MarketDetailPage() {
 
   const latestRatio = ratios?.ratios?.[0] ?? null;
   const priceTone =
-    latestPrice && latestPrice.change < 0
+    livePrice && livePrice.change < 0
+      ? "danger"
+      : livePrice
+      ? "success"
+      : latestPrice && latestPrice.change < 0
       ? "danger"
       : latestPrice
       ? "success"
       : "default";
+  const displayedPrice = livePrice ?? latestPrice;
 
   return (
     <div className="min-h-full space-y-6 font-mono text-terminal-text">
@@ -149,14 +198,14 @@ export default function MarketDetailPage() {
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <TerminalMetricCard
           label={`${symbol} Latest Price`}
-          value={latestPrice ? formatVnd(latestPrice.price) : "-"}
+          value={displayedPrice ? formatVnd(displayedPrice.price) : "-"}
           tone={priceTone}
           helper={
-            latestPrice
-              ? `${latestPrice.change >= 0 ? "+" : ""}${numberFormatter.format(
-                  latestPrice.change
-                )} (${latestPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(
-                  latestPrice.changePercent
+            displayedPrice
+              ? `${displayedPrice.change >= 0 ? "+" : ""}${numberFormatter.format(
+                  displayedPrice.change
+                )} (${displayedPrice.changePercent >= 0 ? "+" : ""}${numberFormatter.format(
+                  displayedPrice.changePercent
                 )}%)`
               : undefined
           }
@@ -188,10 +237,23 @@ export default function MarketDetailPage() {
         <div className="space-y-6 xl:col-span-8">
           {/* Chart */}
           <div className="rounded border border-terminal-border bg-terminal-surface p-4">
-            {ohlcSeries && ohlcSeries.data && ohlcSeries.data.length > 0 ? (
-              <OHLCChart symbol={symbol} data={ohlcSeries.data} />
+            <div className="mb-3 flex items-center justify-end gap-1.5">
+              <TimeframeToggle value={timeframe} onChange={setTimeframe} />
+            </div>
+            {timeframe === "DAILY" ? (
+              ohlcSeries && ohlcSeries.data && ohlcSeries.data.length > 0 ? (
+                <OHLCChart symbol={symbol} data={ohlcSeries.data} />
+              ) : (
+                <TerminalEmptyState icon={Activity} title="No historical price data" />
+              )
             ) : (
-              <TerminalEmptyState icon={Activity} title="No historical price data" />
+              <IntradayChartPanel
+                symbol={symbol}
+                series={intradaySeries}
+                loading={intradayLoading}
+                error={intradayError}
+                onRetry={loadIntraday}
+              />
             )}
           </div>
 
@@ -232,13 +294,13 @@ export default function MarketDetailPage() {
               subtitle="Latest exchange quotes"
             />
             <div className="space-y-1">
-              <SnapshotRow label="Open" value={latestPrice ? formatVnd(latestPrice.open) : "-"} />
-              <SnapshotRow label="High" value={latestPrice ? formatVnd(latestPrice.high) : "-"} />
-              <SnapshotRow label="Low" value={latestPrice ? formatVnd(latestPrice.low) : "-"} />
-              <SnapshotRow label="Close" value={latestPrice ? formatVnd(latestPrice.close) : "-"} />
+              <SnapshotRow label="Open" value={displayedPrice ? formatVnd(displayedPrice.open) : "-"} />
+              <SnapshotRow label="High" value={displayedPrice ? formatVnd(displayedPrice.high) : "-"} />
+              <SnapshotRow label="Low" value={displayedPrice ? formatVnd(displayedPrice.low) : "-"} />
+              <SnapshotRow label="Close" value={displayedPrice ? formatVnd(displayedPrice.close) : "-"} />
               <SnapshotRow
                 label="Volume"
-                value={latestPrice ? new Intl.NumberFormat("vi-VN").format(latestPrice.volume) : "-"}
+                value={displayedPrice ? new Intl.NumberFormat("vi-VN").format(displayedPrice.volume) : "-"}
               />
               <SnapshotRow
                 label="P/B"
@@ -299,6 +361,72 @@ export default function MarketDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function TimeframeToggle({ value, onChange }: { value: ChartTimeframe; onChange: (v: ChartTimeframe) => void }) {
+  return (
+    <div className="inline-flex rounded border border-terminal-border bg-terminal-bg p-0.5">
+      <ToggleButton active={value === "DAILY"} onClick={() => onChange("DAILY")}>
+        Daily 30D
+      </ToggleButton>
+      <ToggleButton active={value === "INTRADAY"} onClick={() => onChange("INTRADAY")}>
+        Intraday 5m
+      </ToggleButton>
+    </div>
+  );
+}
+
+function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "rounded px-3 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider transition-colors",
+        active
+          ? "bg-terminal-accent/15 text-terminal-accent"
+          : "text-terminal-muted hover:text-terminal-text"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function IntradayChartPanel({
+  symbol,
+  series,
+  loading,
+  error,
+  onRetry,
+}: {
+  symbol: string;
+  series: IntradayOhlcSeries | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  const bars: IntradayOhlcBar[] = series?.data ?? [];
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <TerminalNotice tone="danger">{error}</TerminalNotice>
+        <div className="text-right">
+          <TerminalButton size="xs" tone="muted" onClick={onRetry}>
+            Retry
+          </TerminalButton>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <IntradayOhlcChart
+      symbol={symbol}
+      bars={bars}
+      interval={series?.interval ?? "5m"}
+      loading={loading}
+    />
   );
 }
 

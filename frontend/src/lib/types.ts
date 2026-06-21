@@ -72,6 +72,23 @@ export interface OhlcSeries {
   data: OhlcPoint[];
 }
 
+export interface IntradayOhlcBar {
+  time: string;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  close: number | null;
+  volume: number | null;
+  interval: string;
+}
+
+export interface IntradayOhlcSeries {
+  symbol: string;
+  interval: string;
+  data: IntradayOhlcBar[];
+  asOf: string;
+}
+
 export interface FinancialRatioItem {
   period: string;
   peRatio: number | null;
