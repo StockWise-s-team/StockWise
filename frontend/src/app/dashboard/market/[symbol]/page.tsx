@@ -15,7 +15,7 @@ import {
 import { clsx } from "clsx";
 import { marketApi, wikiApi } from "@/lib/api";
 import { extractErrorMessage } from "@/lib/apiError";
-import { formatVnd } from "@/lib/format";
+import { formatVnd, toVndYmd } from "@/lib/format";
 import { useMarketTicker } from "@/components/providers/MarketDataProvider";
 import type {
   IntradayOhlcBar,
@@ -73,15 +73,16 @@ export default function MarketDetailPage() {
         setLoading(true);
         setError(null);
 
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - 30);
+        const endDate = toVndYmd();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        const startDate = toVndYmd(start);
 
         const [priceData, ohlcData, wikiData, ratioData] = await Promise.all([
           marketApi.getLatestPrice(symbol).catch(() => null),
           marketApi.getOhlc(symbol, {
-            startDate: startDate.toISOString().slice(0, 10),
-            endDate: endDate.toISOString().slice(0, 10),
+            startDate,
+            endDate,
           }).catch(() => null),
           wikiApi.get(symbol).catch(() => null),
           marketApi.getRatios(symbol).catch(() => null),

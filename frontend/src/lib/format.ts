@@ -40,3 +40,8 @@ export function pnlColor(value: number | null | undefined): string {
   if (value === null || value === undefined || value === 0) return "text-terminal-text";
   return value > 0 ? "text-terminal-green" : "text-terminal-red";
 }
+
+// Current date in Asia/Ho_Chi_Minh as YYYY-MM-DD (matches backend LocalDate.parse).
+export function toVndYmd(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(date);
+}
