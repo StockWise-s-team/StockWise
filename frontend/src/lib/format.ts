@@ -22,6 +22,12 @@ export function formatQty(value: number | null | undefined): string {
   return qtyFmt.format(value);
 }
 
+// Percentage from decimal (0.28 → "28.00%").
+export function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return `${(value * 100).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
+}
+
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);

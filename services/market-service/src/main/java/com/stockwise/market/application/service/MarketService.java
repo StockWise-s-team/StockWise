@@ -103,7 +103,19 @@ public class MarketService implements GetStockPriceUseCase, GetFinancialRatioUse
             throw new SymbolNotFoundException("No financial ratios found for symbol " + normalizedSymbol);
         }
 
-        List<FinancialRatioResponse> responses = ratios.stream()
+        // TTM first (case-insensitive), then remaining periods desc by string.
+        List<FinancialRatio> sorted = ratios.stream()
+                .sorted((a, b) -> {
+                    boolean aTtm = a.getPeriod() != null && a.getPeriod().equalsIgnoreCase("ttm");
+                    boolean bTtm = b.getPeriod() != null && b.getPeriod().equalsIgnoreCase("ttm");
+                    if (aTtm != bTtm) return aTtm ? -1 : 1;
+                    String ap = a.getPeriod() == null ? "" : a.getPeriod();
+                    String bp = b.getPeriod() == null ? "" : b.getPeriod();
+                    return bp.compareTo(ap);
+                })
+                .toList();
+
+        List<FinancialRatioResponse> responses = sorted.stream()
                 .map(this::toFinancialRatioResponse)
                 .toList();
 

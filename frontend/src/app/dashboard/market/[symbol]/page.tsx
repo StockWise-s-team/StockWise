@@ -6,16 +6,14 @@ import { useParams } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
-  BookOpen,
   FlaskConical,
   Gauge,
   Info,
-  TrendingDown,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { marketApi, wikiApi } from "@/lib/api";
 import { extractErrorMessage } from "@/lib/apiError";
-import { formatVnd, toVndYmd } from "@/lib/format";
+import { formatPercent, formatVnd, toVndYmd } from "@/lib/format";
 import { useMarketTicker } from "@/components/providers/MarketDataProvider";
 import type {
   IntradayOhlcBar,
@@ -142,7 +140,6 @@ export default function MarketDetailPage() {
     );
   }
 
-  const latestRatio = ratios?.ratios?.[0] ?? null;
   const priceTone =
     livePrice && livePrice.change < 0
       ? "danger"
@@ -196,7 +193,7 @@ export default function MarketDetailPage() {
       {error && <TerminalNotice tone="danger">{error}</TerminalNotice>}
 
       {/* Metrics Row */}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2">
         <TerminalMetricCard
           label={`${symbol} Latest Price`}
           value={displayedPrice ? formatVnd(displayedPrice.price) : "-"}
@@ -212,14 +209,6 @@ export default function MarketDetailPage() {
           }
         />
         <TerminalMetricCard
-          label="P/E Ratio"
-          value={latestRatio?.peRatio != null ? numberFormatter.format(latestRatio.peRatio) : "-"}
-        />
-        <TerminalMetricCard
-          label="ROE"
-          value={latestRatio?.roe != null ? `${numberFormatter.format(latestRatio.roe * 100)}%` : "-"}
-        />
-        <TerminalMetricCard
           label="Sentiment Index"
           value={wiki?.sentiment || "NEUTRAL"}
           tone={
@@ -231,6 +220,26 @@ export default function MarketDetailPage() {
           }
         />
       </section>
+
+      {/* Financial Ratios Tables (TTM / Annual) */}
+      {(ratios?.ratios?.length ?? 0) > 0 && (
+        <section className="grid gap-3 sm:grid-cols-2">
+          {(["ttm", "annual"] as const).map((periodKey) => {
+            const item = ratios!.ratios.find(
+              (r) => r.period?.toLowerCase() === periodKey
+            );
+            if (!item) return null;
+            return (
+              <FinancialRatioTable
+                key={periodKey}
+                symbol={symbol}
+                period={periodKey}
+                item={item}
+              />
+            );
+          })}
+        </section>
+      )}
 
       {/* Main Content Layout */}
       <div className="grid gap-6 xl:grid-cols-12">
@@ -257,18 +266,6 @@ export default function MarketDetailPage() {
               />
             )}
           </div>
-
-          {/* Business Summary */}
-          <section className="rounded border border-terminal-border bg-terminal-surface p-4 space-y-3">
-            <TerminalSectionHeader
-              icon={BookOpen}
-              title="Business Overview"
-              subtitle="LLM-Synthesized Knowledge Base"
-            />
-            <p className="text-xs leading-relaxed text-terminal-text whitespace-pre-line">
-              {wiki?.businessSummary || "No business summary generated for this ticker."}
-            </p>
-          </section>
 
           {/* News Analysis */}
           {wiki?.lastNewsSummary && (
@@ -303,61 +300,7 @@ export default function MarketDetailPage() {
                 label="Volume"
                 value={displayedPrice ? new Intl.NumberFormat("vi-VN").format(displayedPrice.volume) : "-"}
               />
-              <SnapshotRow
-                label="P/B"
-                value={latestRatio?.pbRatio != null ? numberFormatter.format(latestRatio.pbRatio) : "-"}
-              />
-              <SnapshotRow
-                label="EPS"
-                value={latestRatio?.eps != null ? numberFormatter.format(latestRatio.eps) : "-"}
-              />
             </div>
-          </section>
-
-          {/* Risk Factors */}
-          <section className="rounded border border-terminal-border bg-terminal-surface p-4 space-y-3">
-            <TerminalSectionHeader
-              icon={TrendingDown}
-              title="Risk & Performance Analysis"
-              subtitle="Highlighted risk parameters"
-            />
-
-            {wiki?.keyRisks && wiki.keyRisks.length > 0 ? (
-              <ul className="space-y-2">
-                {wiki.keyRisks.map((risk, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2 rounded border border-terminal-border bg-terminal-bg px-3 py-2 text-xs"
-                  >
-                    <span className="text-terminal-red font-bold font-mono">!</span>
-                    <span className="text-terminal-text">{risk}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-terminal-muted">No specific risk highlights logged.</p>
-            )}
-
-            {wiki?.recentPerformance && (
-              <div className="mt-4 rounded border border-terminal-border bg-terminal-bg p-3 text-xs space-y-1">
-                <div className="font-semibold text-terminal-accent uppercase tracking-wider text-[10px]">
-                  Recent Trend
-                </div>
-                <div className="text-terminal-text capitalize">
-                  {typeof wiki.recentPerformance === "string"
-                    ? wiki.recentPerformance
-                    : wiki.recentPerformance.trend}
-                </div>
-                {typeof wiki.recentPerformance !== "string" && wiki.recentPerformance.notable && (
-                  <>
-                    <div className="font-semibold text-terminal-accent uppercase tracking-wider text-[10px] mt-2">
-                      Key Event
-                    </div>
-                    <div className="text-terminal-muted">{wiki.recentPerformance.notable}</div>
-                  </>
-                )}
-              </div>
-            )}
           </section>
         </div>
       </div>
@@ -437,5 +380,77 @@ function SnapshotRow({ label, value }: { label: string; value: string }) {
       <span className="text-[10px] uppercase tracking-wider text-terminal-muted">{label}</span>
       <span className="text-right text-xs font-semibold text-terminal-text">{value}</span>
     </div>
+  );
+}
+
+const periodLabel: Record<"ttm" | "annual", string> = {
+  ttm: "TTM (12 tháng cuốn chiếu)",
+  annual: "Annual (cả năm tài chính)",
+};
+
+function FinancialRatioTable({
+  symbol,
+  period,
+  item,
+}: {
+  symbol: string;
+  period: "ttm" | "annual";
+  item: FinancialRatioList["ratios"][number];
+}) {
+  const rows: Array<{ metric: string; value: string }> = [
+    {
+      metric: "P/E",
+      value: item.peRatio != null ? numberFormatter.format(item.peRatio) : "—",
+    },
+    {
+      metric: "P/B",
+      value: item.pbRatio != null ? numberFormatter.format(item.pbRatio) : "—",
+    },
+    {
+      metric: "EPS",
+      value: item.eps != null ? numberFormatter.format(item.eps) : "—",
+    },
+    {
+      metric: "ROE",
+      value: formatPercent(item.roe),
+    },
+    {
+      metric: "ROA",
+      value: formatPercent(item.roa),
+    },
+  ];
+  return (
+    <section className="rounded border border-terminal-border bg-terminal-surface p-4 space-y-3">
+      <TerminalSectionHeader
+        icon={Gauge}
+        title={`Financial Ratios — ${symbol} (${period.toUpperCase()})`}
+        subtitle={periodLabel[period]}
+      />
+      <div className="rounded border border-terminal-border bg-terminal-bg">
+        <table className="w-full font-mono text-xs">
+          <thead>
+            <tr className="border-b border-terminal-border text-[10px] uppercase tracking-wider text-terminal-muted">
+              <th className="px-3 py-2 text-left font-medium">Metric</th>
+              <th className="px-3 py-2 text-right font-medium">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.metric}
+                className="border-b border-terminal-border/50 last:border-b-0"
+              >
+                <td className="px-3 py-2 text-[10px] uppercase tracking-wider text-terminal-muted">
+                  {row.metric}
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-semibold text-terminal-text">
+                  {row.value}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
