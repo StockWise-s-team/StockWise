@@ -1,5 +1,6 @@
 package com.stockwise.portfolio.application.service.order;
 
+import com.stockwise.portfolio.application.service.order.ports.SymbolPriceCache;
 import com.stockwise.portfolio.application.service.order.lifecycle.CancelOrderService;
 import com.stockwise.portfolio.application.service.order.lifecycle.OrderFactory;
 import com.stockwise.portfolio.application.service.order.lifecycle.PlaceOrderService;
@@ -44,7 +45,7 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
 
-    private com.stockwise.portfolio.application.service.order.validation.SymbolPriceCache symbolPriceCache;
+    private SymbolPriceCache symbolPriceCache;
 
     @Mock
     private OrderEventPublisher orderEventPublisher;

@@ -3,7 +3,7 @@ package com.stockwise.portfolio.application.service.order;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockwise.portfolio.application.service.order.match.OrderMatchProcessor;
 import com.stockwise.portfolio.application.service.order.validation.InMemorySymbolPriceCache;
-import com.stockwise.portfolio.application.service.order.validation.SymbolPriceCache;
+import com.stockwise.portfolio.application.service.order.ports.SymbolPriceCache;
 import com.stockwise.portfolio.application.port.out.PortfolioEventPublisher;
 import com.stockwise.portfolio.domain.entity.Holding;
 import com.stockwise.portfolio.domain.entity.Order;

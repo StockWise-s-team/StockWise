@@ -35,7 +35,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding portfolioPriceBinding(Queue portfolioPriceQueue, TopicExchange marketExchange) {
+    public Binding portfolioPriceBinding(
+            @org.springframework.beans.factory.annotation.Qualifier("portfolioPriceQueue") Queue portfolioPriceQueue, 
+            @org.springframework.beans.factory.annotation.Qualifier("marketExchange") TopicExchange marketExchange) {
         return BindingBuilder.bind(portfolioPriceQueue).to(marketExchange).with(MARKET_PRICE_ROUTING_KEY);
     }
 
